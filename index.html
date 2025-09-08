@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>สวนผักของเรา</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'IBM Plex Sans Thai', sans-serif; 
+            touch-action: manipulation; 
+            background: linear-gradient(to bottom, #a7f3d0, #f0fdf4);
+        }
+        .plot, .animal-slot { 
+            transition: all 0.2s ease-in-out; 
+            background-size: contain; 
+            background-position: center; 
+            background-repeat: no-repeat; 
+            image-rendering: pixelated; /* For pixel art style */
+        }
+        .plot:hover, .animal-slot:hover { transform: scale(1.05); }
+
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        @keyframes fadeOut { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(0.95); } }
+        .modal-enter { animation: fadeIn 0.2s ease-out forwards; }
+        .modal-leave { animation: fadeOut 0.2s ease-out forwards; }
+
+        @keyframes pop {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        .pop-animation { animation: pop 0.3s ease-out; }
+
+        @keyframes water-effect {
+            0% { background-color: rgba(59, 130, 246, 0); }
+            50% { background-color: rgba(59, 130, 246, 0.3); }
+            100% { background-color: rgba(59, 130, 246, 0); }
+        }
+        .watered { animation: water-effect 0.5s ease-out; }
+
+        @keyframes fertilize-effect {
+            0% { box-shadow: 0 0 0 0px rgba(139, 69, 19, 0); }
+            50% { box-shadow: 0 0 15px 5px rgba(139, 69, 19, 0.5); }
+            100% { box-shadow: 0 0 0 0px rgba(139, 69, 19, 0); }
+        }
+        .fertilized { animation: fertilize-effect 0.6s ease-out; }
+
+        @keyframes hop { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+        .animal.happy { animation: hop 0.5s infinite; }
+
+        body { padding-bottom: 80px; }
+        .nav-btn.active { background-color: #15803d; color: white; border-top: 4px solid #facc15; }
+        .quality-star { color: #facc15; text-shadow: 0 0 2px black; }
+
+        /* Loading Screen */
+        .loading-hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+    </style>
+</head>
+<body class="min-h-screen">
+    
+    <!-- Loading Screen -->
+    <div id="loading-screen" class="fixed inset-0 bg-green-100 z-[100] flex flex-col items-center justify-center transition-opacity duration-500">
+        <div class="text-6xl animate-bounce">🥕</div>
+        <p class="mt-4 text-2xl font-bold text-green-800">กำลังเตรียมฟาร์ม...</p>
+    </div>
+
+    <!-- All Modals -->
+    <div id="modal-container">
+        <!-- Name Change Modal -->
+        <div id="name-modal" class="hidden fixed inset-0 bg-black/50 z-[52] flex items-center justify-center p-4">
+            <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm modal-enter">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">เปลี่ยนชื่อเล่น</h2>
+                <p class="text-gray-600 mb-4">ใส่ชื่อเล่นใหม่ของคุณ (ไม่เกิน 15 ตัวอักษร)</p>
+                <input type="text" id="name-input" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500" maxlength="15">
+                <div class="mt-6 flex justify-end gap-3">
+                    <button id="cancel-name-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg">ยกเลิก</button>
+                    <button id="save-name-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg">บันทึก</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Context Menu Modal -->
+        <div id="context-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+            <div id="context-modal-content" class="bg-white rounded-2xl shadow-xl p-5 w-full max-w-xs text-center">
+                <h3 id="context-modal-title" class="text-xl font-bold text-gray-800 mb-4"></h3>
+                <div id="context-modal-actions" class="flex flex-col gap-3"></div>
+                <button id="context-modal-close" class="mt-4 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg w-full">ปิด</button>
+            </div>
+        </div>
+         <!-- Sub-menu Modal (for planting/fertilizing) -->
+        <div id="submenu-modal" class="hidden fixed inset-0 bg-black/60 z-[51] flex items-center justify-center p-4">
+            <div class="bg-white rounded-2xl shadow-xl p-5 w-full max-w-xs">
+                <h3 id="submenu-modal-title" class="text-xl font-bold text-gray-800 mb-4 text-center"></h3>
+                <div id="submenu-modal-items" class="grid grid-cols-3 gap-3 text-center"></div>
+                <button id="submenu-modal-close" class="mt-4 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg w-full">กลับ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Game Area -->
+    <div id="game-container" class="w-full max-w-5xl mx-auto p-4 md:p-6 opacity-0 transition-opacity duration-500">
+        <header class="text-center mb-4 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-4">
+            <h1 class="text-3xl md:text-4xl font-bold text-green-800">สวนผักของเรา 💚</h1>
+            <div class="mt-3 flex flex-wrap justify-center items-center gap-x-4 gap-y-2 text-sm text-gray-600">
+                <div class="flex items-center justify-center gap-2 bg-green-100 px-3 py-1 rounded-full">
+                    <span>ชื่อ:</span>
+                    <span id="player-name" class="font-bold text-green-900 cursor-pointer hover:underline" title="คลิกเพื่อเปลี่ยนชื่อ">...</span>
+                </div>
+                <span class="font-semibold bg-yellow-100 px-3 py-1 rounded-full">💰: <span id="money-display" class="font-bold text-yellow-800">0</span></span>
+            </div>
+             <div id="inventory-display" class="mt-3 flex flex-wrap justify-center items-center gap-x-3 gap-y-1 text-xs text-gray-500">
+                <!-- Inventory items will be rendered here -->
+             </div>
+        </header>
+
+        <main id="tab-content-area" class="bg-white/60 backdrop-blur-sm rounded-2xl shadow-inner p-4 min-h-[400px]">
+            <div id="farm-view">
+                <div id="farm-grid" class="grid grid-cols-4 sm:grid-cols-6 gap-2 md:gap-4 flex-grow"></div>
+            </div>
+            <div id="animals-view" class="hidden">
+                 <div id="animal-pen" class="grid grid-cols-3 sm:grid-cols-4 gap-2 md:gap-4"></div>
+            </div>
+            <div id="shop-view" class="hidden">
+                <div class="w-full max-w-lg mx-auto">
+                    <h2 class="text-3xl font-bold text-green-800 mb-4 text-center">🏪 ร้านค้า</h2>
+                    <div id="sell-box" class="mb-6 bg-yellow-100 p-4 rounded-xl border-2 border-dashed border-yellow-300">
+                        <h3 class="text-xl font-bold text-yellow-800 mb-2 text-center">กล่องขายผลผลิต</h3>
+                        <div id="sell-box-items" class="min-h-[50px] space-y-2">
+                            <p class="text-center text-yellow-700">ไม่มีผลผลิตจะขาย</p>
+                        </div>
+                        <div class="mt-4 text-center">
+                            <p class="font-semibold text-lg">รวม: <span id="sell-box-total" class="font-bold">0</span>💰</p>
+                            <button id="sell-all-btn" disabled class="mt-2 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-full disabled:bg-gray-400 disabled:cursor-not-allowed">ขายทั้งหมด</button>
+                        </div>
+                    </div>
+                    <div id="shop-items" class="space-y-4"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Bottom Navigation Bar -->
+    <footer id="footer-nav" class="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-sm shadow-[0_-4px_12px_rgba(0,0,0,0.05)] z-40 flex justify-around opacity-0 transition-opacity duration-500">
+        <button data-view="farm" class="nav-btn flex-1 py-3 text-green-800 font-bold text-lg hover:bg-green-100 transition">ฟาร์ม</button>
+        <button data-view="animals" class="nav-btn flex-1 py-3 text-green-800 font-bold text-lg hover:bg-green-100 transition">คอกสัตว์</button>
+        <button data-view="shop" class="nav-btn flex-1 py-3 text-green-800 font-bold text-lg hover:bg-green-100 transition">ร้านค้า</button>
+    </footer>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- Config ---
+        const firebaseConfig = {
+          apiKey: "AIzaSyDAc4bOydh3x9OFMI-ocbAIXDQc61qRcnc",
+          authDomain: "my-farm-game-556f5.firebaseapp.com",
+          projectId: "my-farm-game-556f5",
+          storageBucket: "my-farm-game-556f5.appspot.com",
+          messagingSenderId: "725056841274",
+          appId: "1:725056841274:web:a2b0d5b0cb913c2a10f703",
+          measurementId: "G-R0DJJ5KWD0"
+        };
+        //  ++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        const FARM_GRID_SIZE = 24;
+        const ANIMAL_PEN_SIZE = 8;
+
+        // --- MASTER GAME DATA ---
+        // growTime & produceTime are in seconds
+        const GAME_DATA = {
+            'carrot_seed':   { name: 'เมล็ดแครอท', type: 'seed', cost: 5, plantId: 'carrot', icon: '🥕' },
+            'carrot':        { name: 'แครอท', type: 'crop', growTime: 1200, produceId: 'carrot_produce', icon: '🥕' },
+            'carrot_produce':{ name: 'แครอท', type: 'produce', sellPrice: [8, 12, 16], icon: '🥕' },
+            
+            'tomato_seed':   { name: 'เมล็ดมะเขือเทศ', type: 'seed', cost: 10, plantId: 'tomato', icon: '🍅' },
+            'tomato':        { name: 'มะเขือเทศ', type: 'crop', growTime: 1800, produceId: 'tomato_produce', icon: '🍅' },
+            'tomato_produce':{ name: 'มะเขือเทศ', type: 'produce', sellPrice: [18, 25, 35], icon: '🍅' },
+
+            'strawberry_seed': { name: 'เมล็ดสตรอว์เบอร์รี', type: 'seed', cost: 15, plantId: 'strawberry', icon: '🍓' },
+            'strawberry':      { name: 'สตรอว์เบอร์รี', type: 'crop', growTime: 2400, produceId: 'strawberry_produce', icon: '🍓' },
+            'strawberry_produce': { name: 'สตรอว์เบอร์รี', type: 'produce', sellPrice: [25, 35, 50], icon: '🍓' },
+
+            'grape_seed': { name: 'เมล็ดองุ่น', type: 'seed', cost: 20, plantId: 'grape', icon: '🍇' },
+            'grape':      { name: 'องุ่น', type: 'crop', growTime: 3000, produceId: 'grape_produce', icon: '🍇' },
+            'grape_produce': { name: 'องุ่น', type: 'produce', sellPrice: [35, 50, 70], icon: '🍇' },
+
+            'peach_seed': { name: 'เมล็ดพีช', type: 'seed', cost: 25, plantId: 'peach', icon: '🍑' },
+            'peach':      { name: 'พีช', type: 'crop', growTime: 3600, produceId: 'peach_produce', icon: '🍑' },
+            'peach_produce': { name: 'พีช', type: 'produce', sellPrice: [45, 65, 90], icon: '🍑' },
+
+            'orange_seed': { name: 'เมล็ดส้ม', type: 'seed', cost: 30, plantId: 'orange', icon: '🍊' },
+            'orange':      { name: 'ส้ม', type: 'crop', growTime: 4200, produceId: 'orange_produce', icon: '🍊' },
+            'orange_produce': { name: 'ส้ม', type: 'produce', sellPrice: [55, 80, 110], icon: '🍊' },
+
+            'mango_seed': { name: 'เมล็ดมะม่วง', type: 'seed', cost: 35, plantId: 'mango', icon: '🥭' },
+            'mango':      { name: 'มะม่วง', type: 'crop', growTime: 4800, produceId: 'mango_produce', icon: '🥭' },
+            'mango_produce': { name: 'มะม่วง', type: 'produce', sellPrice: [65, 95, 130], icon: '🥭' },
+
+            'pineapple_seed': { name: 'เมล็ดสับปะรด', type: 'seed', cost: 40, plantId: 'pineapple', icon: '🍍' },
+            'pineapple':      { name: 'สับปะรด', type: 'crop', growTime: 5400, produceId: 'pineapple_produce', icon: '🍍' },
+            'pineapple_produce': { name: 'สับปะรด', type: 'produce', sellPrice: [75, 110, 150], icon: '🍍' },
+
+            'guava_seed': { name: 'เมล็ดฝรั่ง', type: 'seed', cost: 18, plantId: 'guava', icon: '🍈' },
+            'guava':      { name: 'ฝรั่ง', type: 'crop', growTime: 2800, produceId: 'guava_produce', icon: '🍈' },
+            'guava_produce': { name: 'ฝรั่ง', type: 'produce', sellPrice: [30, 45, 65], icon: '🍈' },
+
+            'roseapple_seed': { name: 'เมล็ดชมพู่', type: 'seed', cost: 22, plantId: 'roseapple', icon: '🍐' },
+            'roseapple':      { name: 'ชมพู่', type: 'crop', growTime: 3200, produceId: 'roseapple_produce', icon: '🍐' },
+            'roseapple_produce': { name: 'ชมพู่', type: 'produce', sellPrice: [40, 60, 85], icon: '🍐' },
+
+            'apple_seed': { name: 'เมล็ดแอปเปิ้ล', type: 'seed', cost: 28, plantId: 'apple', icon: '🍎' },
+            'apple':      { name: 'แอปเปิ้ล', type: 'crop', growTime: 4000, produceId: 'apple_produce', icon: '🍎' },
+            'apple_produce': { name: 'แอปเปิ้ล', type: 'produce', sellPrice: [50, 75, 105], icon: '🍎' },
+
+            'fertilizer_1': { name: 'ปุ๋ยธรรมดา', type: 'item', cost: 10, qualityBonus: 0.3, icon: '💩' },
+            'fertilizer_2': { name: 'ปุ๋ยอย่างดี', type: 'item', cost: 25, qualityBonus: 0.6, icon: '✨' },
+            
+            'chicken_deed': { name: 'กรรมสิทธิ์ไก่', type: 'animal_deed', cost: 100, animalId: 'chicken', icon: '🐔' },
+            'chicken':      { name: 'ไก่', type: 'animal_instance', produceTime: 600, produceId: 'egg', icon: '🐔' },
+            'egg':          { name: 'ไข่', type: 'produce', sellPrice: [12, 18, 25], icon: '🥚' },
+
+            'cow_deed':     { name: 'กรรมสิทธิ์วัว', type: 'animal_deed', cost: 500, animalId: 'cow', icon: '🐄' },
+            'cow':          { name: 'วัว', type: 'animal_instance', produceTime: 3600, produceId: 'milk', icon: '🐄' },
+            'milk':         { name: 'นม', type: 'produce', sellPrice: [50, 70, 90], icon: '🥛' },
+
+            'pig_deed':     { name: 'กรรมสิทธิ์หมู', type: 'animal_deed', cost: 300, animalId: 'pig', icon: '🐖' },
+            'pig':          { name: 'หมู', type: 'animal_instance', produceTime: 4800, produceId: 'truffle', icon: '🐖' },
+            'truffle':      { name: 'เห็ดทรัฟเฟิล', type: 'produce', sellPrice: [80, 110, 150], icon: '🍄' },
+
+            'duck_deed':    { name: 'กรรมสิทธิ์เป็ด', type: 'animal_deed', cost: 120, animalId: 'duck', icon: '🦆' },
+            'duck':         { name: 'เป็ด', type: 'animal_instance', produceTime: 900, produceId: 'duck_egg', icon: '🦆' },
+            'duck_egg':     { name: 'ไข่เป็ด', type: 'produce', sellPrice: [15, 22, 30], icon: '🥚' },
+
+            'goose_deed':   { name: 'กรรมสิทธิ์ห่าน', type: 'animal_deed', cost: 150, animalId: 'goose', icon: '🦢' },
+            'goose':        { name: 'ห่าน', type: 'animal_instance', produceTime: 1800, produceId: 'feather', icon: '🦢' },
+            'feather':      { name: 'ขนนก', type: 'produce', sellPrice: [25, 38, 55], icon: '🪶' },
+
+            'turtle_deed':  { name: 'กรรมสิทธิ์เต่า', type: 'animal_deed', cost: 1000, animalId: 'turtle', icon: '🐢' },
+            'turtle':       { name: 'เต่า', type: 'animal_instance', produceTime: 86400, produceId: 'gem', icon: '🐢' },
+            'gem':          { name: 'อัญมณี', type: 'produce', sellPrice: [200, 300, 500], icon: '💎' },
+        };
+
+        // --- Game State ---
+        let userId = null;
+        let farmState = { plots: [], animals: [] };
+        let playerState = { money: 20, inventory: {}, produceBin: [], nickname: 'ผู้เล่นใหม่' };
+        
+        // --- UI Elements ---
+        const playerNameEl = document.getElementById('player-name');
+        
+        // --- Helper Functions ---
+        function formatTime(seconds) {
+            if (seconds < 0) seconds = 0;
+            const h = Math.floor(seconds / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            const s = Math.floor(seconds % 60);
+            let parts = [];
+            if (h > 0) parts.push(`${h} ชม.`);
+            if (m > 0) parts.push(`${m} นาที`);
+            if (s > 0 || parts.length === 0) parts.push(`${s} วิ`);
+            return parts.join(' ');
+        }
+        
+        // --- State Management ---
+        async function updateFarmState(newState) {
+             if (!userId) return;
+             farmState = newState;
+             const farmDocRef = doc(db, "publicFarmData", "farmState");
+             await setDoc(farmDocRef, farmState, { merge: true });
+        }
+        async function updatePlayerState(newState) {
+             if (!userId) return;
+             playerState = newState;
+             const playerDocRef = doc(db, "players", userId);
+             await setDoc(playerDocRef, newState, { merge: true });
+        }
+        
+        // --- Rendering ---
+        function renderAll() {
+            renderFarm();
+            renderAnimals();
+            renderPlayerUI();
+            renderShop();
+            renderSellBox();
+        }
+        
+        function renderFarm() {
+            const farmGrid = document.getElementById('farm-grid');
+            farmGrid.innerHTML = '';
+            farmState.plots.forEach((plot, index) => {
+                const plotEl = document.createElement('div');
+                plotEl.className = 'plot aspect-square rounded-lg shadow-inner cursor-pointer flex items-center justify-center text-3xl relative';
+                plotEl.style.backgroundColor = 'rgba(139, 69, 19, 0.4)';
+                
+                if (plot.plantId) {
+                    const plantData = GAME_DATA[plot.plantId];
+                    const progress = Math.min(plot.growth / plantData.growTime, 1);
+                    plotEl.style.backgroundImage = `linear-gradient(to top, rgba(96, 165, 250, ${plot.water/10}) 0%, rgba(96, 165, 250, ${plot.water/10}) ${progress*100}%, transparent ${progress*100}%)`;
+                    
+                    const content = document.createElement('div');
+                    if (plantData.imageUrl) {
+                        content.style.backgroundImage = `url(${plantData.imageUrl})`;
+                        content.style.opacity = 0.5 + (progress * 0.5);
+                        content.className = 'w-full h-full bg-contain bg-no-repeat bg-center';
+                    } else {
+                        content.textContent = plantData.icon;
+                        content.style.transform = `scale(${0.5 + (progress * 0.5)})`;
+                    }
+                    plotEl.appendChild(content);
+
+                    if (plot.quality > 0) {
+                        const qualityEl = document.createElement('div');
+                        qualityEl.className = 'absolute top-1 right-1 text-xs quality-star';
+                        qualityEl.textContent = '★'.repeat(plot.quality);
+                        plotEl.appendChild(qualityEl);
+                    }
+                }
+                
+                plotEl.onclick = () => showContextMenu('plot', index);
+                farmGrid.appendChild(plotEl);
+            });
+        }
+
+        function renderAnimals() {
+             const animalPen = document.getElementById('animal-pen');
+             animalPen.innerHTML = '';
+             farmState.animals.forEach((animal, index) => {
+                const slotEl = document.createElement('div');
+                slotEl.className = 'animal-slot aspect-square rounded-2xl shadow-inner cursor-pointer flex flex-col items-center justify-center p-1 bg-green-200/50';
+                
+                if (animal.animalId) {
+                    const animalData = GAME_DATA[animal.animalId];
+                    const content = document.createElement('div');
+                    content.className = 'text-4xl';
+                    if (animalData.imageUrl) {
+                         content.style.backgroundImage = `url(${animalData.imageUrl})`;
+                         content.className = 'w-full h-full bg-contain bg-no-repeat bg-center';
+                    } else {
+                         content.textContent = animalData.icon;
+                    }
+
+                    const progressEl = document.createElement('div');
+                    progressEl.className = 'w-full h-1 bg-gray-300 rounded-full mt-1';
+                    const progressFill = document.createElement('div');
+                    const progress = (Date.now() - animal.startTime) / (animalData.produceTime * 1000);
+                    progressFill.className = 'h-1 bg-yellow-400 rounded-full';
+                    progressFill.style.width = `${Math.min(progress, 1) * 100}%`;
+                    progressEl.appendChild(progressFill);
+
+                    slotEl.appendChild(content);
+                    slotEl.appendChild(progressEl);
+
+                    if (progress >= 1) {
+                        slotEl.classList.add('animate-bounce');
+                    }
+                } else {
+                    slotEl.textContent = '+';
+                    slotEl.className += ' text-3xl text-gray-400';
+                }
+
+                slotEl.onclick = () => showContextMenu('animal', index);
+                animalPen.appendChild(slotEl);
+             });
+        }
+
+        function renderPlayerUI() {
+            playerNameEl.textContent = playerState.nickname;
+            document.getElementById('money-display').textContent = playerState.money || 0;
+            const inventoryDisplay = document.getElementById('inventory-display');
+            inventoryDisplay.innerHTML = '';
+            Object.entries(playerState.inventory).forEach(([itemId, count]) => {
+                if (count > 0) {
+                    const itemData = GAME_DATA[itemId];
+                    const itemEl = document.createElement('span');
+                    itemEl.className = 'bg-white px-2 py-1 rounded-md shadow-sm';
+                    itemEl.textContent = `${itemData.icon} ${count}`;
+                    inventoryDisplay.appendChild(itemEl);
+                }
+            });
+        }
+
+        function renderShop() {
+            const shopItems = document.getElementById('shop-items');
+            shopItems.innerHTML = '';
+            ['seed', 'item', 'animal_deed'].forEach(category => {
+                const categoryEl = document.createElement('div');
+                const title = {seed:'เมล็ดพันธุ์', item:'ไอเท็ม', animal_deed:'สัตว์เลี้ยง'}[category];
+                categoryEl.innerHTML = `<h3 class="text-xl font-bold text-green-700 mb-2">${title}</h3>`;
+                const grid = document.createElement('div');
+                grid.className = 'grid grid-cols-2 md:grid-cols-3 gap-2';
+
+                Object.entries(GAME_DATA).filter(([_, data]) => data.type === category).forEach(([id, data]) => {
+                    const itemEl = document.createElement('div');
+                    itemEl.className = 'bg-white/80 p-3 rounded-xl shadow-md flex flex-col items-center gap-2';
+                    itemEl.innerHTML = `
+                        <div class="text-3xl">${data.icon}</div>
+                        <div class="font-semibold text-center text-sm">${data.name}</div>
+                        <button data-itemid="${id}" class="buy-btn bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-bold py-1 px-4 rounded-full w-full">ซื้อ ${data.cost}💰</button>
+                    `;
+                    grid.appendChild(itemEl);
+                });
+                categoryEl.appendChild(grid);
+                shopItems.appendChild(categoryEl);
+            });
+        }
+
+        function renderSellBox() {
+            const itemsEl = document.getElementById('sell-box-items');
+            const totalEl = document.getElementById('sell-box-total');
+            const sellBtn = document.getElementById('sell-all-btn');
+            
+            if (!playerState.produceBin || playerState.produceBin.length === 0) {
+                itemsEl.innerHTML = `<p class="text-center text-yellow-700">ไม่มีผลผลิตจะขาย</p>`;
+                totalEl.textContent = '0';
+                sellBtn.disabled = true;
+                return;
+            }
+
+            itemsEl.innerHTML = '';
+            let totalValue = 0;
+            const groupedProduce = playerState.produceBin.reduce((acc, item) => {
+                const key = `${item.id}_q${item.quality}`;
+                if (!acc[key]) {
+                    acc[key] = { ...item, count: 0 };
+                }
+                acc[key].count++;
+                return acc;
+            }, {});
+
+            Object.values(groupedProduce).forEach(item => {
+                const itemData = GAME_DATA[item.id];
+                const sellPrice = itemData.sellPrice[item.quality];
+                totalValue += sellPrice * item.count;
+                
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'flex justify-between items-center bg-white/50 p-2 rounded';
+                itemDiv.innerHTML = `
+                    <div>
+                        <span class="text-lg">${itemData.icon}</span>
+                        <span>${itemData.name}</span>
+                        <span class="quality-star">${'★'.repeat(item.quality)}</span>
+                        <span class="text-gray-600 text-sm">x${item.count}</span>
+                    </div>
+                    <span class="font-semibold">${sellPrice * item.count}💰</span>
+                `;
+                itemsEl.appendChild(itemDiv);
+            });
+
+            totalEl.textContent = totalValue;
+            sellBtn.disabled = false;
+        }
+
+        // --- Context Menu Logic ---
+        function showContextMenu(type, index) {
+            const modal = document.getElementById('context-modal');
+            const contentEl = document.getElementById('context-modal-content');
+            const titleEl = document.getElementById('context-modal-title');
+            const actionsEl = document.getElementById('context-modal-actions');
+            actionsEl.innerHTML = '';
+
+            // Remove old details before adding new ones
+            contentEl.querySelectorAll('.context-details').forEach(el => el.remove());
+
+            const detailsEl = document.createElement('div');
+            detailsEl.className = 'context-details text-sm text-gray-600 mb-4 border-t pt-4 mt-4';
+
+            const createButton = (text, action, disabled = false) => {
+                const button = document.createElement('button');
+                button.textContent = text;
+                button.className = `w-full font-bold py-2 px-4 rounded-lg transition ${disabled ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-green-500 hover:bg-green-600 text-white'}`;
+                if (!disabled) button.onclick = () => { action(); hideContextMenu(); };
+                return button;
+            };
+
+            if (type === 'plot') {
+                const plot = farmState.plots[index];
+                titleEl.textContent = `แปลงที่ ${index + 1}`;
+                if (!plot.plantId) {
+                     const plantableItems = Object.keys(playerState.inventory).filter(id => GAME_DATA[id].type === 'seed' && playerState.inventory[id] > 0);
+                     actionsEl.appendChild(createButton('🌱 ปลูก', () => showSubMenu('plant', index, plantableItems), plantableItems.length === 0));
+                } else {
+                    const plantData = GAME_DATA[plot.plantId];
+                    const isGrown = plot.growth >= plantData.growTime;
+                    
+                    const remainingSeconds = Math.max(0, plantData.growTime - plot.growth);
+                    detailsEl.innerHTML += `<p>เหลือเวลา: <span class="font-semibold">${formatTime(remainingSeconds)}</span></p>`;
+                    
+                    if (plot.wateredBy && plot.wateredBy.length > 0) {
+                        const waterers = plot.wateredBy.map(p => p.nickname).join(', ');
+                        detailsEl.innerHTML += `<div class="mt-2"><p>รดน้ำแล้วโดย:</p><p class="font-semibold text-green-700">${waterers}</p></div>`;
+                    }
+                    actionsEl.before(detailsEl);
+                    
+                    if (isGrown) {
+                        actionsEl.appendChild(createButton('🌾 เก็บเกี่ยว', () => harvest(index)));
+                    } else {
+                         const hasWatered = plot.wateredBy && plot.wateredBy.some(p => p.uid === userId);
+                         actionsEl.appendChild(createButton('💧 รดน้ำ', () => water(index), hasWatered));
+                         const fertilizers = Object.keys(playerState.inventory).filter(id => GAME_DATA[id].type === 'item' && playerState.inventory[id] > 0);
+                         actionsEl.appendChild(createButton('💩 ใส่ปุ๋ย', () => showSubMenu('fertilize', index, fertilizers), fertilizers.length === 0));
+                    }
+                }
+            } else if (type === 'animal') {
+                 const animal = farmState.animals[index];
+                 titleEl.textContent = `คอกที่ ${index + 1}`;
+                 if (!animal.animalId) {
+                     const buyableAnimals = Object.keys(playerState.inventory).filter(id => GAME_DATA[id].type === 'animal_deed' && playerState.inventory[id] > 0);
+                     actionsEl.appendChild(createButton('➕ วางสัตว์', () => showSubMenu('placeAnimal', index, buyableAnimals), buyableAnimals.length === 0));
+                 } else {
+                    const animalData = GAME_DATA[animal.animalId];
+                    const isReady = (Date.now() - animal.startTime) >= (animalData.produceTime * 1000);
+                    
+                    const remainingMillis = Math.max(0, (animal.startTime + animalData.produceTime * 1000) - Date.now());
+                    detailsEl.innerHTML = `<p>พร้อมเก็บใน: <span class="font-semibold">${formatTime(remainingMillis / 1000)}</span></p>`;
+                    actionsEl.before(detailsEl);
+                    
+                    if(isReady){
+                        actionsEl.appendChild(createButton(`เก็บ${GAME_DATA[animalData.produceId].name}`, () => collectProduct(index)));
+                    } else {
+                         actionsEl.appendChild(createButton('ให้อาหาร (เร็วขึ้น)', () => {}, true)); // Placeholder for future feature
+                    }
+                 }
+            }
+            
+            modal.classList.remove('hidden', 'modal-leave');
+            modal.classList.add('modal-enter');
+        }
+        function hideContextMenu() {
+            const modal = document.getElementById('context-modal');
+            modal.classList.add('modal-leave');
+            setTimeout(() => modal.classList.add('hidden'), 200);
+        }
+
+        function showSubMenu(actionType, index, itemIds) {
+            const modal = document.getElementById('submenu-modal');
+            const titleEl = document.getElementById('submenu-modal-title');
+            const itemsEl = document.getElementById('submenu-modal-items');
+            itemsEl.innerHTML = '';
+            titleEl.textContent = actionType === 'plant' ? 'เลือกเมล็ดที่จะปลูก' : actionType === 'fertilize' ? 'เลือกปุ๋ย' : 'เลือกสัตว์ที่จะวาง';
+
+            itemIds.forEach(itemId => {
+                const itemData = GAME_DATA[itemId];
+                const itemButton = document.createElement('button');
+                itemButton.className = 'p-2 bg-gray-100 rounded-lg hover:bg-green-100';
+                itemButton.innerHTML = `<div class="text-3xl">${itemData.icon}</div><div class="text-xs">${itemData.name}</div>`;
+                itemButton.onclick = () => {
+                    if (actionType === 'plant') plant(index, itemId);
+                    else if (actionType === 'fertilize') fertilize(index, itemId);
+                    else if (actionType === 'placeAnimal') placeAnimal(index, itemId);
+                    hideSubMenu();
+                };
+                itemsEl.appendChild(itemButton);
+            });
+            modal.classList.remove('hidden', 'modal-leave');
+            modal.classList.add('modal-enter');
+        }
+        function hideSubMenu() {
+            const modal = document.getElementById('submenu-modal');
+            modal.classList.add('modal-leave');
+            setTimeout(() => modal.classList.add('hidden'), 200);
+        }
+
+        // --- Game Actions ---
+        function plant(plotIndex, seedId) {
+            const newFarmState = { ...farmState };
+            const newPlayerState = { ...playerState };
+            const seedData = GAME_DATA[seedId];
+            newFarmState.plots[plotIndex] = { plantId: seedData.plantId, growth: 0, water: 5, fertilizerLevel: 0, wateredBy: [] };
+            newPlayerState.inventory[seedId]--;
+            document.querySelector(`#farm-grid > div:nth-child(${plotIndex + 1})`).classList.add('pop-animation');
+            updateFarmState(newFarmState);
+            updatePlayerState(newPlayerState);
+        }
+
+        function water(plotIndex) {
+             const newFarmState = { ...farmState };
+             const plot = newFarmState.plots[plotIndex];
+             if (plot.wateredBy.some(p => p.uid === userId)) return; // Prevent watering twice
+
+             plot.water = Math.min(plot.water + 5, 10);
+             plot.wateredBy.push({ uid: userId, nickname: playerState.nickname });
+             document.querySelector(`#farm-grid > div:nth-child(${plotIndex + 1})`).classList.add('watered');
+             updateFarmState(newFarmState);
+        }
+
+        function fertilize(plotIndex, fertilizerId) {
+            const newFarmState = { ...farmState };
+            const newPlayerState = { ...playerState };
+            const fertilizerData = GAME_DATA[fertilizerId];
+            newFarmState.plots[plotIndex].fertilizerLevel += fertilizerData.qualityBonus;
+            newPlayerState.inventory[fertilizerId]--;
+            document.querySelector(`#farm-grid > div:nth-child(${plotIndex + 1})`).classList.add('fertilized');
+            updateFarmState(newFarmState);
+            updatePlayerState(newPlayerState);
+        }
+
+        function harvest(plotIndex) {
+            const newPlayerState = { ...playerState };
+            const newFarmState = { ...farmState };
+            const plot = newFarmState.plots[plotIndex];
+            const cropData = GAME_DATA[plot.plantId];
+
+            let quality = 0;
+            if (Math.random() < plot.fertilizerLevel) quality = 1;
+            if (Math.random() < plot.fertilizerLevel - 1) quality = 2;
+
+            newPlayerState.produceBin.push({ id: cropData.produceId, quality: quality });
+            newFarmState.plots[plotIndex] = { plantId: null };
+            updatePlayerState(newPlayerState);
+            updateFarmState(newFarmState);
+        }
+
+        function placeAnimal(slotIndex, deedId) {
+            const newFarmState = { ...farmState };
+            const newPlayerState = { ...playerState };
+            const deedData = GAME_DATA[deedId];
+            newFarmState.animals[slotIndex] = { animalId: deedData.animalId, startTime: Date.now() };
+            newPlayerState.inventory[deedId]--;
+            document.querySelector(`#animal-pen > div:nth-child(${slotIndex + 1})`).classList.add('pop-animation');
+            updateFarmState(newFarmState);
+            updatePlayerState(newPlayerState);
+        }
+
+        function collectProduct(slotIndex) {
+            const newPlayerState = { ...playerState };
+            const newFarmState = { ...farmState };
+            const animal = newFarmState.animals[slotIndex];
+            const animalData = GAME_DATA[animal.animalId];
+
+            newPlayerState.produceBin.push({ id: animalData.produceId, quality: 0 });
+            animal.startTime = Date.now();
+            newFarmState.animals[slotIndex] = animal;
+            
+            updatePlayerState(newPlayerState);
+            updateFarmState(newFarmState);
+        }
+        
+        // --- Game Loop ---
+        function gameTick() {
+            let farmChanged = false;
+            farmState.plots.forEach(plot => {
+                if (plot.plantId) {
+                    const plantData = GAME_DATA[plot.plantId];
+                    if (plot.growth < plantData.growTime) {
+                         let growthRate = 2;
+                         if (plot.water > 0) {
+                             growthRate += (plot.water / 5) + (plot.wateredBy.length || 0); 
+                             plot.water -= 1; 
+                         }
+                         plot.growth += growthRate;
+                         farmChanged = true;
+                    }
+                }
+            });
+            if (farmChanged) updateFarmState(farmState);
+        }
+
+        function displayError(message) {
+            document.getElementById('game-container').innerHTML = message;
+            document.getElementById('footer-nav').style.display = 'none';
+        }
+
+        // --- Init & Setup ---
+        function initPlayer(uid) {
+            return new Promise((resolve, reject) => {
+                let isFirstLoad = true;
+                const playerDocRef = doc(db, "players", uid);
+                const unsubscribe = onSnapshot(playerDocRef, (docSnap) => {
+                    if (docSnap.exists()) {
+                        playerState = docSnap.data();
+                        if (!playerState.produceBin) playerState.produceBin = [];
+                    } else if (isFirstLoad) { // Only create new player on first load check
+                        playerState = { money: 20, inventory: {}, produceBin: [], nickname: `ผู้เล่น-${uid.substring(0, 4)}` };
+                        updatePlayerState(playerState);
+                    }
+                    renderAll();
+                    if (isFirstLoad) {
+                        isFirstLoad = false;
+                        resolve(unsubscribe);
+                    }
+                }, (error) => {
+                    if (isFirstLoad) reject(error);
+                });
+            });
+        }
+        
+        function initFarm() {
+            return new Promise((resolve, reject) => {
+                let isFirstLoad = true;
+                const farmDocRef = doc(db, "publicFarmData", "farmState");
+                const unsubscribe = onSnapshot(farmDocRef, (docSnap) => {
+                    const defaultPlot = () => ({ plantId: null });
+                    const defaultAnimalSlot = () => ({ animalId: null });
+                    if (docSnap.exists()) {
+                        farmState = docSnap.data();
+                        if(!farmState.plots || farmState.plots.length !== FARM_GRID_SIZE) farmState.plots = Array(FARM_GRID_SIZE).fill(null).map(defaultPlot);
+                        if(!farmState.animals || farmState.animals.length !== ANIMAL_PEN_SIZE) farmState.animals = Array(ANIMAL_PEN_SIZE).fill(null).map(defaultAnimalSlot);
+                    } else if (isFirstLoad) {
+                        farmState = { 
+                            plots: Array(FARM_GRID_SIZE).fill(null).map(defaultPlot),
+                            animals: Array(ANIMAL_PEN_SIZE).fill(null).map(defaultAnimalSlot)
+                        };
+                        updateFarmState(farmState);
+                    }
+                    renderAll();
+                    if (isFirstLoad) {
+                        isFirstLoad = false;
+                        resolve(unsubscribe);
+                    }
+                }, (error) => {
+                     if (isFirstLoad) reject(error);
+                });
+            });
+        }
+
+        function setupControls() {
+            // View Switching
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const view = btn.dataset.view;
+                    document.querySelectorAll('#tab-content-area > div').forEach(div => div.classList.add('hidden'));
+                    const viewEl = document.getElementById(`${view}-view`);
+                    if (viewEl) viewEl.classList.remove('hidden');
+                    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                });
+            });
+            document.querySelector('.nav-btn[data-view="farm"]').classList.add('active');
+            
+            // Modals
+            document.getElementById('context-modal-close').onclick = hideContextMenu;
+            document.getElementById('submenu-modal-close').onclick = hideSubMenu;
+
+            // Shop Buying
+            document.getElementById('shop-items').addEventListener('click', (e) => {
+                if (e.target.classList.contains('buy-btn')) {
+                    const itemId = e.target.dataset.itemid;
+                    const itemData = GAME_DATA[itemId];
+                    if (playerState.money >= itemData.cost) {
+                        const newPlayerState = { ...playerState };
+                        newPlayerState.money -= itemData.cost;
+                        newPlayerState.inventory[itemId] = (newPlayerState.inventory[itemId] || 0) + 1;
+                        updatePlayerState(newPlayerState);
+                    }
+                }
+            });
+
+            // Sell Button
+            document.getElementById('sell-all-btn').addEventListener('click', () => {
+                if (!playerState.produceBin || playerState.produceBin.length === 0) return;
+                const newPlayerState = { ...playerState };
+                let totalValue = 0;
+                newPlayerState.produceBin.forEach(item => {
+                    const itemData = GAME_DATA[item.id];
+                    totalValue += itemData.sellPrice[item.quality];
+                });
+                newPlayerState.money += totalValue;
+                newPlayerState.produceBin = [];
+                updatePlayerState(newPlayerState);
+            });
+
+            // Name Change Modal
+            const nameModal = document.getElementById('name-modal');
+            const nameInput = document.getElementById('name-input');
+            const showNameModal = () => {
+                nameInput.value = playerState.nickname;
+                nameModal.classList.remove('hidden');
+                nameModal.querySelector('div').classList.remove('modal-leave');
+                nameModal.querySelector('div').classList.add('modal-enter');
+                nameInput.focus();
+            };
+            const hideNameModal = () => {
+                const modalContent = nameModal.querySelector('div');
+                modalContent.classList.remove('modal-enter');
+                modalContent.classList.add('modal-leave');
+                setTimeout(() => nameModal.classList.add('hidden'), 200);
+            };
+            const saveNameChange = async () => {
+                const newName = nameInput.value.trim();
+                if (newName.length > 0 && newName.length <= 15) {
+                    const newState = {...playerState, nickname: newName};
+                    await updatePlayerState(newState);
+                    hideNameModal();
+                }
+            };
+            playerNameEl.addEventListener('click', showNameModal);
+            document.getElementById('save-name-btn').addEventListener('click', saveNameChange);
+            document.getElementById('cancel-name-btn').addEventListener('click', hideNameModal);
+            nameInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') saveNameChange(); });
+        }
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                userId = user.uid;
+                try {
+                    await Promise.all([initPlayer(user.uid), initFarm()]);
+                    document.getElementById('loading-screen').classList.add('loading-hidden');
+                    document.getElementById('game-container').style.opacity = 1;
+                    document.getElementById('footer-nav').style.opacity = 1;
+                    setInterval(gameTick, 2000);
+                } catch(error) {
+                    console.error("Failed to initialize game data:", error);
+                }
+            }
+        });
+        
+        window.addEventListener('load', async () => {
+            setupControls();
+            try {
+                 await signInAnonymously(auth);
+            } catch (error) { 
+                console.error("Authentication failed:", error); 
+                let errorMessage = `<div class="p-4 text-center text-red-700 bg-red-100">เกิดข้อผิดพลาดในการเชื่อมต่อ: ไม่สามารถยืนยันตัวตนได้ กรุณาตรวจสอบ Firebase Config ของคุณ</div>`;
+                if (error.code === 'auth/configuration-not-found') {
+                    errorMessage = `
+                        <div class="p-4 text-center text-red-700 bg-red-100 rounded-lg m-4 shadow-lg">
+                            <strong class="text-lg block">เกิดข้อผิดพลาดในการเชื่อมต่อ (auth/configuration-not-found)</strong>
+                            <p class="mt-2">ปัญหานี้เกิดจากการที่ยังไม่ได้เปิดใช้งาน "การลงชื่อเข้าใช้แบบไม่ระบุตัวตน" ในโปรเจกต์ Firebase ของคุณ</p>
+                            <div class="text-left mt-4 bg-red-50 p-3 rounded">
+                                <strong class="block mb-2">วิธีแก้ไข:</strong>
+                                <ol class="list-decimal list-inside space-y-1">
+                                    <li>ไปที่โปรเจกต์ของคุณใน <a href="https://console.firebase.google.com/" target="_blank" class="text-blue-600 underline">Firebase Console</a></li>
+                                    <li>ไปที่เมนู <strong>Build > Authentication</strong></li>
+                                    <li>เลือกแท็บ <strong>Sign-in method</strong></li>
+                                    <li>ในรายการผู้ให้บริการ ให้หา <strong>"ไม่ระบุชื่อ" (Anonymous)</strong> แล้วกดเปิดใช้งาน (Enable)</li>
+                                    <li>รีเฟรชหน้านี้อีกครั้ง</li>
+                                </ol>
+                            </div>
+                        </div>
+                    `;
+                }
+                displayError(errorMessage);
+            }
+        });
+    </script>
+</body>
+</html>
+
