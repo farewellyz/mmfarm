@@ -62,12 +62,15 @@
 </head>
 <body class="min-h-screen">
     
+    <!-- Loading Screen -->
     <div id="loading-screen" class="fixed inset-0 bg-green-100 z-[100] flex flex-col items-center justify-center transition-opacity duration-500">
         <div class="text-6xl animate-bounce">🥕</div>
         <p class="mt-4 text-2xl font-bold text-green-800">กำลังเตรียมฟาร์ม...</p>
     </div>
 
+    <!-- All Modals -->
     <div id="modal-container">
+        <!-- Name Change Modal -->
         <div id="name-modal" class="hidden fixed inset-0 bg-black/50 z-[52] flex items-center justify-center p-4">
             <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm modal-enter">
                 <h2 id="name-modal-title" class="text-2xl font-bold text-gray-800 mb-4">เปลี่ยนชื่อเล่น</h2>
@@ -80,9 +83,10 @@
             </div>
         </div>
 
+        <!-- Confirmation Modal -->
         <div id="confirm-modal" class="hidden fixed inset-0 bg-black/50 z-[53] flex items-center justify-center p-4">
             <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm modal-enter">
-                <h2 class="text-2xl font-bold text-gray-800 mb-4">ยืนยันการกระทำ</h2>
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">ยืนันการกระทำ</h2>
                 <p id="confirm-modal-text" class="text-gray-600 mb-4">คุณแน่ใจหรือไม่?</p>
                 <div class="mt-6 flex justify-end gap-3">
                     <button id="confirm-modal-cancel" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg">ยกเลิก</button>
@@ -91,6 +95,7 @@
             </div>
         </div>
 
+        <!-- Context Menu Modal -->
         <div id="context-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
             <div id="context-modal-content" class="bg-white rounded-2xl shadow-xl p-5 w-full max-w-xs text-center">
                 <h3 id="context-modal-title" class="text-xl font-bold text-gray-800 mb-4"></h3>
@@ -98,7 +103,8 @@
                 <button id="context-modal-close" class="mt-4 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg w-full">ปิด</button>
             </div>
         </div>
-         <div id="submenu-modal" class="hidden fixed inset-0 bg-black/60 z-[51] flex items-center justify-center p-4">
+         <!-- Sub-menu Modal (for planting/fertilizing) -->
+        <div id="submenu-modal" class="hidden fixed inset-0 bg-black/60 z-[51] flex items-center justify-center p-4">
             <div class="bg-white rounded-2xl shadow-xl p-5 w-full max-w-xs">
                 <h3 id="submenu-modal-title" class="text-xl font-bold text-gray-800 mb-4 text-center"></h3>
                 <div id="submenu-modal-items" class="grid grid-cols-3 gap-3 text-center"></div>
@@ -107,6 +113,7 @@
         </div>
     </div>
 
+    <!-- Main Game Area -->
     <div id="game-container" class="w-full max-w-5xl mx-auto p-4 md:p-6 opacity-0 transition-opacity duration-500">
         <header class="text-center mb-4 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-4">
             <h1 class="text-3xl md:text-4xl font-bold text-green-800">สวนผักของเรา 💚</h1>
@@ -118,7 +125,8 @@
                 <span class="font-semibold bg-yellow-100 px-3 py-1 rounded-full">💰: <span id="money-display" class="font-bold text-yellow-800">0</span></span>
             </div>
              <div id="inventory-display" class="mt-3 flex flex-wrap justify-center items-center gap-x-3 gap-y-1 text-xs text-gray-500">
-                </div>
+                <!-- Inventory items will be rendered here -->
+             </div>
         </header>
 
         <main id="tab-content-area" class="bg-white/60 backdrop-blur-sm rounded-2xl shadow-inner p-4 min-h-[400px]">
@@ -147,6 +155,7 @@
         </main>
     </div>
     
+    <!-- Bottom Navigation Bar -->
     <footer id="footer-nav" class="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-sm shadow-[0_-4px_12px_rgba(0,0,0,0.05)] z-40 flex justify-around opacity-0 transition-opacity duration-500">
         <button data-view="farm" class="nav-btn flex-1 py-3 text-green-800 font-bold text-lg hover:bg-green-100 transition">ฟาร์ม</button>
         <button data-view="animals" class="nav-btn flex-1 py-3 text-green-800 font-bold text-lg hover:bg-green-100 transition">คอกสัตว์</button>
@@ -180,47 +189,47 @@
         // --- MASTER GAME DATA ---
         const GAME_DATA = {
             'carrot_seed':   { name: 'เมล็ดแครอท', type: 'seed', cost: 5, plantId: 'carrot', icon: '🥕', imageUrl: 'carrot.png' },
-            'carrot':        { name: 'แครอท', type: 'crop', growTime: 1200, produceId: 'carrot_produce', icon: '🥕', imageUrl: 'carrot.png' },
+            'carrot':        { name: 'แครอท', type: 'crop', growTime: 4800, produceId: 'carrot_produce', icon: '🥕', imageUrl: 'carrot.png' },
             'carrot_produce':{ name: 'แครอท', type: 'produce', sellPrice: [8, 12, 16], icon: '🥕' },
             
             'tomato_seed':   { name: 'เมล็ดมะเขือเทศ', type: 'seed', cost: 10, plantId: 'tomato', icon: '🍅', imageUrl: 'tomato.png' },
-            'tomato':        { name: 'มะเขือเทศ', type: 'crop', growTime: 1800, produceId: 'tomato_produce', icon: '🍅', imageUrl: 'tomato.png' },
+            'tomato':        { name: 'มะเขือเทศ', type: 'crop', growTime: 7200, produceId: 'tomato_produce', icon: '🍅', imageUrl: 'tomato.png' },
             'tomato_produce':{ name: 'มะเขือเทศ', type: 'produce', sellPrice: [18, 25, 35], icon: '🍅' },
 
             'strawberry_seed': { name: 'เมล็ดสตรอว์เบอร์รี', type: 'seed', cost: 15, plantId: 'strawberry', icon: '🍓', imageUrl: 'stawberry.png' },
-            'strawberry':      { name: 'สตรอว์เบอร์รี', type: 'crop', growTime: 2400, produceId: 'strawberry_produce', icon: '🍓', imageUrl: 'stawberry.png' },
+            'strawberry':      { name: 'สตรอว์เบอร์รี', type: 'crop', growTime: 8400, produceId: 'strawberry_produce', icon: '🍓', imageUrl: 'stawberry.png' },
             'strawberry_produce': { name: 'สตรอว์เบอร์รี', type: 'produce', sellPrice: [25, 35, 50], icon: '🍓' },
 
             'grape_seed': { name: 'เมล็ดองุ่น', type: 'seed', cost: 20, plantId: 'grape', icon: '🍇', imageUrl: 'grape.png' },
-            'grape':      { name: 'องุ่น', type: 'crop', growTime: 3000, produceId: 'grape_produce', icon: '🍇', imageUrl: 'grape.png' },
+            'grape':      { name: 'องุ่น', type: 'crop', growTime: 10500, produceId: 'grape_produce', icon: '🍇', imageUrl: 'grape.png' },
             'grape_produce': { name: 'องุ่น', type: 'produce', sellPrice: [35, 50, 70], icon: '🍇' },
 
             'peach_seed': { name: 'เมล็ดพีช', type: 'seed', cost: 25, plantId: 'peach', icon: '🍑', imageUrl: 'peach.png' },
-            'peach':      { name: 'พีช', type: 'crop', growTime: 3600, produceId: 'peach_produce', icon: '🍑', imageUrl: 'peach.png' },
+            'peach':      { name: 'พีช', type: 'crop', growTime: 10800, produceId: 'peach_produce', icon: '🍑', imageUrl: 'peach.png' },
             'peach_produce': { name: 'พีช', type: 'produce', sellPrice: [45, 65, 90], icon: '🍑' },
 
             'orange_seed': { name: 'เมล็ดส้ม', type: 'seed', cost: 30, plantId: 'orange', icon: '🍊', imageUrl: 'orange.png' },
-            'orange':      { name: 'ส้ม', type: 'crop', growTime: 4200, produceId: 'orange_produce', icon: '🍊', imageUrl: 'orange.png' },
+            'orange':      { name: 'ส้ม', type: 'crop', growTime: 12600, produceId: 'orange_produce', icon: '🍊', imageUrl: 'orange.png' },
             'orange_produce': { name: 'ส้ม', type: 'produce', sellPrice: [55, 80, 110], icon: '🍊' },
 
             'mango_seed': { name: 'เมล็ดมะม่วง', type: 'seed', cost: 35, plantId: 'mango', icon: '🥭', imageUrl: 'mango.png' },
-            'mango':      { name: 'มะม่วง', type: 'crop', growTime: 4800, produceId: 'mango_produce', icon: '🥭', imageUrl: 'mango.png' },
+            'mango':      { name: 'มะม่วง', type: 'crop', growTime: 14400, produceId: 'mango_produce', icon: '🥭', imageUrl: 'mango.png' },
             'mango_produce': { name: 'มะม่วง', type: 'produce', sellPrice: [65, 95, 130], icon: '🥭' },
 
             'pineapple_seed': { name: 'เมล็ดสับปะรด', type: 'seed', cost: 40, plantId: 'pineapple', icon: '🍍', imageUrl: 'pineapple.png' },
-            'pineapple':      { name: 'สับปะรด', type: 'crop', growTime: 5400, produceId: 'pineapple_produce', icon: '🍍', imageUrl: 'pineapple.png' },
+            'pineapple':      { name: 'สับปะรด', type: 'crop', growTime: 16200, produceId: 'pineapple_produce', icon: '🍍', imageUrl: 'pineapple.png' },
             'pineapple_produce': { name: 'สับปะรด', type: 'produce', sellPrice: [75, 110, 150], icon: '🍍' },
 
             'guava_seed': { name: 'เมล็ดฝรั่ง', type: 'seed', cost: 18, plantId: 'guava', icon: '🍈', imageUrl: 'guava.png' },
-            'guava':      { name: 'ฝรั่ง', type: 'crop', growTime: 2800, produceId: 'guava_produce', icon: '🍈', imageUrl: 'guava.png' },
+            'guava':      { name: 'ฝรั่ง', type: 'crop', growTime: 11200, produceId: 'guava_produce', icon: '🍈', imageUrl: 'guava.png' },
             'guava_produce': { name: 'ฝรั่ง', type: 'produce', sellPrice: [30, 45, 65], icon: '🍈' },
 
             'roseapple_seed': { name: 'เมล็ดชมพู่', type: 'seed', cost: 22, plantId: 'roseapple', icon: '🍐', imageUrl: 'chompu.png' },
-            'roseapple':      { name: 'ชมพู่', type: 'crop', growTime: 3200, produceId: 'roseapple_produce', icon: '🍐', imageUrl: 'chompu.png' },
+            'roseapple':      { name: 'ชมพู่', type: 'crop', growTime: 12800, produceId: 'roseapple_produce', icon: '🍐', imageUrl: 'chompu.png' },
             'roseapple_produce': { name: 'ชมพู่', type: 'produce', sellPrice: [40, 60, 85], icon: '🍐' },
 
             'apple_seed': { name: 'เมล็ดแอปเปิ้ล', type: 'seed', cost: 28, plantId: 'apple', icon: '🍎', imageUrl: 'apple.png' },
-            'apple':      { name: 'แอปเปิ้ล', type: 'crop', growTime: 4000, produceId: 'apple_produce', icon: '🍎', imageUrl: 'apple.png' },
+            'apple':      { name: 'แอปเปิ้ล', type: 'crop', growTime: 16000, produceId: 'apple_produce', icon: '🍎', imageUrl: 'apple.png' },
             'apple_produce': { name: 'แอปเปิ้ล', type: 'produce', sellPrice: [50, 75, 105], icon: '🍎' },
 
             'fertilizer_1': { name: 'ปุ๋ยธรรมดา', type: 'item', cost: 10, qualityBonus: 0.3, icon: '💩' },
@@ -307,32 +316,39 @@
                 
                 if (plot.plantId) {
                     const plantData = GAME_DATA[plot.plantId];
-                    let progress = 0;
-                    if (plot.plantTime) { 
-                        const elapsedSeconds = (Date.now() - plot.plantTime) / 1000;
-                        const growthMultiplier = 1 + ((plot.wateredBy?.length || 0) * 0.5);
-                        const effectiveGrowth = elapsedSeconds * growthMultiplier;
-                        progress = Math.min(effectiveGrowth / plantData.growTime, 1);
-                    }
                     
-                    plotEl.style.backgroundImage = `linear-gradient(to top, rgba(96, 165, 250, 0.5) 0%, rgba(96, 165, 250, 0.5) ${progress*100}%, transparent ${progress*100}%)`;
-                    
-                    const content = document.createElement('div');
-                    if (plantData.imageUrl) {
-                        content.style.backgroundImage = `url(${plantData.imageUrl})`;
-                        content.style.opacity = 0.5 + (progress * 0.5);
-                        content.className = 'w-full h-full bg-contain bg-no-repeat bg-center';
+                    if (!plantData) {
+                        console.error(`Invalid plantId "${plot.plantId}" found for plot ${index}. Skipping render.`);
+                        plotEl.innerHTML = `❓`;
+                        plotEl.style.backgroundColor = 'rgba(255, 100, 100, 0.5)';
                     } else {
-                        content.textContent = plantData.icon;
-                        content.style.transform = `scale(${0.5 + (progress * 0.5)})`;
-                    }
-                    plotEl.appendChild(content);
+                        let progress = 0;
+                        if (plot.plantTime) { 
+                            const elapsedSeconds = (Date.now() - plot.plantTime) / 1000;
+                            const growthMultiplier = 1 + ((plot.wateredBy?.length || 0) * 0.5);
+                            const effectiveGrowth = elapsedSeconds * growthMultiplier;
+                            progress = Math.min(effectiveGrowth / plantData.growTime, 1);
+                        }
+                        
+                        plotEl.style.backgroundImage = `linear-gradient(to top, rgba(96, 165, 250, 0.5) 0%, rgba(96, 165, 250, 0.5) ${progress*100}%, transparent ${progress*100}%)`;
+                        
+                        const content = document.createElement('div');
+                        if (plantData.imageUrl) {
+                            content.style.backgroundImage = `url(${plantData.imageUrl})`;
+                            content.style.opacity = 0.5 + (progress * 0.5);
+                            content.className = 'w-full h-full bg-contain bg-no-repeat bg-center';
+                        } else {
+                            content.textContent = plantData.icon;
+                            content.style.transform = `scale(${0.5 + (progress * 0.5)})`;
+                        }
+                        plotEl.appendChild(content);
 
-                    if (plot.quality > 0) {
-                        const qualityEl = document.createElement('div');
-                        qualityEl.className = 'absolute top-1 right-1 text-xs quality-star';
-                        qualityEl.textContent = '★'.repeat(plot.quality);
-                        plotEl.appendChild(qualityEl);
+                        if (plot.quality > 0) {
+                            const qualityEl = document.createElement('div');
+                            qualityEl.className = 'absolute top-1 right-1 text-xs quality-star';
+                            qualityEl.textContent = '★'.repeat(plot.quality);
+                            plotEl.appendChild(qualityEl);
+                        }
                     }
                 }
                 
@@ -393,10 +409,12 @@
             Object.entries(playerState.inventory).forEach(([itemId, count]) => {
                 if (count > 0) {
                     const itemData = GAME_DATA[itemId];
-                    const itemEl = document.createElement('span');
-                    itemEl.className = 'bg-white px-2 py-1 rounded-md shadow-sm';
-                    itemEl.textContent = `${itemData.icon} ${count}`;
-                    inventoryDisplay.appendChild(itemEl);
+                    if (itemData) { // Check if itemData exists
+                        const itemEl = document.createElement('span');
+                        itemEl.className = 'bg-white px-2 py-1 rounded-md shadow-sm';
+                        itemEl.textContent = `${itemData.icon} ${count}`;
+                        inventoryDisplay.appendChild(itemEl);
+                    }
                 }
             });
         }
@@ -506,72 +524,78 @@
                 const plot = farmState.plots[index];
                 titleEl.textContent = `แปลงที่ ${index + 1}`;
                 if (!plot.plantId) {
-                     const plantableItems = Object.keys(playerState.inventory).filter(id => GAME_DATA[id].type === 'seed' && playerState.inventory[id] > 0);
+                     const plantableItems = Object.keys(playerState.inventory).filter(id => GAME_DATA[id] && GAME_DATA[id].type === 'seed' && playerState.inventory[id] > 0);
                      actionsEl.appendChild(createButton('🌱 ปลูก', () => showSubMenu('plant', index, plantableItems), plantableItems.length === 0));
                 } else {
                     const plantData = GAME_DATA[plot.plantId];
-                    let effectiveGrowth = 0;
-                    if (plot.plantTime) {
-                        const elapsedSeconds = (Date.now() - plot.plantTime) / 1000;
-                        const growthMultiplier = 1 + ((plot.wateredBy?.length || 0) * 0.5);
-                        effectiveGrowth = elapsedSeconds * growthMultiplier;
-                    }
-
-                    const isGrown = effectiveGrowth >= plantData.growTime;
-                    const growthMultiplierForRemainingTime = 1 + ((plot.wateredBy?.length || 0) * 0.5);
-                    const remainingSeconds = Math.max(0, (plantData.growTime - effectiveGrowth) / growthMultiplierForRemainingTime);
-                    
-                    if(plot.plantedBy){
-                         detailsEl.innerHTML += `<p>ปลูกโดย: <span class="font-semibold">${plot.plantedBy.nickname}</span></p>`;
-                    }
-                    detailsEl.innerHTML += `<p>เหลือเวลา: <span class="font-semibold">${formatTime(remainingSeconds)}</span></p>`;
-                    
-                    if (plot.wateredBy && plot.wateredBy.length > 0) {
-                        const waterers = plot.wateredBy.filter(p => p && p.nickname).map(p => p.nickname).join(', ');
-                        detailsEl.innerHTML += `<div class="mt-2"><p>รดน้ำแล้วโดย:</p><p class="font-semibold text-green-700">${waterers}</p></div>`;
-                    }
-                    actionsEl.before(detailsEl);
-                    
-                    if (isGrown) {
-                        const involvedUids = new Set([plot.plantedBy?.uid, ...(plot.wateredBy?.map(p => p.uid) || [])]);
-                        const harvestedUids = new Set(plot.harvestedBy?.map(p => p.uid) || []);
-                        const hasHarvested = harvestedUids.has(userId);
-
-                        actionsEl.appendChild(createButton('🌾 เก็บเกี่ยว', () => harvest(index), hasHarvested));
+                    if (!plantData) {
+                        detailsEl.innerHTML = `<p class="text-red-500">ข้อมูลพืชเสียหาย</p>`;
+                        actionsEl.before(detailsEl);
                         actionsEl.appendChild(createButton('❌ เคลียแปลง (บังคับ)', () => clearPlot(index), false, 'bg-red-500 hover:bg-red-600 text-white'));
-                        
-                        const playerMap = new Map();
-                        if (plot.plantedBy && plot.plantedBy.uid) {
-                            playerMap.set(plot.plantedBy.uid, plot.plantedBy.nickname);
-                        }
-                        if (plot.wateredBy) {
-                            plot.wateredBy.forEach(p => {
-                                if (p && p.uid) playerMap.set(p.uid, p.nickname);
-                            });
-                        }
-
-                        let harvestStatusHTML = '<div class="mt-2 text-xs"><p>สถานะการเก็บเกี่ยว:</p>';
-                        involvedUids.forEach(uid => {
-                            const status = harvestedUids.has(uid) ? '✅' : 'รอ...';
-                            const playerNickname = playerMap.get(uid) || 'ผู้เล่นไม่ทราบชื่อ';
-                            harvestStatusHTML += `<p>${status} ${playerNickname}</p>`;
-                        });
-                        harvestStatusHTML += '</div>';
-                        detailsEl.innerHTML += harvestStatusHTML;
-
                     } else {
-                         const hasWatered = plot.wateredBy && plot.wateredBy.some(p => p.uid === userId);
-                         actionsEl.appendChild(createButton('💧 รดน้ำ', () => water(index), hasWatered));
-                         const fertilizers = Object.keys(playerState.inventory).filter(id => GAME_DATA[id].type === 'item' && playerState.inventory[id] > 0);
-                         actionsEl.appendChild(createButton('💩 ใส่ปุ๋ย', () => showSubMenu('fertilize', index, fertilizers), fertilizers.length === 0));
-                         actionsEl.appendChild(createButton('❌ เคลียแปลง', () => clearPlot(index), false, 'bg-red-500 hover:bg-red-600 text-white'));
+                        let effectiveGrowth = 0;
+                        if (plot.plantTime) {
+                            const elapsedSeconds = (Date.now() - plot.plantTime) / 1000;
+                            const growthMultiplier = 1 + ((plot.wateredBy?.length || 0) * 0.5);
+                            effectiveGrowth = elapsedSeconds * growthMultiplier;
+                        }
+
+                        const isGrown = effectiveGrowth >= plantData.growTime;
+                        const growthMultiplierForRemainingTime = 1 + ((plot.wateredBy?.length || 0) * 0.5);
+                        const remainingSeconds = Math.max(0, (plantData.growTime - effectiveGrowth) / growthMultiplierForRemainingTime);
+                        
+                        if(plot.plantedBy && plot.plantedBy.nickname){
+                             detailsEl.innerHTML += `<p>ปลูกโดย: <span class="font-semibold">${plot.plantedBy.nickname}</span></p>`;
+                        }
+                        detailsEl.innerHTML += `<p>เหลือเวลา: <span class="font-semibold">${formatTime(remainingSeconds)}</span></p>`;
+                        
+                        if (plot.wateredBy && plot.wateredBy.length > 0) {
+                            const waterers = plot.wateredBy.filter(p => p && p.nickname).map(p => p.nickname).join(', ');
+                            detailsEl.innerHTML += `<div class="mt-2"><p>รดน้ำแล้วโดย:</p><p class="font-semibold text-green-700">${waterers}</p></div>`;
+                        }
+                        actionsEl.before(detailsEl);
+                        
+                        if (isGrown) {
+                            const involvedUids = new Set([plot.plantedBy?.uid, ...(plot.wateredBy?.map(p => p.uid).filter(uid => uid) || [])]);
+                            const harvestedUids = new Set(plot.harvestedBy?.map(p => p.uid) || []);
+                            const hasHarvested = harvestedUids.has(userId);
+
+                            actionsEl.appendChild(createButton('🌾 เก็บเกี่ยว', () => harvest(index), hasHarvested));
+                            actionsEl.appendChild(createButton('❌ เคลียแปลง (บังคับ)', () => clearPlot(index), false, 'bg-red-500 hover:bg-red-600 text-white'));
+                            
+                            const playerMap = new Map();
+                            if (plot.plantedBy && plot.plantedBy.uid) {
+                                playerMap.set(plot.plantedBy.uid, plot.plantedBy.nickname);
+                            }
+                            if (plot.wateredBy) {
+                                plot.wateredBy.forEach(p => {
+                                    if (p && p.uid) playerMap.set(p.uid, p.nickname);
+                                });
+                            }
+
+                            let harvestStatusHTML = '<div class="mt-2 text-xs"><p>สถานะการเก็บเกี่ยว:</p>';
+                            involvedUids.forEach(uid => {
+                                const status = harvestedUids.has(uid) ? '✅' : 'รอ...';
+                                const playerNickname = playerMap.get(uid) || 'ผู้เล่นไม่ทราบชื่อ';
+                                harvestStatusHTML += `<p>${status} ${playerNickname}</p>`;
+                            });
+                            harvestStatusHTML += '</div>';
+                            detailsEl.innerHTML += harvestStatusHTML;
+
+                        } else {
+                             const hasWatered = plot.wateredBy && plot.wateredBy.some(p => p.uid === userId);
+                             actionsEl.appendChild(createButton('💧 รดน้ำ', () => water(index), hasWatered));
+                             const fertilizers = Object.keys(playerState.inventory).filter(id => GAME_DATA[id] && GAME_DATA[id].type === 'item' && playerState.inventory[id] > 0);
+                             actionsEl.appendChild(createButton('💩 ใส่ปุ๋ย', () => showSubMenu('fertilize', index, fertilizers), fertilizers.length === 0));
+                             actionsEl.appendChild(createButton('❌ เคลียแปลง', () => clearPlot(index), false, 'bg-red-500 hover:bg-red-600 text-white'));
+                        }
                     }
                 }
             } else if (type === 'animal') {
                  const animal = farmState.animals[index];
                  titleEl.textContent = `คอกที่ ${index + 1}`;
                  if (!animal.animalId) {
-                     const buyableItems = Object.keys(playerState.inventory).filter(id => GAME_DATA[id].type === 'animal_deed' && playerState.inventory[id] > 0);
+                     const buyableItems = Object.keys(playerState.inventory).filter(id => GAME_DATA[id] && GAME_DATA[id].type === 'animal_deed' && playerState.inventory[id] > 0);
                      actionsEl.appendChild(createButton('➕ วางสัตว์', () => showSubMenu('placeAnimal', index, buyableItems), buyableItems.length === 0));
                  } else {
                     const animalData = GAME_DATA[animal.animalId];
@@ -691,12 +715,13 @@
             if (Math.random() < plot.fertilizerLevel) quality = 1;
             if (Math.random() < plot.fertilizerLevel - 1) quality = 2;
 
+            if (!newPlayerState.produceBin) newPlayerState.produceBin = [];
             newPlayerState.produceBin.push({ id: cropData.produceId, quality: quality });
             
             if (!plot.harvestedBy) plot.harvestedBy = [];
             plot.harvestedBy.push({ uid: userId, nickname: playerState.nickname });
             
-            const involvedUids = new Set([plot.plantedBy?.uid, ...(plot.wateredBy?.map(p => p.uid) || [])]);
+            const involvedUids = new Set([plot.plantedBy?.uid, ...(plot.wateredBy?.map(p => p.uid).filter(uid => uid) || [])]);
             const harvestedUids = new Set(plot.harvestedBy.map(p => p.uid));
             
             let allHarvested = true;
@@ -734,6 +759,7 @@
             const animal = newFarmState.animals[slotIndex];
             const animalData = GAME_DATA[animal.animalId];
 
+            if (!newPlayerState.produceBin) newPlayerState.produceBin = [];
             newPlayerState.produceBin.push({ id: animalData.produceId, quality: 0 });
             animal.startTime = Date.now();
             newFarmState.animals[slotIndex] = animal;
@@ -799,7 +825,6 @@
         
         function handleFirestoreError(error) {
             console.error("Firestore connection error:", error);
-            displayError(`...`); // Placeholder, actual message is in the HTML
         }
         
         let isInitialNameSetup = false;
@@ -841,7 +866,9 @@
                 let totalValue = 0;
                 newPlayerState.produceBin.forEach(item => {
                     const itemData = GAME_DATA[item.id];
-                    totalValue += itemData.sellPrice[item.quality];
+                    if (itemData && itemData.sellPrice) {
+                        totalValue += itemData.sellPrice[item.quality];
+                    }
                 });
                 newPlayerState.money += totalValue;
                 newPlayerState.produceBin = [];
@@ -900,7 +927,12 @@
             const newName = nameInput.value.trim();
             if (newName.length > 0 && newName.length <= 15) {
                 if (isInitialNameSetup) {
-                    playerState = { money: 20, inventory: {}, produceBin: [], nickname: newName };
+                    playerState = { 
+                        money: 20, 
+                        inventory: {}, 
+                        produceBin: [], 
+                        nickname: newName
+                    };
                     await setDoc(doc(db, "players", userId), playerState);
                     await startGame(userId);
                 } else {
@@ -940,13 +972,10 @@
 
             } catch (error) { 
                 console.error("Authentication failed:", error); 
-                let errorMessage = `<div class="p-4 text-center text-red-700 bg-red-100">เกิดข้อผิดพลาดในการเชื่อมต่อ: ไม่สามารถยืนยันตัวตนได้ กรุณาตรวจสอบ Firebase Config ของคุณ</div>`;
-                if (error.code === 'auth/configuration-not-found') {
-                    errorMessage = `...`; // Error message content is correct from previous turn
-                }
-                displayError(errorMessage);
+                document.body.innerHTML = `<div class="p-4 text-center text-red-700 bg-red-100">เกิดข้อผิดพลาดในการเชื่อมต่อ: ไม่สามารถยืนยันตัวตนได้ กรุณาตรวจสอบ Firebase Config ของคุณ</div>`;
             }
         });
     </script>
 </body>
 </html>
+
