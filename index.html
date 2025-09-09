@@ -303,8 +303,12 @@
                 
                 if (plot.plantId) {
                     const plantData = GAME_DATA[plot.plantId];
-                    const progress = Math.min(plot.growth / plantData.growTime, 1);
-                    plotEl.style.backgroundImage = `linear-gradient(to top, rgba(96, 165, 250, ${plot.water/10}) 0%, rgba(96, 165, 250, ${plot.water/10}) ${progress*100}%, transparent ${progress*100}%)`;
+                    const elapsedSeconds = (Date.now() - plot.plantTime) / 1000;
+                    const growthMultiplier = 1 + ((plot.wateredBy?.length || 0) * 0.5);
+                    const effectiveGrowth = elapsedSeconds * growthMultiplier;
+                    const progress = Math.min(effectiveGrowth / plantData.growTime, 1);
+
+                    plotEl.style.backgroundImage = `linear-gradient(to top, rgba(96, 165, 250, 0.5) 0%, rgba(96, 165, 250, 0.5) ${progress*100}%, transparent ${progress*100}%)`;
                     
                     const content = document.createElement('div');
                     if (plantData.imageUrl) {
@@ -488,9 +492,12 @@
                      actionsEl.appendChild(createButton('🌱 ปลูก', () => showSubMenu('plant', index, plantableItems), plantableItems.length === 0));
                 } else {
                     const plantData = GAME_DATA[plot.plantId];
-                    const isGrown = plot.growth >= plantData.growTime;
+                    const elapsedSeconds = (Date.now() - plot.plantTime) / 1000;
+                    const growthMultiplier = 1 + ((plot.wateredBy?.length || 0) * 0.5);
+                    const effectiveGrowth = elapsedSeconds * growthMultiplier;
+                    const isGrown = effectiveGrowth >= plantData.growTime;
                     
-                    const remainingSeconds = Math.max(0, plantData.growTime - plot.growth);
+                    const remainingSeconds = Math.max(0, (plantData.growTime - effectiveGrowth) / growthMultiplier);
                     detailsEl.innerHTML += `<p>เหลือเวลา: <span class="font-semibold">${formatTime(remainingSeconds)}</span></p>`;
                     
                     if (plot.wateredBy && plot.wateredBy.length > 0) {
@@ -525,7 +532,7 @@
                     if(isReady){
                         actionsEl.appendChild(createButton(`เก็บ${GAME_DATA[animalData.produceId].name}`, () => collectProduct(index)));
                     } else {
-                         actionsEl.appendChild(createButton('ให้อาหาร (เร็วขึ้น)', () => {}, true)); // Placeholder for future feature
+                         actionsEl.appendChild(createButton('ให้อาหาร (เร็วขึ้น)', () => {}, true));
                     }
                  }
             }
@@ -573,7 +580,7 @@
             const newFarmState = { ...farmState };
             const newPlayerState = { ...playerState };
             const seedData = GAME_DATA[seedId];
-            newFarmState.plots[plotIndex] = { plantId: seedData.plantId, growth: 0, water: 5, fertilizerLevel: 0, wateredBy: [] };
+            newFarmState.plots[plotIndex] = { plantId: seedData.plantId, plantTime: Date.now(), fertilizerLevel: 0, wateredBy: [] };
             newPlayerState.inventory[seedId]--;
             document.querySelector(`#farm-grid > div:nth-child(${plotIndex + 1})`).classList.add('pop-animation');
             updateFarmState(newFarmState);
@@ -585,7 +592,6 @@
              const plot = newFarmState.plots[plotIndex];
              if (plot.wateredBy && plot.wateredBy.some(p => p.uid === userId)) return; 
 
-             plot.water = Math.min(plot.water + 5, 10);
              plot.wateredBy.push({ uid: userId, nickname: playerState.nickname });
              document.querySelector(`#farm-grid > div:nth-child(${plotIndex + 1})`).classList.add('watered');
              updateFarmState(newFarmState);
@@ -643,33 +649,6 @@
             updateFarmState(newFarmState);
         }
         
-        // --- Game Loop ---
-        function gameTick() {
-            let farmChanged = false;
-            farmState.plots.forEach(plot => {
-                if (plot.plantId) {
-                    const plantData = GAME_DATA[plot.plantId];
-                    if (plot.growth < plantData.growTime) {
-                         let growthRate = 2;
-                         if (plot.water > 0) {
-                             growthRate += (plot.water / 5) + (plot.wateredBy.length || 0); 
-                             plot.water -= 1; 
-                         }
-                         plot.growth += growthRate;
-                         farmChanged = true;
-                    }
-                }
-            });
-            if (farmChanged) updateFarmState(farmState);
-        }
-
-        function displayError(message) {
-            document.getElementById('loading-screen').style.display = 'none';
-            document.getElementById('game-container').innerHTML = message;
-            document.getElementById('game-container').style.opacity = 1;
-            document.getElementById('footer-nav').style.display = 'none';
-        }
-
         // --- Init & Setup ---
         async function startGame(uid) {
             userId = uid;
@@ -680,7 +659,7 @@
             document.getElementById('loading-screen').classList.add('loading-hidden');
             document.getElementById('game-container').style.opacity = 1;
             document.getElementById('footer-nav').style.opacity = 1;
-            setInterval(gameTick, 2000);
+            setInterval(renderAll, 2000); // Re-render periodically for visual updates
         }
 
         function initPlayerListeners(uid) {
@@ -697,26 +676,28 @@
         function initFarmListeners() {
             const farmDocRef = doc(db, "publicFarmData", "farmState");
             onSnapshot(farmDocRef, (docSnap) => {
-                if (docSnap.exists()) {
-                    farmState = docSnap.data();
-                } 
-                // No need to check for plots/animals array existence here, renderAll will handle it
+                farmState = docSnap.data();
                 renderAll();
             }, handleFirestoreError);
         }
         
         async function ensureFarmDataExists() {
             const farmDocRef = doc(db, "publicFarmData", "farmState");
-            const farmSnap = await getDoc(farmDocRef);
-            if (!farmSnap.exists()) {
-                console.log("Farm data not found, creating initial state...");
-                const defaultPlot = () => ({ plantId: null });
-                const defaultAnimalSlot = () => ({ animalId: null });
-                const initialFarmState = {
-                    plots: Array(FARM_GRID_SIZE).fill(null).map(defaultPlot),
-                    animals: Array(ANIMAL_PEN_SIZE).fill(null).map(defaultAnimalSlot)
-                };
-                await setDoc(farmDocRef, initialFarmState);
+            try {
+                const farmSnap = await getDoc(farmDocRef);
+                if (!farmSnap.exists()) {
+                    console.log("Farm data not found, creating initial state...");
+                    const defaultPlot = () => ({ plantId: null });
+                    const defaultAnimalSlot = () => ({ animalId: null });
+                    const initialFarmState = {
+                        plots: Array(FARM_GRID_SIZE).fill(null).map(defaultPlot),
+                        animals: Array(ANIMAL_PEN_SIZE).fill(null).map(defaultAnimalSlot)
+                    };
+                    await setDoc(farmDocRef, initialFarmState);
+                }
+            } catch (error) {
+                // This might fail if rules are not set up yet, but that's handled elsewhere.
+                console.warn("Could not ensure farm data existence.", error.message);
             }
         }
         
@@ -829,7 +810,6 @@
                         const playerDocRef = doc(db, "players", userId);
                         
                         try {
-                            // Ensure farm data exists before proceeding
                             await ensureFarmDataExists();
                             const docSnap = await getDoc(playerDocRef);
                             
