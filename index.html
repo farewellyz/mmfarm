@@ -735,7 +735,11 @@
                 </div>
             `);
         }
-
+        
+        let isInitialNameSetup = false;
+        const nameModal = document.getElementById('name-modal');
+        const nameInput = document.getElementById('name-input');
+        
         function setupControls() {
             // View Switching
             document.querySelectorAll('.nav-btn').forEach(btn => {
@@ -784,14 +788,11 @@
 
             // Name Change Modal
             playerNameEl.addEventListener('click', () => showNameModal(false));
-            document.getElementById('save-name-btn').addEventListener('click', () => saveNameChange(isInitialNameSetup));
+            document.getElementById('save-name-btn').addEventListener('click', () => saveNameChange());
             document.getElementById('cancel-name-btn').addEventListener('click', hideNameModal);
-            nameInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') saveNameChange(isInitialNameSetup); });
+            nameInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') saveNameChange(); });
         }
         
-        let isInitialNameSetup = false;
-        const nameModal = document.getElementById('name-modal');
-        const nameInput = document.getElementById('name-input');
         const showNameModal = (isInitial = false) => {
             isInitialNameSetup = isInitial;
             nameInput.value = isInitial ? '' : playerState.nickname;
@@ -838,17 +839,22 @@
                         userId = user.uid;
                         const playerDocRef = doc(db, "players", userId);
                         
-                        try {
-                            const docSnap = await getDoc(playerDocRef);
+                        // We use onSnapshot here because it gracefully waits for the connection
+                        // to be established before trying to get the document.
+                        const unsubscribe = onSnapshot(playerDocRef, async (docSnap) => {
+                            unsubscribe(); // We only need this check once at startup.
+                            
                             if (docSnap.exists()) {
                                 await startGame(userId);
                             } else {
                                 document.getElementById('loading-screen').classList.add('loading-hidden');
                                 showNameModal(true);
                             }
-                        } catch (error) {
-                            handleFirestoreError(error);
-                        }
+                        }, (error) => {
+                             unsubscribe();
+                             handleFirestoreError(error);
+                        });
+
                     } else {
                         await signInAnonymously(auth);
                     }
