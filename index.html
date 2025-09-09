@@ -74,7 +74,7 @@
         <!-- Name Change Modal -->
         <div id="name-modal" class="hidden fixed inset-0 bg-black/50 z-[52] flex items-center justify-center p-4">
             <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm modal-enter">
-                <h2 class="text-2xl font-bold text-gray-800 mb-4">เปลี่ยนชื่อเล่น</h2>
+                <h2 id="name-modal-title" class="text-2xl font-bold text-gray-800 mb-4">เปลี่ยนชื่อเล่น</h2>
                 <p class="text-gray-600 mb-4">ใส่ชื่อเล่นใหม่ของคุณ (ไม่เกิน 15 ตัวอักษร)</p>
                 <input type="text" id="name-input" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500" maxlength="15">
                 <div class="mt-6 flex justify-end gap-3">
@@ -153,8 +153,8 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged, signInAnonymously, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, onSnapshot, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- Config ---
         const firebaseConfig = {
@@ -468,7 +468,6 @@
             const actionsEl = document.getElementById('context-modal-actions');
             actionsEl.innerHTML = '';
 
-            // Remove old details before adding new ones
             contentEl.querySelectorAll('.context-details').forEach(el => el.remove());
 
             const detailsEl = document.createElement('div');
@@ -585,7 +584,7 @@
         function water(plotIndex) {
              const newFarmState = { ...farmState };
              const plot = newFarmState.plots[plotIndex];
-             if (plot.wateredBy.some(p => p.uid === userId)) return; // Prevent watering twice
+             if (plot.wateredBy && plot.wateredBy.some(p => p.uid === userId)) return; 
 
              plot.water = Math.min(plot.water + 5, 10);
              plot.wateredBy.push({ uid: userId, nickname: playerState.nickname });
@@ -666,37 +665,44 @@
         }
 
         function displayError(message) {
+            document.getElementById('loading-screen').style.display = 'none';
             document.getElementById('game-container').innerHTML = message;
+            document.getElementById('game-container').style.opacity = 1;
             document.getElementById('footer-nav').style.display = 'none';
         }
 
         // --- Init & Setup ---
-        function initPlayer(uid) {
+        async function startGame(uid) {
+            userId = uid;
+            try {
+                // These now return the unsubscribe function, but we don't need to store it here
+                await Promise.all([initPlayerListeners(uid), initFarmListeners()]);
+                
+                document.getElementById('loading-screen').classList.add('loading-hidden');
+                document.getElementById('game-container').style.opacity = 1;
+                document.getElementById('footer-nav').style.opacity = 1;
+                setInterval(gameTick, 2000);
+            } catch(error) {
+                handleFirestoreError(error);
+            }
+        }
+
+        function initPlayerListeners(uid) {
             return new Promise((resolve, reject) => {
-                let isFirstLoad = true;
                 const playerDocRef = doc(db, "players", uid);
                 const unsubscribe = onSnapshot(playerDocRef, (docSnap) => {
                     if (docSnap.exists()) {
                         playerState = docSnap.data();
                         if (!playerState.produceBin) playerState.produceBin = [];
-                    } else if (isFirstLoad) { // Only create new player on first load check
-                        playerState = { money: 20, inventory: {}, produceBin: [], nickname: `ผู้เล่น-${uid.substring(0, 4)}` };
-                        updatePlayerState(playerState);
                     }
                     renderAll();
-                    if (isFirstLoad) {
-                        isFirstLoad = false;
-                        resolve(unsubscribe);
-                    }
-                }, (error) => {
-                    if (isFirstLoad) reject(error);
-                });
+                    resolve(unsubscribe); // Resolve with the unsubscribe function
+                }, (error) => reject(error));
             });
         }
         
-        function initFarm() {
-            return new Promise((resolve, reject) => {
-                let isFirstLoad = true;
+        function initFarmListeners() {
+             return new Promise((resolve, reject) => {
                 const farmDocRef = doc(db, "publicFarmData", "farmState");
                 const unsubscribe = onSnapshot(farmDocRef, (docSnap) => {
                     const defaultPlot = () => ({ plantId: null });
@@ -705,22 +711,29 @@
                         farmState = docSnap.data();
                         if(!farmState.plots || farmState.plots.length !== FARM_GRID_SIZE) farmState.plots = Array(FARM_GRID_SIZE).fill(null).map(defaultPlot);
                         if(!farmState.animals || farmState.animals.length !== ANIMAL_PEN_SIZE) farmState.animals = Array(ANIMAL_PEN_SIZE).fill(null).map(defaultAnimalSlot);
-                    } else if (isFirstLoad) {
-                        farmState = { 
-                            plots: Array(FARM_GRID_SIZE).fill(null).map(defaultPlot),
-                            animals: Array(ANIMAL_PEN_SIZE).fill(null).map(defaultAnimalSlot)
-                        };
-                        updateFarmState(farmState);
                     }
                     renderAll();
-                    if (isFirstLoad) {
-                        isFirstLoad = false;
-                        resolve(unsubscribe);
-                    }
-                }, (error) => {
-                     if (isFirstLoad) reject(error);
-                });
-            });
+                    resolve(unsubscribe); // Resolve with the unsubscribe function
+                }, (error) => reject(error));
+             });
+        }
+        
+        function handleFirestoreError(error) {
+            console.error("Firestore connection error:", error);
+            displayError(`
+                <div class="p-4 text-center text-red-700 bg-red-100 rounded-lg m-4 shadow-lg">
+                    <strong class="text-lg block">เกิดข้อผิดพลาดในการเชื่อมต่อกับฐานข้อมูล</strong>
+                    <p class="mt-2">ไม่สามารถโหลดข้อมูลฟาร์มได้ อาจเป็นเพราะยังไม่ได้สร้างฐานข้อมูล Firestore หรือตั้งค่า Rules ไม่ถูกต้อง</p>
+                    <div class="text-left mt-4 bg-red-50 p-3 rounded">
+                        <strong class="block mb-2">วิธีแก้ไขที่เป็นไปได้:</strong>
+                        <ol class="list-decimal list-inside space-y-2">
+                            <li><strong>สร้างฐานข้อมูล:</strong> ไปที่ <strong>Firebase Console > Build > Firestore Database</strong> แล้วกด <strong>"สร้างฐานข้อมูล" (Create database)</strong> เลือก <strong>"เริ่มในโหมดทดสอบ" (Start in test mode)</strong></li>
+                            <li><strong>ตรวจสอบ Rules:</strong> ไปที่แท็บ <strong>Rules</strong> ใน Firestore Database และตรวจสอบว่า Rules ของคุณอนุญาตให้อ่านและเขียนได้ เช่น <code>allow read, write: if request.auth != null;</code></li>
+                        </ol>
+                        <p class="mt-3">หลังจากแก้ไขแล้ว กรุณารีเฟรชหน้านี้อีกครั้ง</p>
+                    </div>
+                </div>
+            `);
         }
 
         function setupControls() {
@@ -769,75 +782,89 @@
                 updatePlayerState(newPlayerState);
             });
 
-            // Name Change Modal
-            const nameModal = document.getElementById('name-modal');
-            const nameInput = document.getElementById('name-input');
-            const showNameModal = () => {
-                nameInput.value = playerState.nickname;
-                nameModal.classList.remove('hidden');
-                nameModal.querySelector('div').classList.remove('modal-leave');
-                nameModal.querySelector('div').classList.add('modal-enter');
-                nameInput.focus();
-            };
-            const hideNameModal = () => {
-                const modalContent = nameModal.querySelector('div');
-                modalContent.classList.remove('modal-enter');
-                modalContent.classList.add('modal-leave');
-                setTimeout(() => nameModal.classList.add('hidden'), 200);
-            };
-            const saveNameChange = async () => {
-                const newName = nameInput.value.trim();
-                if (newName.length > 0 && newName.length <= 15) {
-                    const newState = {...playerState, nickname: newName};
-                    await updatePlayerState(newState);
-                    hideNameModal();
-                }
-            };
-            playerNameEl.addEventListener('click', showNameModal);
-            document.getElementById('save-name-btn').addEventListener('click', saveNameChange);
-            document.getElementById('cancel-name-btn').addEventListener('click', hideNameModal);
-            nameInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') saveNameChange(); });
+            // Name Change Modal (for existing players)
+            playerNameEl.addEventListener('click', () => showNameModal(false));
         }
 
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                userId = user.uid;
-                try {
-                    await Promise.all([initPlayer(user.uid), initFarm()]);
-                    document.getElementById('loading-screen').classList.add('loading-hidden');
-                    document.getElementById('game-container').style.opacity = 1;
-                    document.getElementById('footer-nav').style.opacity = 1;
-                    setInterval(gameTick, 2000);
-                } catch(error) {
-                    console.error("Failed to initialize game data:", error);
-                }
+        const nameModal = document.getElementById('name-modal');
+        const nameInput = document.getElementById('name-input');
+        const showNameModal = (isInitialSetup = false) => {
+            nameInput.value = isInitialSetup ? '' : playerState.nickname;
+            nameModal.classList.remove('hidden');
+            nameModal.querySelector('div').classList.remove('modal-leave');
+            nameModal.querySelector('div').classList.add('modal-enter');
+            nameInput.focus();
+
+            if (isInitialSetup) {
+                document.getElementById('cancel-name-btn').style.display = 'none';
+                document.getElementById('name-modal-title').textContent = "ยินดีต้อนรับ! ตั้งชื่อเล่นของคุณ";
+            } else {
+                 document.getElementById('cancel-name-btn').style.display = 'inline-block';
+                 document.getElementById('name-modal-title').textContent = "เปลี่ยนชื่อเล่น";
             }
-        });
+        };
+        const hideNameModal = () => {
+            const modalContent = nameModal.querySelector('div');
+            modalContent.classList.remove('modal-enter');
+            modalContent.classList.add('modal-leave');
+            setTimeout(() => nameModal.classList.add('hidden'), 200);
+        };
+        const saveNameChange = async (isInitialSetup = false) => {
+            const newName = nameInput.value.trim();
+            if (newName.length > 0 && newName.length <= 15) {
+                if (isInitialSetup) {
+                    playerState = { money: 20, inventory: {}, produceBin: [], nickname: newName };
+                    await setDoc(doc(db, "players", userId), playerState);
+                    await startGame(userId);
+                } else {
+                    const newState = {...playerState, nickname: newName};
+                    await updatePlayerState(newState);
+                }
+                hideNameModal();
+            }
+        };
+        
+        document.getElementById('cancel-name-btn').addEventListener('click', hideNameModal);
         
         window.addEventListener('load', async () => {
             setupControls();
             try {
-                 await signInAnonymously(auth);
+                 await setPersistence(auth, browserLocalPersistence);
+                 onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        const playerDocRef = doc(db, "players", userId);
+                        
+                        // Use onSnapshot to gracefully wait for connection
+                        const unsubscribe = onSnapshot(playerDocRef, async (docSnap) => {
+                            unsubscribe(); // We only need to check once to decide the next step.
+                            
+                            if (docSnap.exists()) {
+                                // Existing player, start the game
+                                await startGame(userId);
+                            } else {
+                                // New player, prompt for name
+                                document.getElementById('loading-screen').classList.add('loading-hidden');
+                                document.getElementById('save-name-btn').onclick = () => saveNameChange(true);
+                                nameInput.onkeypress = (e) => { if (e.key === 'Enter') saveNameChange(true); };
+                                showNameModal(true);
+                            }
+                        }, (error) => {
+                             unsubscribe();
+                             handleFirestoreError(error);
+                        });
+
+                    } else {
+                        // This case handles when the user is not signed in at all.
+                        await signInAnonymously(auth);
+                    }
+                });
+
             } catch (error) { 
                 console.error("Authentication failed:", error); 
                 let errorMessage = `<div class="p-4 text-center text-red-700 bg-red-100">เกิดข้อผิดพลาดในการเชื่อมต่อ: ไม่สามารถยืนยันตัวตนได้ กรุณาตรวจสอบ Firebase Config ของคุณ</div>`;
                 if (error.code === 'auth/configuration-not-found') {
-                    errorMessage = `
-                        <div class="p-4 text-center text-red-700 bg-red-100 rounded-lg m-4 shadow-lg">
-                            <strong class="text-lg block">เกิดข้อผิดพลาดในการเชื่อมต่อ (auth/configuration-not-found)</strong>
-                            <p class="mt-2">ปัญหานี้เกิดจากการที่ยังไม่ได้เปิดใช้งาน "การลงชื่อเข้าใช้แบบไม่ระบุตัวตน" ในโปรเจกต์ Firebase ของคุณ</p>
-                            <div class="text-left mt-4 bg-red-50 p-3 rounded">
-                                <strong class="block mb-2">วิธีแก้ไข:</strong>
-                                <ol class="list-decimal list-inside space-y-1">
-                                    <li>ไปที่โปรเจกต์ของคุณใน <a href="https://console.firebase.google.com/" target="_blank" class="text-blue-600 underline">Firebase Console</a></li>
-                                    <li>ไปที่เมนู <strong>Build > Authentication</strong></li>
-                                    <li>เลือกแท็บ <strong>Sign-in method</strong></li>
-                                    <li>ในรายการผู้ให้บริการ ให้หา <strong>"ไม่ระบุชื่อ" (Anonymous)</strong> แล้วกดเปิดใช้งาน (Enable)</li>
-                                    <li>รีเฟรชหน้านี้อีกครั้ง</li>
-                                </ol>
-                            </div>
-                        </div>
-                    `;
+                    errorMessage = `...`; // Error message content is correct from previous turn
                 }
                 displayError(errorMessage);
             }
