@@ -17,7 +17,6 @@
             background-size: contain; 
             background-position: center; 
             background-repeat: no-repeat; 
-            image-rendering: pixelated; /* For pixel art style */
         }
         .plot:hover, .animal-slot:hover { transform: scale(1.05); }
 
@@ -80,6 +79,18 @@
                 <div class="mt-6 flex justify-end gap-3">
                     <button id="cancel-name-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg">ยกเลิก</button>
                     <button id="save-name-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg">บันทึก</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Confirmation Modal -->
+        <div id="confirm-modal" class="hidden fixed inset-0 bg-black/50 z-[53] flex items-center justify-center p-4">
+            <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm modal-enter">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">ยืนยันการกระทำ</h2>
+                <p id="confirm-modal-text" class="text-gray-600 mb-4">คุณแน่ใจหรือไม่?</p>
+                <div class="mt-6 flex justify-end gap-3">
+                    <button id="confirm-modal-cancel" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg">ยกเลิก</button>
+                    <button id="confirm-modal-ok" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg">ตกลง</button>
                 </div>
             </div>
         </div>
@@ -177,9 +188,9 @@
 
         // --- MASTER GAME DATA ---
         const GAME_DATA = {
-            'carrot_seed':   { name: 'เมล็ดแครอท', type: 'seed', cost: 5, plantId: 'carrot', icon: '🥕' },
-            'carrot':        { name: 'แครอท', type: 'crop', growTime: 1200, produceId: 'carrot_produce', icon: '🥕' },
-            'carrot_produce':{ name: 'แครอท', type: 'produce', sellPrice: [8, 12, 16], icon: '🥕' },
+            'carrot_seed':   { name: 'เมล็ดแครอท', type: 'seed', cost: 5, plantId: 'carrot', icon: '🥕', imageUrl: 'carrot.png' },
+            'carrot':        { name: 'แครอท', type: 'crop', growTime: 1200, produceId: 'carrot_produce', icon: '🥕', imageUrl: 'carrot.png' },
+            'carrot_produce':{ name: 'แครอท', type: 'produce', sellPrice: [8, 12, 16], icon: '🥕', imageUrl: 'carrot.png' },
             
             'tomato_seed':   { name: 'เมล็ดมะเขือเทศ', type: 'seed', cost: 10, plantId: 'tomato', icon: '🍅' },
             'tomato':        { name: 'มะเขือเทศ', type: 'crop', growTime: 1800, produceId: 'tomato_produce', icon: '🍅' },
@@ -251,8 +262,8 @@
 
         // --- Game State ---
         let userId = null;
-        let farmState = { plots: [], animals: [] };
-        let playerState = { money: 20, inventory: {}, produceBin: [], nickname: 'ผู้เล่นใหม่' };
+        let farmState = null;
+        let playerState = null;
         
         // --- UI Elements ---
         const playerNameEl = document.getElementById('player-name');
@@ -286,6 +297,7 @@
         
         // --- Rendering ---
         function renderAll() {
+            if (!farmState || !playerState) return; 
             renderFarm();
             renderAnimals();
             renderPlayerUI();
@@ -294,6 +306,7 @@
         }
         
         function renderFarm() {
+            if (!farmState || !Array.isArray(farmState.plots)) return;
             const farmGrid = document.getElementById('farm-grid');
             farmGrid.innerHTML = '';
             farmState.plots.forEach((plot, index) => {
@@ -304,7 +317,7 @@
                 if (plot.plantId) {
                     const plantData = GAME_DATA[plot.plantId];
                     let progress = 0;
-                    if (plot.plantTime) {
+                    if (plot.plantTime) { 
                         const elapsedSeconds = (Date.now() - plot.plantTime) / 1000;
                         const growthMultiplier = 1 + ((plot.wateredBy?.length || 0) * 0.5);
                         const effectiveGrowth = elapsedSeconds * growthMultiplier;
@@ -338,6 +351,7 @@
         }
 
         function renderAnimals() {
+             if (!farmState || !Array.isArray(farmState.animals)) return;
              const animalPen = document.getElementById('animal-pen');
              animalPen.innerHTML = '';
              farmState.animals.forEach((animal, index) => {
@@ -380,6 +394,7 @@
         }
 
         function renderPlayerUI() {
+            if (!playerState) return;
             playerNameEl.textContent = playerState.nickname;
             document.getElementById('money-display').textContent = playerState.money || 0;
             const inventoryDisplay = document.getElementById('inventory-display');
@@ -425,7 +440,7 @@
             const totalEl = document.getElementById('sell-box-total');
             const sellBtn = document.getElementById('sell-all-btn');
             
-            if (!playerState.produceBin || playerState.produceBin.length === 0) {
+            if (!playerState || !playerState.produceBin || playerState.produceBin.length === 0) {
                 itemsEl.innerHTML = `<p class="text-center text-yellow-700">ไม่มีผลผลิตจะขาย</p>`;
                 totalEl.textContent = '0';
                 sellBtn.disabled = true;
@@ -521,14 +536,15 @@
                          actionsEl.appendChild(createButton('💧 รดน้ำ', () => water(index), hasWatered));
                          const fertilizers = Object.keys(playerState.inventory).filter(id => GAME_DATA[id].type === 'item' && playerState.inventory[id] > 0);
                          actionsEl.appendChild(createButton('💩 ใส่ปุ๋ย', () => showSubMenu('fertilize', index, fertilizers), fertilizers.length === 0));
+                         actionsEl.appendChild(createButton('❌ เคลียแปลง', () => clearPlot(index), false, 'bg-red-500 hover:bg-red-600'));
                     }
                 }
             } else if (type === 'animal') {
                  const animal = farmState.animals[index];
                  titleEl.textContent = `คอกที่ ${index + 1}`;
                  if (!animal.animalId) {
-                     const buyableAnimals = Object.keys(playerState.inventory).filter(id => GAME_DATA[id].type === 'animal_deed' && playerState.inventory[id] > 0);
-                     actionsEl.appendChild(createButton('➕ วางสัตว์', () => showSubMenu('placeAnimal', index, buyableAnimals), buyableAnimals.length === 0));
+                     const buyableItems = Object.keys(playerState.inventory).filter(id => GAME_DATA[id].type === 'animal_deed' && playerState.inventory[id] > 0);
+                     actionsEl.appendChild(createButton('➕ วางสัตว์', () => showSubMenu('placeAnimal', index, buyableItems), buyableItems.length === 0));
                  } else {
                     const animalData = GAME_DATA[animal.animalId];
                     const isReady = (Date.now() - animal.startTime) >= (animalData.produceTime * 1000);
@@ -615,6 +631,17 @@
             updateFarmState(newFarmState);
             updatePlayerState(newPlayerState);
         }
+        
+        function clearPlot(plotIndex) {
+            const plot = farmState.plots[plotIndex];
+            if (!plot || !plot.plantId) return;
+
+            showConfirmationModal('คุณแน่ใจหรือไม่ว่าต้องการเคลียแปลงนี้? พืชที่ปลูกไว้จะหายไปทันที', () => {
+                const newFarmState = { ...farmState };
+                newFarmState.plots[plotIndex] = { plantId: null };
+                updateFarmState(newFarmState);
+            });
+        }
 
         function harvest(plotIndex) {
             const newPlayerState = { ...playerState };
@@ -657,6 +684,7 @@
             updateFarmState(newFarmState);
         }
         
+        let gameLoopInterval = null;
         // --- Init & Setup ---
         async function startGame(uid) {
             userId = uid;
@@ -667,7 +695,9 @@
             document.getElementById('loading-screen').classList.add('loading-hidden');
             document.getElementById('game-container').style.opacity = 1;
             document.getElementById('footer-nav').style.opacity = 1;
-            setInterval(renderAll, 2000); // Re-render periodically for visual time updates
+            
+            if (gameLoopInterval) clearInterval(gameLoopInterval);
+            gameLoopInterval = setInterval(renderAll, 2000); 
         }
 
         function initPlayerListeners(uid) {
@@ -677,15 +707,15 @@
                     playerState = docSnap.data();
                     if (!playerState.produceBin) playerState.produceBin = [];
                 }
-                renderAll();
             }, handleFirestoreError);
         }
         
         function initFarmListeners() {
             const farmDocRef = doc(db, "publicFarmData", "farmState");
             onSnapshot(farmDocRef, (docSnap) => {
-                farmState = docSnap.data();
-                renderAll();
+                if (docSnap.exists()) {
+                    farmState = docSnap.data();
+                }
             }, handleFirestoreError);
         }
         
@@ -711,7 +741,7 @@
         
         function handleFirestoreError(error) {
             console.error("Firestore connection error:", error);
-            displayError(`...`); // Placeholder, actual message is in HTML
+            displayError(`...`); // Placeholder, actual message is in the HTML
         }
         
         let isInitialNameSetup = false;
@@ -764,6 +794,26 @@
             document.getElementById('save-name-btn').addEventListener('click', () => saveNameChange());
             document.getElementById('cancel-name-btn').addEventListener('click', hideNameModal);
             nameInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') saveNameChange(); });
+            document.getElementById('confirm-modal-cancel').addEventListener('click', hideConfirmationModal);
+        }
+        
+        function showConfirmationModal(text, onConfirm) {
+            const confirmModal = document.getElementById('confirm-modal');
+            document.getElementById('confirm-modal-text').textContent = text;
+            const okButton = document.getElementById('confirm-modal-ok');
+            
+            const newOkButton = okButton.cloneNode(true);
+            okButton.parentNode.replaceChild(newOkButton, okButton);
+
+            newOkButton.addEventListener('click', () => {
+                onConfirm();
+                hideConfirmationModal();
+            });
+            confirmModal.classList.remove('hidden');
+        }
+
+        function hideConfirmationModal() {
+            document.getElementById('confirm-modal').classList.add('hidden');
         }
         
         const showNameModal = (isInitial = false) => {
