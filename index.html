@@ -550,7 +550,7 @@
                         
                         let harvestStatusHTML = '<div class="mt-2 text-xs"><p>สถานะการเก็บเกี่ยว:</p>';
                         involvedUids.forEach(uid => {
-                            const nickname = plot.plantedBy?.uid === uid ? plot.plantedBy.nickname : plot.wateredBy.find(p => p.uid === uid)?.nickname || '...';
+                            const waterers = plot.wateredBy.filter(p => p && p.nickname).map(p => p.nickname).join(', ');
                             const status = harvestedUids.has(uid) ? '✅' : 'รอ...';
                             harvestStatusHTML += `<p>${status} ${nickname}</p>`;
                         });
