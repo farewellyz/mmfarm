@@ -188,75 +188,75 @@
 
         // --- MASTER GAME DATA ---
         const GAME_DATA = {
-            'carrot_seed':   { name: 'เมล็ดแครอท', type: 'seed', cost: 5, plantId: 'carrot', icon: '🥕', imageUrl: 'https://placehold.co/64x64/f97316/ffffff?text=🥕' },
-            'carrot':        { name: 'แครอท', type: 'crop', growTime: 1200, produceId: 'carrot_produce', icon: '🥕', imageUrl: 'https://placehold.co/64x64/f97316/ffffff?text=🥕' },
+            'carrot_seed':   { name: 'เมล็ดแครอท', type: 'seed', cost: 5, plantId: 'carrot', icon: '🥕', imageUrl: 'carrot.png' },
+            'carrot':        { name: 'แครอท', type: 'crop', growTime: 1200, produceId: 'carrot_produce', icon: '🥕', imageUrl: 'carrot.png' },
             'carrot_produce':{ name: 'แครอท', type: 'produce', sellPrice: [8, 12, 16], icon: '🥕' },
             
-            'tomato_seed':   { name: 'เมล็ดมะเขือเทศ', type: 'seed', cost: 10, plantId: 'tomato', icon: '🍅' },
-            'tomato':        { name: 'มะเขือเทศ', type: 'crop', growTime: 1800, produceId: 'tomato_produce', icon: '🍅' },
+            'tomato_seed':   { name: 'เมล็ดมะเขือเทศ', type: 'seed', cost: 10, plantId: 'tomato', icon: '🍅', imageUrl: 'tomato.png' },
+            'tomato':        { name: 'มะเขือเทศ', type: 'crop', growTime: 1800, produceId: 'tomato_produce', icon: '🍅', imageUrl: 'tomato.png' },
             'tomato_produce':{ name: 'มะเขือเทศ', type: 'produce', sellPrice: [18, 25, 35], icon: '🍅' },
 
-            'strawberry_seed': { name: 'เมล็ดสตรอว์เบอร์รี', type: 'seed', cost: 15, plantId: 'strawberry', icon: '🍓' },
-            'strawberry':      { name: 'สตรอว์เบอร์รี', type: 'crop', growTime: 2400, produceId: 'strawberry_produce', icon: '🍓' },
+            'strawberry_seed': { name: 'เมล็ดสตรอว์เบอร์รี', type: 'seed', cost: 15, plantId: 'strawberry', icon: '🍓', imageUrl: 'stawberry.png' },
+            'strawberry':      { name: 'สตรอว์เบอร์รี', type: 'crop', growTime: 2400, produceId: 'strawberry_produce', icon: '🍓', imageUrl: 'stawberry.png' },
             'strawberry_produce': { name: 'สตรอว์เบอร์รี', type: 'produce', sellPrice: [25, 35, 50], icon: '🍓' },
 
-            'grape_seed': { name: 'เมล็ดองุ่น', type: 'seed', cost: 20, plantId: 'grape', icon: '🍇' },
-            'grape':      { name: 'องุ่น', type: 'crop', growTime: 3000, produceId: 'grape_produce', icon: '🍇' },
+            'grape_seed': { name: 'เมล็ดองุ่น', type: 'seed', cost: 20, plantId: 'grape', icon: '🍇', imageUrl: 'grape.png' },
+            'grape':      { name: 'องุ่น', type: 'crop', growTime: 3000, produceId: 'grape_produce', icon: '🍇', imageUrl: 'grape.png' },
             'grape_produce': { name: 'องุ่น', type: 'produce', sellPrice: [35, 50, 70], icon: '🍇' },
 
-            'peach_seed': { name: 'เมล็ดพีช', type: 'seed', cost: 25, plantId: 'peach', icon: '🍑' },
-            'peach':      { name: 'พีช', type: 'crop', growTime: 3600, produceId: 'peach_produce', icon: '🍑' },
+            'peach_seed': { name: 'เมล็ดพีช', type: 'seed', cost: 25, plantId: 'peach', icon: '🍑', imageUrl: 'peach.png' },
+            'peach':      { name: 'พีช', type: 'crop', growTime: 3600, produceId: 'peach_produce', icon: '🍑', imageUrl: 'peach.png' },
             'peach_produce': { name: 'พีช', type: 'produce', sellPrice: [45, 65, 90], icon: '🍑' },
 
-            'orange_seed': { name: 'เมล็ดส้ม', type: 'seed', cost: 30, plantId: 'orange', icon: '🍊' },
-            'orange':      { name: 'ส้ม', type: 'crop', growTime: 4200, produceId: 'orange_produce', icon: '🍊' },
+            'orange_seed': { name: 'เมล็ดส้ม', type: 'seed', cost: 30, plantId: 'orange', icon: '🍊', imageUrl: 'orange.png' },
+            'orange':      { name: 'ส้ม', type: 'crop', growTime: 4200, produceId: 'orange_produce', icon: '🍊', imageUrl: 'orange.png' },
             'orange_produce': { name: 'ส้ม', type: 'produce', sellPrice: [55, 80, 110], icon: '🍊' },
 
-            'mango_seed': { name: 'เมล็ดมะม่วง', type: 'seed', cost: 35, plantId: 'mango', icon: '🥭' },
-            'mango':      { name: 'มะม่วง', type: 'crop', growTime: 4800, produceId: 'mango_produce', icon: '🥭' },
+            'mango_seed': { name: 'เมล็ดมะม่วง', type: 'seed', cost: 35, plantId: 'mango', icon: '🥭', imageUrl: 'mango.png' },
+            'mango':      { name: 'มะม่วง', type: 'crop', growTime: 4800, produceId: 'mango_produce', icon: '🥭', imageUrl: 'mango.png' },
             'mango_produce': { name: 'มะม่วง', type: 'produce', sellPrice: [65, 95, 130], icon: '🥭' },
 
-            'pineapple_seed': { name: 'เมล็ดสับปะรด', type: 'seed', cost: 40, plantId: 'pineapple', icon: '🍍' },
-            'pineapple':      { name: 'สับปะรด', type: 'crop', growTime: 5400, produceId: 'pineapple_produce', icon: '🍍' },
+            'pineapple_seed': { name: 'เมล็ดสับปะรด', type: 'seed', cost: 40, plantId: 'pineapple', icon: '🍍', imageUrl: 'pineapple.png' },
+            'pineapple':      { name: 'สับปะรด', type: 'crop', growTime: 5400, produceId: 'pineapple_produce', icon: '🍍', imageUrl: 'pineapple.png' },
             'pineapple_produce': { name: 'สับปะรด', type: 'produce', sellPrice: [75, 110, 150], icon: '🍍' },
 
-            'guava_seed': { name: 'เมล็ดฝรั่ง', type: 'seed', cost: 18, plantId: 'guava', icon: '🍈' },
-            'guava':      { name: 'ฝรั่ง', type: 'crop', growTime: 2800, produceId: 'guava_produce', icon: '🍈' },
+            'guava_seed': { name: 'เมล็ดฝรั่ง', type: 'seed', cost: 18, plantId: 'guava', icon: '🍈', imageUrl: 'guava.png' },
+            'guava':      { name: 'ฝรั่ง', type: 'crop', growTime: 2800, produceId: 'guava_produce', icon: '🍈', imageUrl: 'guava.png' },
             'guava_produce': { name: 'ฝรั่ง', type: 'produce', sellPrice: [30, 45, 65], icon: '🍈' },
 
-            'roseapple_seed': { name: 'เมล็ดชมพู่', type: 'seed', cost: 22, plantId: 'roseapple', icon: '🍐' },
-            'roseapple':      { name: 'ชมพู่', type: 'crop', growTime: 3200, produceId: 'roseapple_produce', icon: '🍐' },
+            'roseapple_seed': { name: 'เมล็ดชมพู่', type: 'seed', cost: 22, plantId: 'roseapple', icon: '🍐', imageUrl: 'chompu.png' },
+            'roseapple':      { name: 'ชมพู่', type: 'crop', growTime: 3200, produceId: 'roseapple_produce', icon: '🍐', imageUrl: 'chompu.png' },
             'roseapple_produce': { name: 'ชมพู่', type: 'produce', sellPrice: [40, 60, 85], icon: '🍐' },
 
-            'apple_seed': { name: 'เมล็ดแอปเปิ้ล', type: 'seed', cost: 28, plantId: 'apple', icon: '🍎' },
-            'apple':      { name: 'แอปเปิ้ล', type: 'crop', growTime: 4000, produceId: 'apple_produce', icon: '🍎' },
+            'apple_seed': { name: 'เมล็ดแอปเปิ้ล', type: 'seed', cost: 28, plantId: 'apple', icon: '🍎', imageUrl: 'apple.png' },
+            'apple':      { name: 'แอปเปิ้ล', type: 'crop', growTime: 4000, produceId: 'apple_produce', icon: '🍎', imageUrl: 'apple.png' },
             'apple_produce': { name: 'แอปเปิ้ล', type: 'produce', sellPrice: [50, 75, 105], icon: '🍎' },
 
             'fertilizer_1': { name: 'ปุ๋ยธรรมดา', type: 'item', cost: 10, qualityBonus: 0.3, icon: '💩' },
             'fertilizer_2': { name: 'ปุ๋ยอย่างดี', type: 'item', cost: 25, qualityBonus: 0.6, icon: '✨' },
             
-            'chicken_deed': { name: 'กรรมสิทธิ์ไก่', type: 'animal_deed', cost: 100, animalId: 'chicken', icon: '🐔' },
-            'chicken':      { name: 'ไก่', type: 'animal_instance', produceTime: 600, produceId: 'egg', icon: '🐔' },
+            'chicken_deed': { name: 'กรรมสิทธิ์ไก่', type: 'animal_deed', cost: 100, animalId: 'chicken', icon: '🐔', imageUrl: 'chicken.png' },
+            'chicken':      { name: 'ไก่', type: 'animal_instance', produceTime: 600, produceId: 'egg', icon: '🐔', imageUrl: 'chicken.png' },
             'egg':          { name: 'ไข่', type: 'produce', sellPrice: [12, 18, 25], icon: '🥚' },
 
-            'cow_deed':     { name: 'กรรมสิทธิ์วัว', type: 'animal_deed', cost: 500, animalId: 'cow', icon: '🐄' },
-            'cow':          { name: 'วัว', type: 'animal_instance', produceTime: 3600, produceId: 'milk', icon: '🐄' },
+            'cow_deed':     { name: 'กรรมสิทธิ์วัว', type: 'animal_deed', cost: 500, animalId: 'cow', icon: '🐄', imageUrl: 'cow.png' },
+            'cow':          { name: 'วัว', type: 'animal_instance', produceTime: 3600, produceId: 'milk', icon: '🐄', imageUrl: 'cow.png' },
             'milk':         { name: 'นม', type: 'produce', sellPrice: [50, 70, 90], icon: '🥛' },
 
-            'pig_deed':     { name: 'กรรมสิทธิ์หมู', type: 'animal_deed', cost: 300, animalId: 'pig', icon: '🐖' },
-            'pig':          { name: 'หมู', type: 'animal_instance', produceTime: 4800, produceId: 'truffle', icon: '🐖' },
+            'pig_deed':     { name: 'กรรมสิทธิ์หมู', type: 'animal_deed', cost: 300, animalId: 'pig', icon: '🐖', imageUrl: 'pig.png' },
+            'pig':          { name: 'หมู', type: 'animal_instance', produceTime: 4800, produceId: 'truffle', icon: '🐖', imageUrl: 'pig.png' },
             'truffle':      { name: 'เห็ดทรัฟเฟิล', type: 'produce', sellPrice: [80, 110, 150], icon: '🍄' },
 
-            'duck_deed':    { name: 'กรรมสิทธิ์เป็ด', type: 'animal_deed', cost: 120, animalId: 'duck', icon: '🦆' },
-            'duck':         { name: 'เป็ด', type: 'animal_instance', produceTime: 900, produceId: 'duck_egg', icon: '🦆' },
+            'duck_deed':    { name: 'กรรมสิทธิ์เป็ด', type: 'animal_deed', cost: 120, animalId: 'duck', icon: '🦆', imageUrl: 'duck.png' },
+            'duck':         { name: 'เป็ด', type: 'animal_instance', produceTime: 900, produceId: 'duck_egg', icon: '🦆', imageUrl: 'duck.png' },
             'duck_egg':     { name: 'ไข่เป็ด', type: 'produce', sellPrice: [15, 22, 30], icon: '🥚' },
 
-            'goose_deed':   { name: 'กรรมสิทธิ์ห่าน', type: 'animal_deed', cost: 150, animalId: 'goose', icon: '🦢' },
-            'goose':        { name: 'ห่าน', type: 'animal_instance', produceTime: 1800, produceId: 'feather', icon: '🦢' },
+            'goose_deed':   { name: 'กรรมสิทธิ์ห่าน', type: 'animal_deed', cost: 150, animalId: 'goose', icon: '🦢', imageUrl: 'swan.png' },
+            'goose':        { name: 'ห่าน', type: 'animal_instance', produceTime: 1800, produceId: 'feather', icon: '🦢', imageUrl: 'swan.png' },
             'feather':      { name: 'ขนนก', type: 'produce', sellPrice: [25, 38, 55], icon: '🪶' },
 
-            'turtle_deed':  { name: 'กรรมสิทธิ์เต่า', type: 'animal_deed', cost: 1000, animalId: 'turtle', icon: '🐢' },
-            'turtle':       { name: 'เต่า', type: 'animal_instance', produceTime: 86400, produceId: 'gem', icon: '🐢' },
+            'turtle_deed':  { name: 'กรรมสิทธิ์เต่า', type: 'animal_deed', cost: 1000, animalId: 'turtle', icon: '🐢', imageUrl: 'turtle.png' },
+            'turtle':       { name: 'เต่า', type: 'animal_instance', produceTime: 86400, produceId: 'gem', icon: '🐢', imageUrl: 'turtle.png' },
             'gem':          { name: 'อัญมณี', type: 'produce', sellPrice: [200, 300, 500], icon: '💎' },
         };
 
@@ -627,8 +627,8 @@
 
         // --- Game Actions ---
         function plant(plotIndex, seedId) {
-            const newFarmState = JSON.parse(JSON.stringify(farmState));
-            const newPlayerState = JSON.parse(JSON.stringify(playerState));
+            const newFarmState = { ...farmState };
+            const newPlayerState = { ...playerState };
             const seedData = GAME_DATA[seedId];
             newFarmState.plots[plotIndex] = { 
                 plantId: seedData.plantId, 
@@ -645,7 +645,7 @@
         }
 
         function water(plotIndex) {
-             const newFarmState = JSON.parse(JSON.stringify(farmState));
+             const newFarmState = { ...farmState };
              const plot = newFarmState.plots[plotIndex];
              if (plot.wateredBy && plot.wateredBy.some(p => p.uid === userId)) return; 
 
@@ -655,8 +655,8 @@
         }
 
         function fertilize(plotIndex, fertilizerId) {
-            const newFarmState = JSON.parse(JSON.stringify(farmState));
-            const newPlayerState = JSON.parse(JSON.stringify(playerState));
+            const newFarmState = { ...farmState };
+            const newPlayerState = { ...playerState };
             const fertilizerData = GAME_DATA[fertilizerId];
             newFarmState.plots[plotIndex].fertilizerLevel += fertilizerData.qualityBonus;
             newPlayerState.inventory[fertilizerId]--;
@@ -670,18 +670,18 @@
             if (!plot || !plot.plantId) return;
 
             showConfirmationModal('คุณแน่ใจหรือไม่ว่าต้องการเคลียแปลงนี้? พืชที่ปลูกไว้จะหายไปทันที', () => {
-                const newFarmState = JSON.parse(JSON.stringify(farmState));
+                const newFarmState = { ...farmState };
                 newFarmState.plots[plotIndex] = { plantId: null };
                 updateFarmState(newFarmState);
             });
         }
 
         function harvest(plotIndex) {
-            const newPlayerState = JSON.parse(JSON.stringify(playerState));
-            const newFarmState = JSON.parse(JSON.stringify(farmState));
+            const newPlayerState = { ...playerState };
+            const newFarmState = { ...farmState };
             const plot = newFarmState.plots[plotIndex];
             if (!plot || !plot.plantId || (plot.harvestedBy && plot.harvestedBy.some(p => p.uid === userId))) {
-                return;
+                return; // Already harvested or nothing to harvest
             }
             const cropData = GAME_DATA[plot.plantId];
 
@@ -716,8 +716,8 @@
         }
 
         function placeAnimal(slotIndex, deedId) {
-            const newFarmState = JSON.parse(JSON.stringify(farmState));
-            const newPlayerState = JSON.parse(JSON.stringify(playerState));
+            const newFarmState = { ...farmState };
+            const newPlayerState = { ...playerState };
             const deedData = GAME_DATA[deedId];
             newFarmState.animals[slotIndex] = { animalId: deedData.animalId, startTime: Date.now() };
             newPlayerState.inventory[deedId]--;
@@ -727,8 +727,8 @@
         }
 
         function collectProduct(slotIndex) {
-            const newPlayerState = JSON.parse(JSON.stringify(playerState));
-            const newFarmState = JSON.parse(JSON.stringify(farmState));
+            const newPlayerState = { ...playerState };
+            const newFarmState = { ...farmState };
             const animal = newFarmState.animals[slotIndex];
             const animalData = GAME_DATA[animal.animalId];
 
@@ -791,7 +791,7 @@
                 }
             } catch (error) {
                 console.warn("Could not ensure farm data existence.", error.message);
-                throw error;
+                throw error; // Re-throw to be caught by the caller
             }
         }
         
@@ -825,7 +825,7 @@
                     const itemId = e.target.dataset.itemid;
                     const itemData = GAME_DATA[itemId];
                     if (playerState.money >= itemData.cost) {
-                        const newPlayerState = JSON.parse(JSON.stringify(playerState));
+                        const newPlayerState = { ...playerState };
                         newPlayerState.money -= itemData.cost;
                         newPlayerState.inventory[itemId] = (newPlayerState.inventory[itemId] || 0) + 1;
                         updatePlayerState(newPlayerState);
@@ -835,7 +835,7 @@
 
             document.getElementById('sell-all-btn').addEventListener('click', () => {
                 if (!playerState.produceBin || playerState.produceBin.length === 0) return;
-                const newPlayerState = JSON.parse(JSON.stringify(playerState));
+                const newPlayerState = { ...playerState };
                 let totalValue = 0;
                 newPlayerState.produceBin.forEach(item => {
                     const itemData = GAME_DATA[item.id];
