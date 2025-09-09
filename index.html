@@ -782,20 +782,25 @@
                 updatePlayerState(newPlayerState);
             });
 
-            // Name Change Modal (for existing players)
+            // Name Change Modal
             playerNameEl.addEventListener('click', () => showNameModal(false));
+            document.getElementById('save-name-btn').addEventListener('click', () => saveNameChange(isInitialNameSetup));
+            document.getElementById('cancel-name-btn').addEventListener('click', hideNameModal);
+            nameInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') saveNameChange(isInitialNameSetup); });
         }
-
+        
+        let isInitialNameSetup = false;
         const nameModal = document.getElementById('name-modal');
         const nameInput = document.getElementById('name-input');
-        const showNameModal = (isInitialSetup = false) => {
-            nameInput.value = isInitialSetup ? '' : playerState.nickname;
+        const showNameModal = (isInitial = false) => {
+            isInitialNameSetup = isInitial;
+            nameInput.value = isInitial ? '' : playerState.nickname;
             nameModal.classList.remove('hidden');
             nameModal.querySelector('div').classList.remove('modal-leave');
             nameModal.querySelector('div').classList.add('modal-enter');
             nameInput.focus();
 
-            if (isInitialSetup) {
+            if (isInitial) {
                 document.getElementById('cancel-name-btn').style.display = 'none';
                 document.getElementById('name-modal-title').textContent = "ยินดีต้อนรับ! ตั้งชื่อเล่นของคุณ";
             } else {
@@ -809,10 +814,10 @@
             modalContent.classList.add('modal-leave');
             setTimeout(() => nameModal.classList.add('hidden'), 200);
         };
-        const saveNameChange = async (isInitialSetup = false) => {
+        const saveNameChange = async () => {
             const newName = nameInput.value.trim();
             if (newName.length > 0 && newName.length <= 15) {
-                if (isInitialSetup) {
+                if (isInitialNameSetup) {
                     playerState = { money: 20, inventory: {}, produceBin: [], nickname: newName };
                     await setDoc(doc(db, "players", userId), playerState);
                     await startGame(userId);
@@ -824,8 +829,6 @@
             }
         };
         
-        document.getElementById('cancel-name-btn').addEventListener('click', hideNameModal);
-        
         window.addEventListener('load', async () => {
             setupControls();
             try {
@@ -835,27 +838,18 @@
                         userId = user.uid;
                         const playerDocRef = doc(db, "players", userId);
                         
-                        // Use onSnapshot to gracefully wait for connection
-                        const unsubscribe = onSnapshot(playerDocRef, async (docSnap) => {
-                            unsubscribe(); // We only need to check once to decide the next step.
-                            
+                        try {
+                            const docSnap = await getDoc(playerDocRef);
                             if (docSnap.exists()) {
-                                // Existing player, start the game
                                 await startGame(userId);
                             } else {
-                                // New player, prompt for name
                                 document.getElementById('loading-screen').classList.add('loading-hidden');
-                                document.getElementById('save-name-btn').onclick = () => saveNameChange(true);
-                                nameInput.onkeypress = (e) => { if (e.key === 'Enter') saveNameChange(true); };
                                 showNameModal(true);
                             }
-                        }, (error) => {
-                             unsubscribe();
-                             handleFirestoreError(error);
-                        });
-
+                        } catch (error) {
+                            handleFirestoreError(error);
+                        }
                     } else {
-                        // This case handles when the user is not signed in at all.
                         await signInAnonymously(auth);
                     }
                 });
