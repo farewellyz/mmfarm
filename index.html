@@ -51,13 +51,12 @@
         body { padding-bottom: 80px; }
         .nav-btn.active { background-color: #15803d; color: white; border-top: 4px solid #facc15; }
         .quality-star { color: #facc15; text-shadow: 0 0 2px black; }
-
-        /* Loading Screen */
-        .loading-hidden {
-            opacity: 0;
-            pointer-events: none;
+        .loading-hidden { opacity: 0; pointer-events: none; }
+        
+        #bedroom-display {
+            background-size: cover;
+            background-position: center;
         }
-
     </style>
 </head>
 <body class="min-h-screen">
@@ -103,7 +102,7 @@
                 <button id="context-modal-close" class="mt-4 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg w-full">ปิด</button>
             </div>
         </div>
-         <!-- Sub-menu Modal (for planting/fertilizing) -->
+         <!-- Sub-menu Modal -->
         <div id="submenu-modal" class="hidden fixed inset-0 bg-black/60 z-[51] flex items-center justify-center p-4">
             <div class="bg-white rounded-2xl shadow-xl p-5 w-full max-w-xs">
                 <h3 id="submenu-modal-title" class="text-xl font-bold text-gray-800 mb-4 text-center"></h3>
@@ -115,7 +114,9 @@
 
     <!-- Main Game Area -->
     <div id="game-container" class="w-full max-w-5xl mx-auto p-4 md:p-6 opacity-0 transition-opacity duration-500">
-        <header class="text-center mb-4 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-4">
+        <header class="text-center mb-4 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-4 relative">
+            <button id="admin-reset-btn" class="hidden absolute top-2 right-2 bg-red-600 text-white text-xs font-bold py-1 px-3 rounded-full hover:bg-red-700">รีเซ็ตฟาร์ม (แอดมิน)</button>
+             <button id="reset-player-btn" class="absolute bottom-1 right-2 bg-yellow-500 text-white text-xs font-bold py-1 px-3 rounded-full hover:bg-yellow-600">รีเซ็ตข้อมูลฉัน</button>
             <h1 class="text-3xl md:text-4xl font-bold text-green-800">สวนผักของเรา 💚</h1>
             <div class="mt-3 flex flex-wrap justify-center items-center gap-x-4 gap-y-2 text-sm text-gray-600">
                 <div class="flex items-center justify-center gap-2 bg-green-100 px-3 py-1 rounded-full">
@@ -124,9 +125,8 @@
                 </div>
                 <span class="font-semibold bg-yellow-100 px-3 py-1 rounded-full">💰: <span id="money-display" class="font-bold text-yellow-800">0</span></span>
             </div>
-             <div id="inventory-display" class="mt-3 flex flex-wrap justify-center items-center gap-x-3 gap-y-1 text-xs text-gray-500">
-                <!-- Inventory items will be rendered here -->
-             </div>
+             <div id="inventory-display" class="mt-3 flex flex-wrap justify-center items-center gap-x-3 gap-y-1 text-xs text-gray-500"></div>
+             <div id="user-id-display" class="mt-2 text-xs text-gray-400 break-all"></div>
         </header>
 
         <main id="tab-content-area" class="bg-white/60 backdrop-blur-sm rounded-2xl shadow-inner p-4 min-h-[400px]">
@@ -136,17 +136,39 @@
             <div id="animals-view" class="hidden">
                  <div id="animal-pen" class="grid grid-cols-3 sm:grid-cols-4 gap-2 md:gap-4"></div>
             </div>
+            <!-- Bedroom View -->
+            <div id="bedroom-view" class="hidden">
+                 <div class="w-full max-w-2xl mx-auto text-center">
+                    <h2 class="text-3xl font-bold text-green-800 mb-4">ห้องนอนของเรา 🛌</h2>
+                    <div id="bedroom-display" class="relative w-full aspect-[4/3] rounded-lg shadow-inner overflow-hidden"></div>
+                    <div id="bedroom-info" class="mt-4">
+                        <p class="text-lg">ห้องนอนระดับ <span id="house-level" class="font-bold">0</span></p>
+                        <button id="upgrade-house-btn" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full disabled:bg-gray-400 disabled:cursor-not-allowed transition">
+                            อัปเกรด
+                        </button>
+                    </div>
+                 </div>
+            </div>
+            <!-- Storage View -->
+            <div id="storage-view" class="hidden">
+                <div class="w-full max-w-lg mx-auto">
+                    <h2 class="text-3xl font-bold text-green-800 mb-4 text-center">คลังเก็บของ 📦</h2>
+                    <div id="storage-items" class="min-h-[200px] space-y-2">
+                        <p class="text-center text-gray-500">ไม่มีของในคลัง</p>
+                    </div>
+                </div>
+            </div>
             <div id="shop-view" class="hidden">
                 <div class="w-full max-w-lg mx-auto">
                     <h2 class="text-3xl font-bold text-green-800 mb-4 text-center">🏪 ร้านค้า</h2>
                     <div id="sell-box" class="mb-6 bg-yellow-100 p-4 rounded-xl border-2 border-dashed border-yellow-300">
-                        <h3 class="text-xl font-bold text-yellow-800 mb-2 text-center">กล่องขายผลผลิต</h3>
+                        <h3 class="text-xl font-bold text-yellow-800 mb-2 text-center">กล่องส่งของ 📬</h3>
                         <div id="sell-box-items" class="min-h-[50px] space-y-2">
-                            <p class="text-center text-yellow-700">ไม่มีผลผลิตจะขาย</p>
+                            <!-- Items go here -->
                         </div>
                         <div class="mt-4 text-center">
-                            <p class="font-semibold text-lg">รวม: <span id="sell-box-total" class="font-bold">0</span>💰</p>
-                            <button id="sell-all-btn" disabled class="mt-2 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-full disabled:bg-gray-400 disabled:cursor-not-allowed">ขายทั้งหมด</button>
+                            <p class="font-semibold text-lg">ยอดขายที่รอรับ: <span id="sell-box-total" class="font-bold">0</span>💰</p>
+                            <p id="sell-countdown" class="text-sm text-gray-600 mt-2">กำลังคำนวณเวลา...</p>
                         </div>
                     </div>
                     <div id="shop-items" class="space-y-4"></div>
@@ -159,13 +181,15 @@
     <footer id="footer-nav" class="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-sm shadow-[0_-4px_12px_rgba(0,0,0,0.05)] z-40 flex justify-around opacity-0 transition-opacity duration-500">
         <button data-view="farm" class="nav-btn flex-1 py-3 text-green-800 font-bold text-lg hover:bg-green-100 transition">ฟาร์ม</button>
         <button data-view="animals" class="nav-btn flex-1 py-3 text-green-800 font-bold text-lg hover:bg-green-100 transition">คอกสัตว์</button>
+        <button data-view="bedroom" class="nav-btn flex-1 py-3 text-green-800 font-bold text-lg hover:bg-green-100 transition">ห้องนอน</button>
+        <button data-view="storage" class="nav-btn flex-1 py-3 text-green-800 font-bold text-lg hover:bg-green-100 transition">คลังของ</button>
         <button data-view="shop" class="nav-btn flex-1 py-3 text-green-800 font-bold text-lg hover:bg-green-100 transition">ร้านค้า</button>
     </footer>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signInAnonymously, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, onSnapshot, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, onSnapshot, setDoc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- Config ---
         const firebaseConfig = {
@@ -185,9 +209,17 @@
 
         const FARM_GRID_SIZE = 24;
         const ANIMAL_PEN_SIZE = 8;
+        const ADMIN_UID = "p7Ujrm9dBZcL6bK5EHYEsrJOCvl2"; // <-- ใส่ USER ID ของแอดมินที่นี่
 
         // --- MASTER GAME DATA ---
         const GAME_DATA = {
+            'house_upgrades': [
+                { name: 'เต็นท์', cost: 500, imageUrl: 'beadroom1.png' },
+                { name: 'กระท่อมไม้', cost: 2500, imageUrl: 'beadroom2.png' },
+                { name: 'บ้านอิฐ', cost: 10000, imageUrl: 'beadroom3.png' },
+                { name: 'คฤหาสน์', cost: 50000, imageUrl: 'beadroom4.png' },
+                { name: 'ปราสาท', cost: 0, imageUrl: 'beadroom5.png' }
+            ],
             'carrot_seed':   { name: 'เมล็ดแครอท', type: 'seed', cost: 5, plantId: 'carrot', icon: '🥕', imageUrl: 'carrot.png' },
             'carrot':        { name: 'แครอท', type: 'crop', growTime: 4800, produceId: 'carrot_produce', icon: '🥕', imageUrl: 'carrot.png' },
             'carrot_produce':{ name: 'แครอท', type: 'produce', sellPrice: [8, 12, 16], icon: '🥕' },
@@ -231,7 +263,7 @@
             'apple_seed': { name: 'เมล็ดแอปเปิ้ล', type: 'seed', cost: 28, plantId: 'apple', icon: '🍎', imageUrl: 'apple.png' },
             'apple':      { name: 'แอปเปิ้ล', type: 'crop', growTime: 16000, produceId: 'apple_produce', icon: '🍎', imageUrl: 'apple.png' },
             'apple_produce': { name: 'แอปเปิ้ล', type: 'produce', sellPrice: [50, 75, 105], icon: '🍎' },
-
+            
             'fertilizer_1': { name: 'ปุ๋ยธรรมดา', type: 'item', cost: 10, qualityBonus: 0.3, icon: '💩' },
             'fertilizer_2': { name: 'ปุ๋ยอย่างดี', type: 'item', cost: 25, qualityBonus: 0.6, icon: '✨' },
             
@@ -300,9 +332,11 @@
             if (!farmState || !playerState) return; 
             renderFarm();
             renderAnimals();
+            renderBedroom();
             renderPlayerUI();
             renderShop();
             renderSellBox();
+            renderStorage();
         }
         
         function renderFarm() {
@@ -316,11 +350,8 @@
                 
                 if (plot.plantId) {
                     const plantData = GAME_DATA[plot.plantId];
-                    
                     if (!plantData) {
-                        console.error(`Invalid plantId "${plot.plantId}" found for plot ${index}. Skipping render.`);
                         plotEl.innerHTML = `❓`;
-                        plotEl.style.backgroundColor = 'rgba(255, 100, 100, 0.5)';
                     } else {
                         let progress = 0;
                         if (plot.plantTime) { 
@@ -329,29 +360,14 @@
                             const effectiveGrowth = elapsedSeconds * growthMultiplier;
                             progress = Math.min(effectiveGrowth / plantData.growTime, 1);
                         }
-                        
                         plotEl.style.backgroundImage = `linear-gradient(to top, rgba(96, 165, 250, 0.5) 0%, rgba(96, 165, 250, 0.5) ${progress*100}%, transparent ${progress*100}%)`;
-                        
                         const content = document.createElement('div');
-                        if (plantData.imageUrl) {
-                            content.style.backgroundImage = `url(${plantData.imageUrl})`;
-                            content.style.opacity = 0.5 + (progress * 0.5);
-                            content.className = 'w-full h-full bg-contain bg-no-repeat bg-center';
-                        } else {
-                            content.textContent = plantData.icon;
-                            content.style.transform = `scale(${0.5 + (progress * 0.5)})`;
-                        }
+                        content.style.backgroundImage = `url(${plantData.imageUrl})`;
+                        content.style.opacity = 0.5 + (progress * 0.5);
+                        content.className = 'w-full h-full bg-contain bg-no-repeat bg-center';
                         plotEl.appendChild(content);
-
-                        if (plot.quality > 0) {
-                            const qualityEl = document.createElement('div');
-                            qualityEl.className = 'absolute top-1 right-1 text-xs quality-star';
-                            qualityEl.textContent = '★'.repeat(plot.quality);
-                            plotEl.appendChild(qualityEl);
-                        }
                     }
                 }
-                
                 plotEl.onclick = () => showContextMenu('plot', index);
                 farmGrid.appendChild(plotEl);
             });
@@ -367,28 +383,29 @@
                 
                 if (animal.animalId) {
                     const animalData = GAME_DATA[animal.animalId];
-                    const content = document.createElement('div');
-                    content.className = 'text-4xl';
-                    if (animalData.imageUrl) {
-                         content.style.backgroundImage = `url(${animalData.imageUrl})`;
-                         content.className = 'w-full h-full bg-contain bg-no-repeat bg-center';
+                    if (!animalData) {
+                        console.error(`Invalid animalId "${animal.animalId}" found for slot ${index}.`);
+                        slotEl.innerHTML = `❓`;
+                        slotEl.style.backgroundColor = 'rgba(255, 100, 100, 0.5)';
                     } else {
-                         content.textContent = animalData.icon;
-                    }
+                        const content = document.createElement('div');
+                        content.style.backgroundImage = `url(${animalData.imageUrl})`;
+                        content.className = 'w-full h-full bg-contain bg-no-repeat bg-center';
 
-                    const progressEl = document.createElement('div');
-                    progressEl.className = 'w-full h-1 bg-gray-300 rounded-full mt-1';
-                    const progressFill = document.createElement('div');
-                    const progress = (Date.now() - animal.startTime) / (animalData.produceTime * 1000);
-                    progressFill.className = 'h-1 bg-yellow-400 rounded-full';
-                    progressFill.style.width = `${Math.min(progress, 1) * 100}%`;
-                    progressEl.appendChild(progressFill);
+                        const progressEl = document.createElement('div');
+                        progressEl.className = 'w-full h-1 bg-gray-300 rounded-full mt-1';
+                        const progressFill = document.createElement('div');
+                        const progress = (Date.now() - animal.startTime) / (animalData.produceTime * 1000);
+                        progressFill.className = 'h-1 bg-yellow-400 rounded-full';
+                        progressFill.style.width = `${Math.min(progress, 1) * 100}%`;
+                        progressEl.appendChild(progressFill);
 
-                    slotEl.appendChild(content);
-                    slotEl.appendChild(progressEl);
+                        slotEl.appendChild(content);
+                        slotEl.appendChild(progressEl);
 
-                    if (progress >= 1) {
-                        slotEl.classList.add('animate-bounce');
+                        if (progress >= 1) {
+                            slotEl.classList.add('animate-bounce');
+                        }
                     }
                 } else {
                     slotEl.textContent = '+';
@@ -409,7 +426,7 @@
             Object.entries(playerState.inventory).forEach(([itemId, count]) => {
                 if (count > 0) {
                     const itemData = GAME_DATA[itemId];
-                    if (itemData) { // Check if itemData exists
+                    if (itemData) {
                         const itemEl = document.createElement('span');
                         itemEl.className = 'bg-white px-2 py-1 rounded-md shadow-sm';
                         itemEl.textContent = `${itemData.icon} ${count}`;
@@ -417,6 +434,15 @@
                     }
                 }
             });
+            
+            document.getElementById('user-id-display').textContent = `ID ของคุณ: ${userId}`;
+            
+            const adminResetBtn = document.getElementById('admin-reset-btn');
+            if (userId === ADMIN_UID) {
+                adminResetBtn.classList.remove('hidden');
+            } else {
+                adminResetBtn.classList.add('hidden');
+            }
         }
 
         function renderShop() {
@@ -456,12 +482,18 @@
         function renderSellBox() {
             const itemsEl = document.getElementById('sell-box-items');
             const totalEl = document.getElementById('sell-box-total');
-            const sellBtn = document.getElementById('sell-all-btn');
+            const countdownEl = document.getElementById('sell-countdown');
+
+            const now = new Date();
+            const tomorrow = new Date(now);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            tomorrow.setHours(0, 0, 0, 0);
+            const timeRemaining = tomorrow.getTime() - now.getTime();
+            countdownEl.textContent = `จะได้รับเงินในอีก ${formatTime(Math.floor(timeRemaining / 1000))}`;
             
             if (!playerState || !playerState.produceBin || playerState.produceBin.length === 0) {
-                itemsEl.innerHTML = `<p class="text-center text-yellow-700">ไม่มีผลผลิตจะขาย</p>`;
+                itemsEl.innerHTML = `<p class="text-center text-yellow-700">ไม่มีของในกล่อง</p>`;
                 totalEl.textContent = '0';
-                sellBtn.disabled = true;
                 return;
             }
 
@@ -496,19 +528,82 @@
             });
 
             totalEl.textContent = totalValue;
-            sellBtn.disabled = false;
         }
+        
+        function renderBedroom() {
+            if (!playerState) return;
+            const container = document.getElementById('bedroom-display');
+            const infoP = document.getElementById('bedroom-info').querySelector('p');
+            const upgradeBtn = document.getElementById('upgrade-house-btn');
 
-        // --- Context Menu Logic ---
-        function showContextMenu(type, index) {
+            const houseLevel = playerState.houseLevel || 0;
+
+            if (houseLevel === 0) {
+                container.style.backgroundImage = 'none';
+                container.style.backgroundColor = '#D2B48C';
+                infoP.innerHTML = `คุณยังไม่มีห้องนอน`;
+                
+                const firstPurchaseData = GAME_DATA.house_upgrades[0];
+                upgradeBtn.textContent = `ซื้อห้องนอน (${firstPurchaseData.cost}💰)`;
+                upgradeBtn.disabled = playerState.money < firstPurchaseData.cost;
+            } else {
+                container.style.backgroundColor = 'transparent';
+                const houseData = GAME_DATA.house_upgrades[houseLevel - 1];
+                container.style.backgroundImage = `url(${houseData.imageUrl})`;
+                infoP.innerHTML = `ห้องนอนระดับ <span id="house-level" class="font-bold">${houseLevel}</span>`;
+                
+                if (houseLevel >= GAME_DATA.house_upgrades.length) {
+                    upgradeBtn.textContent = 'อัปเกรดสูงสุดแล้ว';
+                    upgradeBtn.disabled = true;
+                } else {
+                    const nextUpgradeData = GAME_DATA.house_upgrades[houseLevel];
+                    upgradeBtn.textContent = `อัปเกรด (${nextUpgradeData.cost}💰)`;
+                    upgradeBtn.disabled = playerState.money < nextUpgradeData.cost;
+                }
+            }
+        }
+        
+        function renderStorage() {
+            const container = document.getElementById('storage-items');
+            if (!playerState || !playerState.storageBin || playerState.storageBin.length === 0) {
+                container.innerHTML = `<p class="text-center text-gray-500">ไม่มีของในคลัง</p>`;
+                return;
+            }
+
+            container.innerHTML = '';
+            const groupedStorage = playerState.storageBin.reduce((acc, item) => {
+                const key = `${item.id}_q${item.quality}`;
+                if (!acc[key]) {
+                    acc[key] = { ...item, count: 0 };
+                }
+                acc[key].count++;
+                return acc;
+            }, {});
+
+            Object.values(groupedStorage).forEach(item => {
+                const itemData = GAME_DATA[item.id];
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'flex justify-between items-center bg-white/80 p-2 rounded-lg';
+                itemDiv.innerHTML = `
+                    <div>
+                        <span class="text-2xl">${itemData.icon}</span>
+                        <span>${itemData.name}</span>
+                        <span class="quality-star">${'★'.repeat(item.quality)}</span>
+                        <span class="text-gray-600 text-sm">x${item.count}</span>
+                    </div>
+                    <button class="sell-storage-btn bg-green-500 text-white font-bold py-1 px-4 rounded-full hover:bg-green-600" data-item-id="${item.id}" data-quality="${item.quality}">ขาย</button>
+                `;
+                container.appendChild(itemDiv);
+            });
+        }
+        
+        function showContextMenu(type, id) {
             const modal = document.getElementById('context-modal');
             const contentEl = document.getElementById('context-modal-content');
             const titleEl = document.getElementById('context-modal-title');
             const actionsEl = document.getElementById('context-modal-actions');
             actionsEl.innerHTML = '';
-
             contentEl.querySelectorAll('.context-details').forEach(el => el.remove());
-
             const detailsEl = document.createElement('div');
             detailsEl.className = 'context-details text-sm text-gray-600 mb-4 border-t pt-4 mt-4';
 
@@ -521,6 +616,7 @@
             };
 
             if (type === 'plot') {
+                const index = id;
                 const plot = farmState.plots[index];
                 titleEl.textContent = `แปลงที่ ${index + 1}`;
                 if (!plot.plantId) {
@@ -592,30 +688,36 @@
                     }
                 }
             } else if (type === 'animal') {
-                 const animal = farmState.animals[index];
-                 titleEl.textContent = `คอกที่ ${index + 1}`;
-                 if (!animal.animalId) {
+                const index = id;
+                const animal = farmState.animals[index];
+                titleEl.textContent = `คอกที่ ${index + 1}`;
+                if (!animal.animalId) {
                      const buyableItems = Object.keys(playerState.inventory).filter(id => GAME_DATA[id] && GAME_DATA[id].type === 'animal_deed' && playerState.inventory[id] > 0);
                      actionsEl.appendChild(createButton('➕ วางสัตว์', () => showSubMenu('placeAnimal', index, buyableItems), buyableItems.length === 0));
-                 } else {
+                } else {
                     const animalData = GAME_DATA[animal.animalId];
-                    const isReady = (Date.now() - animal.startTime) >= (animalData.produceTime * 1000);
-                    
-                    const remainingMillis = Math.max(0, (animal.startTime + animalData.produceTime * 1000) - Date.now());
-                    detailsEl.innerHTML = `<p>พร้อมเก็บใน: <span class="font-semibold">${formatTime(remainingMillis / 1000)}</span></p>`;
-                    actionsEl.before(detailsEl);
-                    
-                    if(isReady){
-                        actionsEl.appendChild(createButton(`เก็บ${GAME_DATA[animalData.produceId].name}`, () => collectProduct(index)));
+                    if(!animalData){
+                        detailsEl.innerHTML = `<p class="text-red-500">ข้อมูลสัตว์เสียหาย</p>`;
+                        actionsEl.before(detailsEl);
                     } else {
-                         actionsEl.appendChild(createButton('ให้อาหาร (เร็วขึ้น)', () => {}, true));
+                        const isReady = (Date.now() - animal.startTime) >= (animalData.produceTime * 1000);
+                        const remainingMillis = Math.max(0, (animal.startTime + animalData.produceTime * 1000) - Date.now());
+                        detailsEl.innerHTML = `<p>พร้อมเก็บใน: <span class="font-semibold">${formatTime(remainingMillis / 1000)}</span></p>`;
+                        actionsEl.before(detailsEl);
+                        
+                        if(isReady){
+                            actionsEl.appendChild(createButton(`เก็บ${GAME_DATA[animalData.produceId].name}`, () => collectProduct(index)));
+                        } else {
+                             actionsEl.appendChild(createButton('ให้อาหาร (เร็วขึ้น)', () => {}, true));
+                        }
                     }
-                 }
-            }
+                }
+            } 
             
             modal.classList.remove('hidden', 'modal-leave');
             modal.classList.add('modal-enter');
         }
+
         function hideContextMenu() {
             const modal = document.getElementById('context-modal');
             modal.classList.add('modal-leave');
@@ -693,7 +795,7 @@
         
         function clearPlot(plotIndex) {
             const plot = farmState.plots[plotIndex];
-            if (!plot || !plot.plantId) return;
+            if (!plot) return;
 
             showConfirmationModal('คุณแน่ใจหรือไม่ว่าต้องการเคลียแปลงนี้? พืชที่ปลูกไว้จะหายไปทันที', () => {
                 const newFarmState = { ...farmState };
@@ -707,7 +809,7 @@
             const newFarmState = { ...farmState };
             const plot = newFarmState.plots[plotIndex];
             if (!plot || !plot.plantId || (plot.harvestedBy && plot.harvestedBy.some(p => p.uid === userId))) {
-                return; // Already harvested or nothing to harvest
+                return;
             }
             const cropData = GAME_DATA[plot.plantId];
 
@@ -715,8 +817,7 @@
             if (Math.random() < plot.fertilizerLevel) quality = 1;
             if (Math.random() < plot.fertilizerLevel - 1) quality = 2;
 
-            if (!newPlayerState.produceBin) newPlayerState.produceBin = [];
-            newPlayerState.produceBin.push({ id: cropData.produceId, quality: quality });
+            newPlayerState.storageBin.push({ id: cropData.produceId, quality: quality });
             
             if (!plot.harvestedBy) plot.harvestedBy = [];
             plot.harvestedBy.push({ uid: userId, nickname: playerState.nickname });
@@ -741,7 +842,7 @@
             updatePlayerState(newPlayerState);
             updateFarmState(newFarmState);
         }
-
+        
         function placeAnimal(slotIndex, deedId) {
             const newFarmState = { ...farmState };
             const newPlayerState = { ...playerState };
@@ -759,8 +860,7 @@
             const animal = newFarmState.animals[slotIndex];
             const animalData = GAME_DATA[animal.animalId];
 
-            if (!newPlayerState.produceBin) newPlayerState.produceBin = [];
-            newPlayerState.produceBin.push({ id: animalData.produceId, quality: 0 });
+            newPlayerState.storageBin.push({ id: animalData.produceId, quality: 0 });
             animal.startTime = Date.now();
             newFarmState.animals[slotIndex] = animal;
             
@@ -768,8 +868,85 @@
             updateFarmState(newFarmState);
         }
         
+        function upgradeHouse() {
+            const newPlayerState = { ...playerState };
+            const currentLevel = newPlayerState.houseLevel || 0;
+            if (currentLevel >= GAME_DATA.house_upgrades.length) return;
+
+            const nextLevelData = GAME_DATA.house_upgrades[currentLevel];
+            if (newPlayerState.money >= nextLevelData.cost) {
+                newPlayerState.money -= nextLevelData.cost;
+                newPlayerState.houseLevel = currentLevel + 1;
+                updatePlayerState(newPlayerState);
+            }
+        }
+        
+        function sellFromStorage(itemId, quality) {
+            const newPlayerState = { ...playerState };
+            const itemsToSell = newPlayerState.storageBin.filter(item => item.id === itemId && item.quality === quality);
+            const itemsToKeep = newPlayerState.storageBin.filter(item => item.id !== itemId || item.quality !== quality);
+
+            newPlayerState.storageBin = itemsToKeep;
+            newPlayerState.produceBin.push(...itemsToSell);
+            
+            updatePlayerState(newPlayerState);
+        }
+        
+        async function checkForPayout() {
+            if (!playerState) return;
+
+            const now = new Date();
+            const lastPayout = new Date(playerState.lastPayoutTime || 0);
+            const todayMidnight = new Date();
+            todayMidnight.setHours(0, 0, 0, 0);
+
+            if (lastPayout < todayMidnight && playerState.produceBin && playerState.produceBin.length > 0) {
+                console.log("Processing daily payout...");
+
+                let totalValue = 0;
+                playerState.produceBin.forEach(item => {
+                    const itemData = GAME_DATA[item.id];
+                    if (itemData && itemData.sellPrice) {
+                        totalValue += itemData.sellPrice[item.quality];
+                    }
+                });
+
+                const newPlayerState = { ...playerState };
+                newPlayerState.money = (newPlayerState.money || 0) + totalValue;
+                newPlayerState.produceBin = [];
+                newPlayerState.lastPayoutTime = now.getTime();
+
+                await updatePlayerState(newPlayerState);
+                console.log(`Paid out ${totalValue}💰. New balance: ${newPlayerState.money}`);
+            }
+        }
+        
+        function forceResetFarm() {
+            showConfirmationModal('คุณแน่ใจ 100% หรือไม่? การกระทำนี้จะล้างข้อมูลแปลงผักและคอกสัตว์ทั้งหมดสำหรับผู้เล่นทุกคน และไม่สามารถย้อนกลับได้!', async () => {
+                console.log("Admin is resetting the farm...");
+                const defaultPlot = () => ({ plantId: null });
+                const defaultAnimalSlot = () => ({ animalId: null });
+                const initialFarmState = {
+                    plots: Array(FARM_GRID_SIZE).fill(null).map(defaultPlot),
+                    animals: Array(ANIMAL_PEN_SIZE).fill(null).map(defaultAnimalSlot),
+                };
+                const farmDocRef = doc(db, "publicFarmData", "farmState");
+                await setDoc(farmDocRef, initialFarmState);
+                console.log("Farm has been reset by admin.");
+            });
+        }
+        
+        function resetPlayerProgress() {
+            showConfirmationModal('คุณแน่ใจจริงๆ หรือไม่? การกระทำนี้จะลบข้อมูลส่วนตัวทั้งหมดของคุณ (เงิน, ของในตัว, บ้าน) และเริ่มเกมใหม่ทั้งหมด ไม่สามารถย้อนกลับได้!', async () => {
+                if (!userId) return;
+                console.log("Resetting player progress for user:", userId);
+                const playerDocRef = doc(db, "players", userId);
+                await deleteDoc(playerDocRef);
+                window.location.reload();
+            });
+        }
+        
         let gameLoopInterval = null;
-        // --- Init & Setup ---
         async function startGame(uid) {
             userId = uid;
             
@@ -781,7 +958,10 @@
             document.getElementById('footer-nav').style.opacity = 1;
             
             if (gameLoopInterval) clearInterval(gameLoopInterval);
-            gameLoopInterval = setInterval(renderAll, 2000); 
+            gameLoopInterval = setInterval(() => {
+                checkForPayout();
+                renderAll();
+            }, 2000); 
         }
 
         function initPlayerListeners(uid) {
@@ -790,6 +970,10 @@
                 if (docSnap.exists()) {
                     playerState = docSnap.data();
                     if (!playerState.produceBin) playerState.produceBin = [];
+                    if (!playerState.storageBin) playerState.storageBin = [];
+                    if (typeof playerState.houseLevel === 'undefined') playerState.houseLevel = 0;
+                    if (typeof playerState.lastPayoutTime === 'undefined') playerState.lastPayoutTime = 0;
+                    checkForPayout(); // Run check on initial load
                 }
             }, handleFirestoreError);
         }
@@ -813,13 +997,13 @@
                     const defaultAnimalSlot = () => ({ animalId: null });
                     const initialFarmState = {
                         plots: Array(FARM_GRID_SIZE).fill(null).map(defaultPlot),
-                        animals: Array(ANIMAL_PEN_SIZE).fill(null).map(defaultAnimalSlot)
+                        animals: Array(ANIMAL_PEN_SIZE).fill(null).map(defaultAnimalSlot),
                     };
                     await setDoc(farmDocRef, initialFarmState);
                 }
             } catch (error) {
                 console.warn("Could not ensure farm data existence.", error.message);
-                throw error; // Re-throw to be caught by the caller
+                throw error;
             }
         }
         
@@ -860,20 +1044,17 @@
                 }
             });
 
-            document.getElementById('sell-all-btn').addEventListener('click', () => {
-                if (!playerState.produceBin || playerState.produceBin.length === 0) return;
-                const newPlayerState = { ...playerState };
-                let totalValue = 0;
-                newPlayerState.produceBin.forEach(item => {
-                    const itemData = GAME_DATA[item.id];
-                    if (itemData && itemData.sellPrice) {
-                        totalValue += itemData.sellPrice[item.quality];
-                    }
-                });
-                newPlayerState.money += totalValue;
-                newPlayerState.produceBin = [];
-                updatePlayerState(newPlayerState);
+            document.getElementById('storage-items').addEventListener('click', e => {
+                if (e.target.classList.contains('sell-storage-btn')) {
+                    const itemId = e.target.dataset.itemId;
+                    const quality = parseInt(e.target.dataset.quality, 10);
+                    sellFromStorage(itemId, quality);
+                }
             });
+
+            document.getElementById('upgrade-house-btn').addEventListener('click', upgradeHouse);
+            document.getElementById('admin-reset-btn').addEventListener('click', forceResetFarm);
+            document.getElementById('reset-player-btn').addEventListener('click', resetPlayerProgress);
 
             playerNameEl.addEventListener('click', () => showNameModal(false));
             document.getElementById('save-name-btn').addEventListener('click', () => saveNameChange());
@@ -930,8 +1111,11 @@
                     playerState = { 
                         money: 20, 
                         inventory: {}, 
-                        produceBin: [], 
-                        nickname: newName
+                        produceBin: [],
+                        storageBin: [],
+                        nickname: newName,
+                        houseLevel: 0,
+                        lastPayoutTime: 0,
                     };
                     await setDoc(doc(db, "players", userId), playerState);
                     await startGame(userId);
