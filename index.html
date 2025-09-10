@@ -17,6 +17,7 @@
             background-size: contain; 
             background-position: center; 
             background-repeat: no-repeat; 
+            image-rendering: pixelated; /* For pixel art style */
         }
         .plot:hover, .animal-slot:hover { transform: scale(1.05); }
 
@@ -53,14 +54,15 @@
         .quality-star { color: #facc15; text-shadow: 0 0 2px black; }
         .loading-hidden { opacity: 0; pointer-events: none; }
         
-        #bedroom-display {
+        #bedroom-display, #pond-display, #kitchen-display {
             background-size: cover;
             background-position: center;
         }
         #pond-display {
             background-image: url('sea.png');
-            background-size: cover;
-            background-position: center;
+        }
+        #kitchen-display {
+            background-image: url('kitchen.png');
         }
 
         /* Fishing Minigame Styles */
@@ -103,7 +105,6 @@
             height: 0;
             transition: height 0.1s linear;
         }
-
     </style>
 </head>
 <body class="min-h-screen">
@@ -186,6 +187,16 @@
                 </div>
             </div>
         </div>
+        <!-- Cooking Modal -->
+        <div id="cooking-modal" class="hidden fixed inset-0 bg-black/60 z-[52] flex items-center justify-center p-4">
+            <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-lg modal-enter">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4 text-center">ตำราอาหาร 📖</h2>
+                <div id="recipe-list" class="max-h-[60vh] overflow-y-auto space-y-3">
+                    <!-- Recipes will be rendered here -->
+                </div>
+                 <button id="cooking-modal-close" class="mt-4 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg w-full">ปิด</button>
+            </div>
+        </div>
     </div>
 
     <!-- Main Game Area -->
@@ -222,6 +233,16 @@
                         <button id="upgrade-house-btn" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full disabled:bg-gray-400 disabled:cursor-not-allowed transition">
                             อัปเกรด
                         </button>
+                    </div>
+                 </div>
+            </div>
+             <!-- Kitchen View -->
+            <div id="kitchen-view" class="hidden">
+                 <div class="w-full max-w-2xl mx-auto text-center">
+                    <h2 class="text-3xl font-bold text-green-800 mb-4">ห้องครัว 🍳</h2>
+                    <div id="kitchen-display" class="relative w-full aspect-[4/3] rounded-lg shadow-inner overflow-hidden"></div>
+                    <div class="mt-4">
+                        <button id="cook-btn" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-8 rounded-full transition">ทำอาหาร</button>
                     </div>
                  </div>
             </div>
@@ -326,74 +347,110 @@
                 { name: 'เบ็ดทอง', cost: 15000, imageUrl: 'rod4.png' },
                 { name: 'เบ็ดในตำนาน', cost: 0, imageUrl: 'rod5.png' },
             ],
-            'carp': { name: 'ปลาคาร์ป', icon: '🐟', rarity: 'Common', sellPrice: [15, 20, 25], type: 'produce', energyRestore: 3, imageUrl: 'carp.png' },
-            'sardine': { name: 'ปลาซาร์ดีน', icon: '🐠', rarity: 'Common', sellPrice: [20, 25, 30], type: 'produce', energyRestore: 4, imageUrl: 'sardine.png' },
-            'tuna': { name: 'ปลาทูน่า', icon: '🐟', rarity: 'Uncommon', sellPrice: [35, 50, 65], type: 'produce', energyRestore: 15, imageUrl: 'tuna.png' },
-            'salmon': { name: 'ปลาแซลมอน', icon: '🐠', rarity: 'Uncommon', sellPrice: [45, 60, 80], type: 'produce', energyRestore: 18, imageUrl: 'salmon.png' },
-            'eel': { name: 'ปลาไหล', icon: '鰻', rarity: 'Rare', sellPrice: [150, 200, 250], type: 'produce', energyRestore: 30, imageUrl: 'eel.png' },
-            'pufferfish': { name: 'ปลาปักเป้า', icon: '🐡', rarity: 'Rare', sellPrice: [200, 250, 300], type: 'produce', energyRestore: 35, imageUrl: 'pufferfish.png' },
+            'recipes': {
+                'fried_egg': { resultId: 'fried_egg_food', ingredients: [{ category: 'egg' }], tool: 'kitchen_pan' },
+                'sashimi': { resultId: 'sashimi_food', ingredients: [{ category: 'fish' }], tool: 'kitchen_knife' },
+                'fruit_smoothie': { resultId: 'fruit_smoothie_food', ingredients: [{ category: 'fruit' }], tool: 'kitchen_blender' },
+                'vegetable_juice': { resultId: 'vegetable_juice_food', ingredients: [{ category: 'vegetable' }], tool: 'kitchen_blender' },
+                'salad': { resultId: 'salad_food', ingredients: [{ id: 'carrot_produce' }, { id: 'tomato_produce' }], tool: 'kitchen_knife' },
+                'omelette': { resultId: 'omelette_food', ingredients: [{ id: 'egg' }, { id: 'milk' }], tool: 'kitchen_pan' },
+                'fried_fish': { resultId: 'fried_fish_food', ingredients: [{ category: 'fish' }], tool: 'kitchen_pan' },
+                'fruit_salad': { resultId: 'fruit_salad_food', ingredients: [{ category: 'fruit' }], tool: 'kitchen_knife' },
+                'milkshake': { resultId: 'milkshake_food', ingredients: [{ id: 'milk' }, { category: 'fruit' }], tool: 'kitchen_blender' },
+                'vegetable_soup': { resultId: 'vegetable_soup_food', ingredients: [{ category: 'vegetable' }, { category: 'vegetable' }], tool: 'kitchen_pot' },
+                'spicy_fish_soup': { resultId: 'spicy_fish_soup_food', ingredients: [{ category: 'fish' }, { id: 'tomato_produce' }], tool: 'kitchen_pot' },
+            },
+            
+            // Food
+            'fried_egg_food': { name: 'ไข่ดาว', icon: '🍳', type: 'produce', sellPrice: [25, 35, 45], energyRestore: 15, imageUrl: 'fried_egg_food.png' },
+            'sashimi_food': { name: 'ซาชิมิ', icon: '🍣', type: 'produce', sellPrice: [75, 90, 110], energyRestore: 25, imageUrl: 'sashimi_food.png' },
+            'fruit_smoothie_food': { name: 'น้ำผลไม้ปั่น', icon: '🥤', type: 'produce', sellPrice: [80, 100, 120], energyRestore: 30, imageUrl: 'fruit_smoothie_food.png' },
+            'vegetable_juice_food': { name: 'น้ำผักปั่น', icon: '🧃', type: 'produce', sellPrice: [40, 55, 70], energyRestore: 20, imageUrl: 'vegetable_juice_food.png' },
+            'salad_food': { name: 'สลัด', icon: '🥗', type: 'produce', sellPrice: [50, 70, 90], energyRestore: 22, imageUrl: 'salad_food.png' },
+            'omelette_food': { name: 'ไข่เจียว', icon: '🍳', type: 'produce', sellPrice: [60, 80, 100], energyRestore: 28, imageUrl: 'omelette_food.png' },
+            'fried_fish_food': { name: 'ปลาทอด', icon: '🐟', type: 'produce', sellPrice: [50, 65, 80], energyRestore: 20, imageUrl: 'fried_fish_food.png' },
+            'fruit_salad_food': { name: 'สลัดผลไม้', icon: '🍓', type: 'produce', sellPrice: [65, 85, 110], energyRestore: 25, imageUrl: 'fruit_salad_food.png' },
+            'milkshake_food': { name: 'มิลค์เชค', icon: '🥛', type: 'produce', sellPrice: [100, 125, 150], energyRestore: 40, imageUrl: 'milkshake_food.png' },
+            'vegetable_soup_food': { name: 'ซุปผัก', icon: '🥣', type: 'produce', sellPrice: [60, 80, 100], energyRestore: 25, imageUrl: 'vegetable_soup_food.png' },
+            'spicy_fish_soup_food': { name: 'ต้มยำปลา', icon: '🌶️', type: 'produce', sellPrice: [180, 220, 260], energyRestore: 50, imageUrl: 'spicy_fish_soup_food.png' },
+            
+            // Kitchen Tools
+            'kitchen_knife': { name: 'มีดทำครัว', type: 'kitchen_tool', cost: 1000, icon: '🔪', imageUrl: 'knife.png' },
+            'kitchen_pan': { name: 'กระทะ', type: 'kitchen_tool', cost: 1500, icon: '🍳', imageUrl: 'pan.png' },
+            'kitchen_blender': { name: 'เครื่องปั่น', type: 'kitchen_tool', cost: 2000, icon: '🌪️', imageUrl: 'mixer.png' },
+            'kitchen_pot': { name: 'หม้อ', type: 'kitchen_tool', cost: 2000, icon: '🍲', imageUrl: 'pot.png' },
+
+            // Fish
+            'carp': { name: 'ปลาคาร์ป', icon: '🐟', rarity: 'Common', sellPrice: [15, 20, 25], type: 'produce', energyRestore: 3, imageUrl: 'carp.png', category: 'fish' },
+            'sardine': { name: 'ปลาซาร์ดีน', icon: '🐠', rarity: 'Common', sellPrice: [20, 25, 30], type: 'produce', energyRestore: 4, imageUrl: 'sardine.png', category: 'fish' },
+            'tuna': { name: 'ปลาทูน่า', icon: '🐟', rarity: 'Uncommon', sellPrice: [35, 50, 65], type: 'produce', energyRestore: 15, imageUrl: 'tuna.png', category: 'fish' },
+            'salmon': { name: 'ปลาแซลมอน', icon: '🐠', rarity: 'Uncommon', sellPrice: [45, 60, 80], type: 'produce', energyRestore: 18, imageUrl: 'salmon.png', category: 'fish' },
+            'eel': { name: 'ปลาไหล', icon: '鰻', rarity: 'Rare', sellPrice: [150, 200, 250], type: 'produce', energyRestore: 30, imageUrl: 'eel.png', category: 'fish' },
+            'pufferfish': { name: 'ปลาปักเป้า', icon: '🐡', rarity: 'Rare', sellPrice: [200, 250, 300], type: 'produce', energyRestore: 35, imageUrl: 'pufferfish.png', category: 'fish' },
+            
+            // Seeds & Produce
             'carrot_seed':   { name: 'เมล็ดแครอท', type: 'seed', cost: 5, plantId: 'carrot', icon: '🥕', imageUrl: 'carrot.png' },
             'carrot':        { name: 'แครอท', type: 'crop', growTime: 9600, produceId: 'carrot_produce', icon: '🥕', imageUrl: 'carrot.png' },
-            'carrot_produce':{ name: 'แครอท', type: 'produce', sellPrice: [8, 12, 16], icon: '🥕', energyRestore: 2 },
+            'carrot_produce':{ name: 'แครอท', type: 'produce', sellPrice: [8, 12, 16], icon: '🥕', energyRestore: 2, category: 'vegetable' },
             
             'tomato_seed':   { name: 'เมล็ดมะเขือเทศ', type: 'seed', cost: 10, plantId: 'tomato', icon: '🍅', imageUrl: 'tomato.png' },
             'tomato':        { name: 'มะเขือเทศ', type: 'crop', growTime: 14400, produceId: 'tomato_produce', icon: '🍅', imageUrl: 'tomato.png' },
-            'tomato_produce':{ name: 'มะเขือเทศ', type: 'produce', sellPrice: [18, 25, 35], icon: '🍅', energyRestore: 3 },
+            'tomato_produce':{ name: 'มะเขือเทศ', type: 'produce', sellPrice: [18, 25, 35], icon: '🍅', energyRestore: 3, category: 'vegetable' },
 
             'strawberry_seed': { name: 'เมล็ดสตรอว์เบอร์รี', type: 'seed', cost: 15, plantId: 'strawberry', icon: '🍓', imageUrl: 'stawberry.png' },
             'strawberry':      { name: 'สตรอว์เบอร์รี', type: 'crop', growTime: 16800, produceId: 'strawberry_produce', icon: '🍓', imageUrl: 'stawberry.png' },
-            'strawberry_produce': { name: 'สตรอว์เบอร์รี', type: 'produce', sellPrice: [25, 35, 50], icon: '🍓', energyRestore: 4 },
+            'strawberry_produce': { name: 'สตรอว์เบอร์รี', type: 'produce', sellPrice: [25, 35, 50], icon: '🍓', energyRestore: 4, category: 'fruit' },
 
             'grape_seed': { name: 'เมล็ดองุ่น', type: 'seed', cost: 20, plantId: 'grape', icon: '🍇', imageUrl: 'grape.png' },
             'grape':      { name: 'องุ่น', type: 'crop', growTime: 21000, produceId: 'grape_produce', icon: '🍇', imageUrl: 'grape.png' },
-            'grape_produce': { name: 'องุ่น', type: 'produce', sellPrice: [35, 50, 70], icon: '🍇', energyRestore: 6 },
+            'grape_produce': { name: 'องุ่น', type: 'produce', sellPrice: [35, 50, 70], icon: '🍇', energyRestore: 6, category: 'fruit' },
 
             'peach_seed': { name: 'เมล็ดพีช', type: 'seed', cost: 25, plantId: 'peach', icon: '🍑', imageUrl: 'peach.png' },
             'peach':      { name: 'พีช', type: 'crop', growTime: 21600, produceId: 'peach_produce', icon: '🍑', imageUrl: 'peach.png' },
-            'peach_produce': { name: 'พีช', type: 'produce', sellPrice: [45, 65, 90], icon: '🍑', energyRestore: 8 },
+            'peach_produce': { name: 'พีช', type: 'produce', sellPrice: [45, 65, 90], icon: '🍑', energyRestore: 8, category: 'fruit' },
 
             'orange_seed': { name: 'เมล็ดส้ม', type: 'seed', cost: 30, plantId: 'orange', icon: '🍊', imageUrl: 'orange.png' },
             'orange':      { name: 'ส้ม', type: 'crop', growTime: 25200, produceId: 'orange_produce', icon: '🍊', imageUrl: 'orange.png' },
-            'orange_produce': { name: 'ส้ม', type: 'produce', sellPrice: [55, 80, 110], icon: '🍊', energyRestore: 9 },
+            'orange_produce': { name: 'ส้ม', type: 'produce', sellPrice: [55, 80, 110], icon: '🍊', energyRestore: 9, category: 'fruit' },
 
             'mango_seed': { name: 'เมล็ดมะม่วง', type: 'seed', cost: 35, plantId: 'mango', icon: '🥭', imageUrl: 'mango.png' },
             'mango':      { name: 'มะม่วง', type: 'crop', growTime: 28800, produceId: 'mango_produce', icon: '🥭', imageUrl: 'mango.png' },
-            'mango_produce': { name: 'มะม่วง', type: 'produce', sellPrice: [65, 95, 130], icon: '🥭', energyRestore: 11 },
+            'mango_produce': { name: 'มะม่วง', type: 'produce', sellPrice: [65, 95, 130], icon: '🥭', energyRestore: 11, category: 'fruit' },
 
             'pineapple_seed': { name: 'เมล็ดสับปะรด', type: 'seed', cost: 40, plantId: 'pineapple', icon: '🍍', imageUrl: 'pineapple.png' },
             'pineapple':      { name: 'สับปะรด', type: 'crop', growTime: 32400, produceId: 'pineapple_produce', icon: '🍍', imageUrl: 'pineapple.png' },
-            'pineapple_produce': { name: 'สับปะรด', type: 'produce', sellPrice: [75, 110, 150], icon: '🍍', energyRestore: 12 },
+            'pineapple_produce': { name: 'สับปะรด', type: 'produce', sellPrice: [75, 110, 150], icon: '🍍', energyRestore: 12, category: 'fruit' },
 
             'guava_seed': { name: 'เมล็ดฝรั่ง', type: 'seed', cost: 18, plantId: 'guava', icon: '🍈', imageUrl: 'guava.png' },
             'guava':      { name: 'ฝรั่ง', type: 'crop', growTime: 22400, produceId: 'guava_produce', icon: '🍈', imageUrl: 'guava.png' },
-            'guava_produce': { name: 'ฝรั่ง', type: 'produce', sellPrice: [30, 45, 65], icon: '🍈', energyRestore: 5 },
+            'guava_produce': { name: 'ฝรั่ง', type: 'produce', sellPrice: [30, 45, 65], icon: '🍈', energyRestore: 5, category: 'fruit' },
 
             'roseapple_seed': { name: 'เมล็ดชมพู่', type: 'seed', cost: 22, plantId: 'roseapple', icon: '🍐', imageUrl: 'chompu.png' },
             'roseapple':      { name: 'ชมพู่', type: 'crop', growTime: 25600, produceId: 'roseapple_produce', icon: '🍐', imageUrl: 'chompu.png' },
-            'roseapple_produce': { name: 'ชมพู่', type: 'produce', sellPrice: [40, 60, 85], icon: '🍐', energyRestore: 7 },
+            'roseapple_produce': { name: 'ชมพู่', type: 'produce', sellPrice: [40, 60, 85], icon: '🍐', energyRestore: 7, category: 'fruit' },
 
             'apple_seed': { name: 'เมล็ดแอปเปิ้ล', type: 'seed', cost: 28, plantId: 'apple', icon: '🍎', imageUrl: 'apple.png' },
             'apple':      { name: 'แอปเปิ้ล', type: 'crop', growTime: 32000, produceId: 'apple_produce', icon: '🍎', imageUrl: 'apple.png' },
-            'apple_produce': { name: 'แอปเปิ้ล', type: 'produce', sellPrice: [50, 75, 105], icon: '🍎', energyRestore: 10 },
+            'apple_produce': { name: 'แอปเปิ้ล', type: 'produce', sellPrice: [50, 75, 105], icon: '🍎', energyRestore: 10, category: 'fruit' },
             
-            'fertilizer_1': { name: 'ปุ๋ยธรรมดา', type: 'item', cost: 10, qualityBonus: 0.3, icon: '💩' },
-            'fertilizer_2': { name: 'ปุ๋ยอย่างดี', type: 'item', cost: 25, qualityBonus: 0.6, icon: '✨' },
+            'fertilizer_1': { name: 'ปุ๋ยธรรมดา', type: 'item', cost: 10, qualityBonus: 0.3, icon: '💩', imageUrl: 'manure.png' },
+            'fertilizer_2': { name: 'ปุ๋ยอย่างดี', type: 'item', cost: 25, qualityBonus: 0.6, icon: '✨', imageUrl: 'fertilizer.png' },
             
             'chicken_deed': { name: 'กรรมสิทธิ์ไก่', type: 'animal_deed', cost: 100, animalId: 'chicken', icon: '🐔', imageUrl: 'chicken.png' },
             'chicken':      { name: 'ไก่', type: 'animal_instance', produceTime: 600, produceId: 'egg', icon: '🐔', imageUrl: 'chicken.png' },
-            'egg':          { name: 'ไข่', type: 'produce', sellPrice: [12, 18, 25], icon: '🥚', energyRestore: 5 },
+            'egg':          { name: 'ไข่', type: 'produce', sellPrice: [12, 18, 25], icon: '🥚', energyRestore: 5, category: 'egg' },
 
             'cow_deed':     { name: 'กรรมสิทธิ์วัว', type: 'animal_deed', cost: 500, animalId: 'cow', icon: '🐄', imageUrl: 'cow.png' },
             'cow':          { name: 'วัว', type: 'animal_instance', produceTime: 3600, produceId: 'milk', icon: '🐄', imageUrl: 'cow.png' },
-            'milk':         { name: 'นม', type: 'produce', sellPrice: [50, 70, 90], icon: '🥛', energyRestore: 10 },
+            'milk':         { name: 'นม', type: 'produce', sellPrice: [50, 70, 90], icon: '🥛', energyRestore: 10, category: 'milk' },
 
             'pig_deed':     { name: 'กรรมสิทธิ์หมู', type: 'animal_deed', cost: 300, animalId: 'pig', icon: '🐖', imageUrl: 'pig.png' },
             'pig':          { name: 'หมู', type: 'animal_instance', produceTime: 4800, produceId: 'truffle', icon: '🐖', imageUrl: 'pig.png' },
-            'truffle':      { name: 'เห็ดทรัฟเฟิล', type: 'produce', sellPrice: [80, 110, 150], icon: '🍄', energyRestore: 15 },
+            'truffle':      { name: 'เห็ดทรัฟเฟิล', type: 'produce', sellPrice: [80, 110, 150], icon: '🍄', energyRestore: 15, category: 'vegetable' },
 
             'duck_deed':    { name: 'กรรมสิทธิ์เป็ด', type: 'animal_deed', cost: 120, animalId: 'duck', icon: '🦆', imageUrl: 'duck.png' },
             'duck':         { name: 'เป็ด', type: 'animal_instance', produceTime: 900, produceId: 'duck_egg', icon: '🦆', imageUrl: 'duck.png' },
-            'duck_egg':     { name: 'ไข่เป็ด', type: 'produce', sellPrice: [15, 22, 30], icon: '🥚', energyRestore: 6 },
+            'duck_egg':     { name: 'ไข่เป็ด', type: 'produce', sellPrice: [15, 22, 30], icon: '🥚', energyRestore: 6, category: 'egg' },
 
             'goose_deed':   { name: 'กรรมสิทธิ์ห่าน', type: 'animal_deed', cost: 150, animalId: 'goose', icon: '🦢', imageUrl: 'swan.png' },
             'goose':        { name: 'ห่าน', type: 'animal_instance', produceTime: 1800, produceId: 'feather', icon: '🦢', imageUrl: 'swan.png' },
@@ -561,9 +618,9 @@
         function renderShop() {
             const shopItems = document.getElementById('shop-items');
             shopItems.innerHTML = '';
-            ['seed', 'item', 'animal_deed'].forEach(category => {
+            ['seed', 'item', 'animal_deed', 'kitchen_tool'].forEach(category => {
                 const categoryEl = document.createElement('div');
-                const title = {seed:'เมล็ดพันธุ์', item:'ไอเท็ม', animal_deed:'สัตว์เลี้ยง'}[category];
+                const title = {seed:'เมล็ดพันธุ์', item:'ไอเท็ม', animal_deed:'สัตว์เลี้ยง', kitchen_tool: 'อุปกรณ์ครัว'}[category];
                 categoryEl.innerHTML = `<h3 class="text-xl font-bold text-green-700 mb-2">${title}</h3>`;
                 const grid = document.createElement('div');
                 grid.className = 'grid grid-cols-2 md:grid-cols-3 gap-2';
@@ -915,6 +972,68 @@
             setTimeout(() => modal.classList.add('hidden'), 200);
         }
 
+        function showCookingModal() {
+            const modal = document.getElementById('cooking-modal');
+            renderRecipeList();
+            modal.classList.remove('hidden');
+        }
+
+        function hideCookingModal() {
+            document.getElementById('cooking-modal').classList.add('hidden');
+        }
+
+        function renderRecipeList() {
+            const container = document.getElementById('recipe-list');
+            container.innerHTML = '';
+            
+            Object.entries(GAME_DATA.recipes).forEach(([recipeId, recipeData]) => {
+                const resultData = GAME_DATA[recipeData.resultId];
+                const recipeEl = document.createElement('div');
+                recipeEl.className = 'bg-gray-50 p-3 rounded-lg flex items-center gap-4';
+
+                let ingredientsHTML = '';
+                let canCook = true;
+
+                const tempStorage = [...playerState.storageBin];
+
+                for (const ingredient of recipeData.ingredients) {
+                    let hasIngredient = false;
+                    let foundIndex = -1;
+                    if(ingredient.id) {
+                        foundIndex = tempStorage.findIndex(item => item.id === ingredient.id);
+                    } else if (ingredient.category) {
+                        foundIndex = tempStorage.findIndex(item => GAME_DATA[item.id]?.category === ingredient.category);
+                    }
+
+                    if (foundIndex > -1) {
+                        hasIngredient = true;
+                        tempStorage.splice(foundIndex, 1);
+                    }
+                    
+                    const name = ingredient.id ? GAME_DATA[ingredient.id].name : `ประเภท: ${ingredient.category}`;
+                    const icon = ingredient.id ? GAME_DATA[ingredient.id].icon : {egg:'🥚',fish:'🐟',fruit:'🍓',vegetable:'🥕',milk:'🥛'}[ingredient.category];
+                    ingredientsHTML += `<span class="text-sm ${hasIngredient ? 'text-green-600' : 'text-red-500'}">${icon} ${name} ${hasIngredient ? '✔️' : ''}</span>`;
+                    if (!hasIngredient) canCook = false;
+                }
+
+                const hasTool = playerState.ownedKitchenTools.includes(recipeData.tool);
+                if (!hasTool) canCook = false;
+                const toolData = GAME_DATA[recipeData.tool];
+                const toolHTML = `<span class="text-sm ${hasTool ? 'text-green-600' : 'text-red-500'}">${toolData.icon} ${toolData.name} ${hasTool ? '✔️' : ''}</span>`;
+                
+                recipeEl.innerHTML = `
+                    <div class="w-12 h-12 flex-shrink-0 bg-contain bg-no-repeat bg-center" style="background-image: url('${resultData.imageUrl}')"></div>
+                    <div class="flex-grow text-left">
+                        <p class="font-bold">${resultData.name}</p>
+                        <p class="text-xs text-gray-500">ส่วนผสม: ${ingredientsHTML}</p>
+                        <p class="text-xs text-gray-500">อุปกรณ์: ${toolHTML}</p>
+                    </div>
+                    <button class="cook-recipe-btn bg-orange-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-orange-600 disabled:bg-gray-400" data-recipe-id="${recipeId}" ${!canCook ? 'disabled' : ''}>ทำ</button>
+                `;
+                container.appendChild(recipeEl);
+            });
+        }
+        
         // --- Game Actions ---
         function plant(plotIndex, seedId) {
             const newFarmState = { ...farmState };
@@ -1302,6 +1421,60 @@
             minigameLoopId = requestAnimationFrame(gameLoop);
         }
         
+        function cook(recipeId) {
+            const recipe = GAME_DATA.recipes[recipeId];
+            if (!recipe) return;
+
+            const newPlayerState = { ...playerState, storageBin: [...playerState.storageBin] };
+
+            // Create a temporary copy of storage to safely find and remove items
+            const tempStorage = [...newPlayerState.storageBin];
+            
+            let canCook = true;
+            const consumedIndices = [];
+
+            // First, verify all ingredients are available and get their original indices
+            for (const ingredient of recipe.ingredients) {
+                let foundIndexInTemp = -1;
+                if (ingredient.id) {
+                    foundIndexInTemp = tempStorage.findIndex(item => item.id === ingredient.id);
+                } else if (ingredient.category) {
+                    foundIndexInTemp = tempStorage.findIndex(item => GAME_DATA[item.id]?.category === ingredient.category);
+                }
+
+                if (foundIndexInTemp > -1) {
+                    // Find original index before altering tempStorage
+                    const itemToConsume = tempStorage[foundIndexInTemp];
+                    const originalIndex = newPlayerState.storageBin.findIndex((item, index) => 
+                        !consumedIndices.includes(index) && item.id === itemToConsume.id && item.quality === itemToConsume.quality
+                    );
+                    if (originalIndex > -1) {
+                         consumedIndices.push(originalIndex);
+                         tempStorage.splice(foundIndexInTemp, 1);
+                    } else {
+                        canCook = false; break;
+                    }
+                } else {
+                    canCook = false; break;
+                }
+            }
+
+            if (!canCook) {
+                console.error("Cannot cook, missing ingredients.");
+                return;
+            }
+            
+            // If verification passes, consume the items from the actual player state using sorted indices
+            consumedIndices.sort((a, b) => b - a); 
+            consumedIndices.forEach(index => newPlayerState.storageBin.splice(index, 1));
+            
+            // Add result to storage
+            newPlayerState.storageBin.push({ id: recipe.resultId, quality: 0 });
+
+            updatePlayerState(newPlayerState);
+            renderRecipeList(); // Re-render to update counts
+        }
+        
         let gameLoopInterval = null;
         async function startGame(uid) {
             userId = uid;
@@ -1331,6 +1504,7 @@
                     if (typeof playerState.lastResetTime === 'undefined') playerState.lastResetTime = 0;
                     if (typeof playerState.fishingRodLevel === 'undefined') playerState.fishingRodLevel = 0;
                     if (typeof playerState.energy === 'undefined') playerState.energy = 100;
+                    if (!playerState.ownedKitchenTools) playerState.ownedKitchenTools = [];
                     checkForMidnightReset();
                 }
             }, handleFirestoreError);
@@ -1382,6 +1556,7 @@
             const secondaryViews = [
                 { view: 'bedroom', name: 'ห้องนอน 🛌' },
                 { view: 'fishing', name: 'บ่อปลา 🎣' },
+                { view: 'kitchen', name: 'ห้องครัว 🍳' },
             ];
 
             moreModalItems.innerHTML = ''; // Clear any existing items
@@ -1438,7 +1613,15 @@
                     if (playerState.money >= itemData.cost) {
                         const newPlayerState = { ...playerState };
                         newPlayerState.money -= itemData.cost;
-                        newPlayerState.inventory[itemId] = (newPlayerState.inventory[itemId] || 0) + 1;
+                        
+                        if (itemData.type === 'kitchen_tool') {
+                            if (!newPlayerState.ownedKitchenTools) newPlayerState.ownedKitchenTools = [];
+                            if (!newPlayerState.ownedKitchenTools.includes(itemId)) {
+                                newPlayerState.ownedKitchenTools.push(itemId);
+                            }
+                        } else {
+                           newPlayerState.inventory[itemId] = (newPlayerState.inventory[itemId] || 0) + 1;
+                        }
                         updatePlayerState(newPlayerState);
                     }
                 }
@@ -1464,6 +1647,14 @@
             document.getElementById('upgrade-rod-btn').addEventListener('click', upgradeRod);
             document.getElementById('fish-catch-ok').addEventListener('click', () => {
                 document.getElementById('fish-catch-modal').classList.add('hidden');
+            });
+            document.getElementById('cook-btn').addEventListener('click', showCookingModal);
+            document.getElementById('cooking-modal-close').addEventListener('click', hideCookingModal);
+            document.getElementById('recipe-list').addEventListener('click', e => {
+                if (e.target.classList.contains('cook-recipe-btn')) {
+                    const recipeId = e.target.dataset.recipeId;
+                    cook(recipeId);
+                }
             });
 
 
@@ -1528,7 +1719,8 @@
                         houseLevel: 0,
                         lastResetTime: 0,
                         fishingRodLevel: 0,
-                        energy: 100
+                        energy: 100,
+                        ownedKitchenTools: [],
                     };
                     await setDoc(doc(db, "players", userId), playerState);
                     await startGame(userId);
@@ -1575,4 +1767,3 @@
     </script>
 </body>
 </html>
-
