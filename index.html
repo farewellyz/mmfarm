@@ -274,6 +274,24 @@
                     </div>
                 </div>
             </div>
+            <!-- Quests View -->
+            <div id="quests-view" class="hidden">
+                <div class="w-full max-w-lg mx-auto">
+                    <h2 class="text-3xl font-bold text-green-800 mb-4 text-center">📜 เควสของฟาร์ม</h2>
+                    <div id="daily-quests-container" class="mb-6">
+                        <h3 class="text-xl font-bold text-blue-700 mb-2">เควสประจำวัน</h3>
+                        <div id="daily-quests-list" class="space-y-2">
+                            <!-- Daily quests rendered here -->
+                        </div>
+                    </div>
+                    <div id="weekly-quests-container">
+                        <h3 class="text-xl font-bold text-purple-700 mb-2">เควสประจำสัปดาห์</h3>
+                        <div id="weekly-quests-list" class="space-y-2">
+                            <!-- Weekly quests rendered here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
             <div id="shop-view" class="hidden">
                 <div class="w-full max-w-lg mx-auto">
                     <h2 class="text-3xl font-bold text-green-800 mb-4 text-center">🏪 ร้านค้า & คลังของ</h2>
@@ -460,6 +478,53 @@
             'turtle':       { name: 'เต่า', type: 'animal_instance', produceTime: 86400, produceId: 'gem', icon: '🐢', imageUrl: 'turtle.png' },
             'gem':          { name: 'อัญมณี', type: 'produce', sellPrice: [200, 300, 500], icon: '💎', energyRestore: 0 }, // Gems can't be eaten
         };
+        
+        const QUEST_DATA = {
+            daily: [
+                { id: 'water_25', action: 'water', description: 'ช่วยกันรดน้ำต้นไม้ 25 ครั้ง', target: 25, reward: { type: 'item', id: 'fertilizer_1', count: 3 } },
+                { id: 'harvest_15', action: 'harvest', description: 'ช่วยกันเก็บเกี่ยวผลผลิต 15 ชิ้น', target: 15, reward: { type: 'seed', id: 'carrot_seed', count: 15 } },
+                { id: 'fish_10', action: 'fish', description: 'ช่วยกันตกปลา 10 ตัว', target: 10, reward: { type: 'seed', id: 'tomato_seed', count: 8 } },
+                { id: 'collect_5', action: 'collect_product', description: 'ช่วยกันเก็บผลผลิตจากสัตว์ 5 ชิ้น', target: 5, reward: { type: 'item', id: 'fertilizer_1', count: 2 } },
+                { id: 'cook_3', action: 'cook', description: 'ช่วยกันทำอาหาร 3 อย่าง', target: 3, reward: { type: 'produce', id: 'egg', count: 5 } },
+                { id: 'plant_10', action: 'plant', description: 'ช่วยกันปลูกเมล็ดพืช 10 ต้น', target: 10, reward: { type: 'seed', id: 'carrot_seed', count: 10 } },
+                { id: 'fertilize_5', action: 'fertilize', description: 'ช่วยกันใส่ปุ๋ย 5 แปลง', target: 5, reward: { type: 'item', id: 'fertilizer_1', count: 2 } },
+                { id: 'fish_15_more', action: 'fish', description: 'ช่วยกันตกปลาเพิ่มอีก 15 ตัว', target: 15, reward: { type: 'produce', id: 'sardine', count: 5 } },
+                { id: 'sell_item_10', action: 'sell_item', description: 'ช่วยกันใส่ของลงกล่องขาย 10 ชิ้น', target: 10, reward: { type: 'seed', id: 'strawberry_seed', count: 10 } },
+                { id: 'collect_8_more', action: 'collect_product', description: 'ช่วยกันเก็บผลผลิตจากสัตว์เพิ่ม 8 ชิ้น', target: 8, reward: { type: 'produce', id: 'duck_egg', count: 2 } },
+                { id: 'cook_2_more', action: 'cook', description: 'ช่วยกันทำอาหารเพิ่ม 2 อย่าง', target: 2, reward: { type: 'produce', id: 'sashimi_food', count: 1 } },
+                { id: 'harvest_10_more', action: 'harvest', description: 'ช่วยกันเก็บเกี่ยวเพิ่ม 10 ชิ้น', target: 10, reward: { type: 'produce', id: 'carrot_produce', count: 5 } },
+                { id: 'buy_item_5', action: 'buy_item', description: 'ช่วยกันซื้อของในร้านค้า 5 ชิ้น', target: 5, reward: { type: 'seed', id: 'orange_seed', count: 5 } },
+                { id: 'eat_2', action: 'eat', description: 'ช่วยกันกินอาหาร 2 ครั้ง', target: 2, reward: { type: 'produce', id: 'fried_egg_food', count: 1 } },
+                { id: 'place_animal_1', action: 'place_animal', description: 'ช่วยกันวางสัตว์ในคอก 1 ตัว', target: 1, reward: { type: 'seed', id: 'strawberry_seed', count: 15 } },
+                { id: 'buy_seed_15', action: 'buy_seed', description: 'ช่วยกันซื้อเมล็ดพันธุ์ 15 ถุง', target: 15, reward: { type: 'seed', id: 'grape_seed', count: 5 } },
+                { id: 'buy_fertilizer_5', action: 'buy_fertilizer', description: 'ช่วยกันซื้อปุ๋ย 5 ชิ้น', target: 5, reward: { type: 'seed', id: 'peach_seed', count: 5 } },
+                { id: 'spend_250', action: 'spend_money', description: 'ช่วยกันใช้เงิน 250💰', target: 250, reward: { type: 'produce', id: 'tomato_produce', count: 5 } },
+                { id: 'water_20_more', action: 'water', description: 'ช่วยกันรดน้ำเพิ่ม 20 ครั้ง', target: 20, reward: { type: 'item', id: 'fertilizer_1', count: 3 } },
+                { id: 'buy_animal_1', action: 'buy_animal', description: 'ช่วยกันซื้อสัตว์ 1 ตัว', target: 1, reward: { type: 'seed', id: 'strawberry_seed', count: 5 } },
+            ],
+            weekly: [
+                { id: 'harvest_100', action: 'harvest', description: 'ช่วยกันเก็บเกี่ยวผลผลิต 100 ชิ้น', target: 100, reward: { type: 'item', id: 'fertilizer_2', count: 5 } },
+                { id: 'fish_50', action: 'fish', description: 'ช่วยกันตกปลา 50 ตัว', target: 50, reward: { type: 'seed', id: 'random', count: 20 } },
+                { id: 'fertilize_30', action: 'fertilize', description: 'ช่วยกันใส่ปุ๋ย 30 แปลง', target: 30, reward: { type: 'seed', id: 'mango_seed', count: 15 } },
+                { id: 'cook_10', action: 'cook', description: 'ช่วยกันทำอาหาร 10 อย่าง', target: 10, reward: { type: 'produce', id: 'milk', count: 8 } },
+                { id: 'collect_30', action: 'collect_product', description: 'ช่วยกันเก็บผลผลิตจากสัตว์ 30 ชิ้น', target: 30, reward: { type: 'produce', id: 'gem', count: 1 } },
+                { id: 'harvest_80_more', action: 'harvest', description: 'ช่วยกันเก็บเกี่ยวผลผลิตเพิ่ม 80 ชิ้น', target: 80, reward: { type: 'seed', id: 'apple_seed', count: 10 } },
+                { id: 'plant_80', action: 'plant', description: 'ช่วยกันปลูกเมล็ดพืช 80 ต้น', target: 80, reward: { type: 'item', id: 'fertilizer_2', count: 8 } },
+                { id: 'sell_item_100', action: 'sell_item', description: 'ช่วยกันใส่ของลงกล่องขาย 100 ชิ้น', target: 100, reward: { type: 'item', id: 'fertilizer_2', count: 15 } },
+                { id: 'fish_40_more', action: 'fish', description: 'ช่วยกันตกปลาเพิ่ม 40 ตัว', target: 40, reward: { type: 'produce', id: 'salmon', count: 10 } },
+                { id: 'collect_25_more', action: 'collect_product', description: 'ช่วยกันเก็บผลผลิตสัตว์เพิ่ม 25 ชิ้น', target: 25, reward: { type: 'produce', id: 'gem', count: 2 } },
+                { id: 'cook_8_more', action: 'cook', description: 'ช่วยกันทำอาหารเพิ่ม 8 อย่าง', target: 8, reward: { type: 'kitchen_tool', id: 'kitchen_pot', count: 1 } },
+                { id: 'spend_3000', action: 'spend_money', description: 'ช่วยกันใช้จ่ายเงิน 3000💰', target: 3000, reward: { type: 'kitchen_tool', id: 'kitchen_knife', count: 1 } },
+                { id: 'upgrade_house_1', action: 'upgrade_house', description: 'ช่วยกันอัปเกรดบ้าน 1 ครั้ง', target: 1, reward: { type: 'produce', id: 'gem', count: 2 } },
+                { id: 'upgrade_rod_1', action: 'upgrade_rod', description: 'ช่วยกันอัปเกรดเบ็ดตกปลา 1 ครั้ง', target: 1, reward: { type: 'seed', id: 'mango_seed', count: 10 } },
+                { id: 'fertilize_20_more', action: 'fertilize', description: 'ช่วยกันใส่ปุ๋ยเพิ่ม 20 แปลง', target: 20, reward: { type: 'seed', id: 'pineapple_seed', count: 10 } },
+                { id: 'eat_15', action: 'eat', description: 'ช่วยกันกินอาหาร 15 ครั้ง', target: 15, reward: { type: 'kitchen_tool', id: 'kitchen_blender', count: 1 } },
+                { id: 'place_animal_3', action: 'place_animal', description: 'ช่วยกันวางสัตว์ในคอก 3 ตัว', target: 3, reward: { type: 'seed', id: 'guava_seed', count: 15 } },
+                { id: 'buy_animal_5', action: 'buy_animal', description: 'ช่วยกันซื้อสัตว์ 5 ตัว', target: 5, reward: { type: 'item', id: 'fertilizer_2', count: 10 } },
+                { id: 'sell_hq_10', action: 'sell_high_quality', description: 'ช่วยกันขายของคุณภาพสูงสุด 10 ชิ้น', target: 10, reward: { type: 'kitchen_tool', id: 'kitchen_pan', count: 1 } },
+                { id: 'buy_tool_1', action: 'buy_tool', description: 'ช่วยกันซื้ออุปกรณ์ครัว 1 ชิ้น', target: 1, reward: { type: 'produce', id: 'gem', count: 2 } },
+            ]
+        };
 
         // --- Game State ---
         let userId = null;
@@ -507,6 +572,7 @@
             renderSellBox();
             renderStorage();
             renderFishing();
+            renderQuests();
         }
         
         function renderFarm() {
@@ -598,8 +664,11 @@
                     const itemData = GAME_DATA[itemId];
                     if (itemData) {
                         const itemEl = document.createElement('span');
-                        itemEl.className = 'bg-white px-2 py-1 rounded-md shadow-sm';
-                        itemEl.textContent = `${itemData.icon} ${count}`;
+                        itemEl.className = 'bg-white px-2 py-1 rounded-md shadow-sm flex items-center gap-1';
+                        const iconHTML = itemData.imageUrl 
+                            ? `<img src="${itemData.imageUrl}" class="w-5 h-5 object-contain">`
+                            : `<span>${itemData.icon}</span>`;
+                        itemEl.innerHTML = `${iconHTML} ${count}`;
                         inventoryDisplay.appendChild(itemEl);
                     }
                 }
@@ -815,6 +884,66 @@
                 upgradeRodBtn.disabled = playerState.money < nextRodData.cost;
             }
         }
+
+        function renderQuests() {
+            if (!farmState || !farmState.quests) return;
+
+            const renderList = (type, containerId) => {
+                const container = document.getElementById(containerId);
+                container.innerHTML = '';
+                const quests = farmState.quests[type];
+
+                if (!quests || quests.length === 0) {
+                    container.innerHTML = `<p class="text-center text-gray-500">ไม่มีเควสในขณะนี้</p>`;
+                    return;
+                }
+                
+                quests.forEach(questProgress => {
+                    const questData = QUEST_DATA[type].find(q => q.id === questProgress.id);
+                    if (!questData) return;
+
+                    const isComplete = questProgress.progress >= questData.target;
+                    const hasClaimed = questProgress.claimedBy?.includes(userId);
+                    
+                    const questEl = document.createElement('div');
+                    questEl.className = 'bg-white/70 p-3 rounded-lg flex items-center gap-3';
+
+                    let claimButtonHTML = '';
+                    if (isComplete) {
+                        if (hasClaimed) {
+                            claimButtonHTML = `<button class="bg-gray-400 text-white font-bold py-2 px-4 rounded-lg text-sm cursor-not-allowed" disabled>รับแล้ว</button>`;
+                        } else {
+                            claimButtonHTML = `<button class="claim-quest-btn bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg text-sm" data-quest-type="${type}" data-quest-id="${questProgress.id}">รับรางวัล</button>`;
+                        }
+                    } else {
+                        claimButtonHTML = `<button class="bg-gray-300 text-gray-600 font-bold py-2 px-4 rounded-lg text-sm" disabled>${questProgress.progress}/${questData.target}</button>`;
+                    }
+
+                    const rewardData = questData.reward;
+                    let rewardItemData;
+                    if (rewardData.id === 'random') {
+                       rewardItemData = { name: 'เมล็ดสุ่ม', icon: '❓' };
+                    } else {
+                       rewardItemData = GAME_DATA[rewardData.id];
+                    }
+                    const rewardIcon = rewardItemData.imageUrl ? `<img src="${rewardItemData.imageUrl}" class="w-6 h-6 object-contain inline-block">` : rewardItemData.icon;
+
+                    questEl.innerHTML = `
+                        <div class="flex-grow">
+                            <p class="font-semibold">${questData.description}</p>
+                            <p class="text-xs text-gray-600">รางวัล: ${rewardIcon} ${rewardItemData.name} x${rewardData.count}</p>
+                        </div>
+                        <div class="flex-shrink-0">
+                            ${claimButtonHTML}
+                        </div>
+                    `;
+                    container.appendChild(questEl);
+                });
+            };
+
+            renderList('daily', 'daily-quests-list');
+            renderList('weekly', 'weekly-quests-list');
+        }
         
         function showContextMenu(type, id) {
             const modal = document.getElementById('context-modal');
@@ -953,8 +1082,11 @@
             itemIds.forEach(itemId => {
                 const itemData = GAME_DATA[itemId];
                 const itemButton = document.createElement('button');
-                itemButton.className = 'p-2 bg-gray-100 rounded-lg hover:bg-green-100';
-                itemButton.innerHTML = `<div class="text-3xl">${itemData.icon}</div><div class="text-xs">${itemData.name}</div>`;
+                itemButton.className = 'p-2 bg-gray-100 rounded-lg hover:bg-green-100 flex flex-col items-center justify-center gap-1';
+                const iconHTML = itemData.imageUrl 
+                    ? `<img src="${itemData.imageUrl}" class="w-10 h-10 object-contain">`
+                    : `<div class="text-3xl">${itemData.icon}</div>`;
+                itemButton.innerHTML = `${iconHTML}<div class="text-xs">${itemData.name}</div>`;
                 itemButton.onclick = () => {
                     if (actionType === 'plant') plant(index, itemId);
                     else if (actionType === 'fertilize') fertilize(index, itemId);
@@ -1051,6 +1183,7 @@
             document.querySelector(`#farm-grid > div:nth-child(${plotIndex + 1})`).classList.add('pop-animation');
             updateFarmState(newFarmState);
             updatePlayerState(newPlayerState);
+            updateQuestProgress('plant');
         }
 
         function water(plotIndex) {
@@ -1061,6 +1194,7 @@
              plot.wateredBy.push({ uid: userId, nickname: playerState.nickname });
              document.querySelector(`#farm-grid > div:nth-child(${plotIndex + 1})`).classList.add('watered');
              updateFarmState(newFarmState);
+             updateQuestProgress('water');
         }
 
         function fertilize(plotIndex, fertilizerId) {
@@ -1072,6 +1206,7 @@
             document.querySelector(`#farm-grid > div:nth-child(${plotIndex + 1})`).classList.add('fertilized');
             updateFarmState(newFarmState);
             updatePlayerState(newPlayerState);
+            updateQuestProgress('fertilize');
         }
         
         function clearPlot(plotIndex) {
@@ -1122,6 +1257,7 @@
 
             updatePlayerState(newPlayerState);
             updateFarmState(newFarmState);
+            updateQuestProgress('harvest');
         }
         
         function placeAnimal(slotIndex, deedId) {
@@ -1147,6 +1283,7 @@
             
             updatePlayerState(newPlayerState);
             updateFarmState(newFarmState);
+            updateQuestProgress('collect_product');
         }
         
         function upgradeHouse() {
@@ -1170,6 +1307,10 @@
                 const itemToSell = newPlayerState.storageBin.splice(itemIndex, 1)[0];
                 newPlayerState.produceBin.push(itemToSell);
                 updatePlayerState(newPlayerState);
+                updateQuestProgress('sell_item');
+                if (quality === 2) {
+                    updateQuestProgress('sell_high_quality');
+                }
             }
         }
 
@@ -1187,23 +1328,34 @@
                 newPlayerState.energy = Math.min(MAX_ENERGY, (newPlayerState.energy || 0) + itemData.energyRestore);
                 
                 updatePlayerState(newPlayerState);
+                updateQuestProgress('eat');
             }
         }
         
-        async function checkForMidnightReset() {
-            if (!playerState) return;
+        function generateRandomQuests(type, count) {
+            const sourceQuests = QUEST_DATA[type];
+            const shuffled = [...sourceQuests].sort(() => 0.5 - Math.random());
+            const selected = shuffled.slice(0, count);
+            return selected.map(q => ({
+                id: q.id,
+                action: q.action,
+                progress: 0,
+                claimedBy: []
+            }));
+        }
+        
+        async function checkForTimeResets() {
+            if (!playerState || !farmState) return;
 
             const now = new Date();
-            const lastReset = new Date(playerState.lastResetTime || 0);
             
-            if (lastReset.getFullYear() < now.getFullYear() ||
-                lastReset.getMonth() < now.getMonth() ||
-                lastReset.getDate() < now.getDate()) {
+            // --- Player-specific resets ---
+            const lastPlayerReset = new Date(playerState.lastResetTime || 0);
+            let playerNeedsUpdate = false;
+            const newPlayerState = { ...playerState };
 
-                console.log("Processing daily midnight reset...");
-                
-                const newPlayerState = { ...playerState };
-                let processedPayout = false;
+            if (lastPlayerReset.getDate() !== now.getDate() || lastPlayerReset.getMonth() !== now.getMonth() || lastPlayerReset.getFullYear() !== now.getFullYear()) {
+                console.log("Processing daily player reset...");
 
                 if (newPlayerState.produceBin && newPlayerState.produceBin.length > 0) {
                     let totalValue = 0;
@@ -1215,15 +1367,40 @@
                     });
                     newPlayerState.money = (newPlayerState.money || 0) + totalValue;
                     newPlayerState.produceBin = [];
-                    console.log(`Paid out ${totalValue}💰.`);
-                    processedPayout = true;
                 }
-
                 newPlayerState.energy = 100;
                 newPlayerState.lastResetTime = now.getTime();
-                console.log("Energy reset to full.");
-                
+                playerNeedsUpdate = true;
+            }
+
+            // --- Farm-wide quest resets ---
+            const lastDailyQuestReset = new Date(farmState.quests?.lastDailyReset || 0);
+            let farmNeedsUpdate = false;
+            const newFarmState = { ...farmState };
+
+            if (lastDailyQuestReset.getDate() !== now.getDate() || lastDailyQuestReset.getMonth() !== now.getMonth() || lastDailyQuestReset.getFullYear() !== now.getFullYear()) {
+                console.log("Resetting daily quests for the farm...");
+                newFarmState.quests.daily = generateRandomQuests('daily', 5);
+                newFarmState.quests.lastDailyReset = now.getTime();
+                farmNeedsUpdate = true;
+            }
+
+            const lastWeeklyQuestReset = new Date(farmState.quests?.lastWeeklyReset || 0);
+            const startOfWeek = new Date(now);
+            startOfWeek.setHours(0, 0, 0, 0);
+            startOfWeek.setDate(now.getDate() - now.getDay()); 
+            if (lastWeeklyQuestReset < startOfWeek) {
+                 console.log("Resetting weekly quests for the farm...");
+                 newFarmState.quests.weekly = generateRandomQuests('weekly', 5);
+                 newFarmState.quests.lastWeeklyReset = now.getTime();
+                 farmNeedsUpdate = true;
+            }
+
+            if (playerNeedsUpdate) {
                 await updatePlayerState(newPlayerState);
+            }
+            if (farmNeedsUpdate) {
+                await updateFarmState(newFarmState);
             }
         }
         
@@ -1415,6 +1592,7 @@
                     newPlayerState.storageBin.push({ id: caughtFishId, quality: 0 });
                     updatePlayerState(newPlayerState);
                     showFishCatchModal(caughtFishId);
+                    updateQuestProgress('fish');
                 }
             }
 
@@ -1427,13 +1605,11 @@
 
             const newPlayerState = { ...playerState, storageBin: [...playerState.storageBin] };
 
-            // Create a temporary copy of storage to safely find and remove items
             const tempStorage = [...newPlayerState.storageBin];
             
             let canCook = true;
             const consumedIndices = [];
 
-            // First, verify all ingredients are available and get their original indices
             for (const ingredient of recipe.ingredients) {
                 let foundIndexInTemp = -1;
                 if (ingredient.id) {
@@ -1443,7 +1619,6 @@
                 }
 
                 if (foundIndexInTemp > -1) {
-                    // Find original index before altering tempStorage
                     const itemToConsume = tempStorage[foundIndexInTemp];
                     const originalIndex = newPlayerState.storageBin.findIndex((item, index) => 
                         !consumedIndices.includes(index) && item.id === itemToConsume.id && item.quality === itemToConsume.quality
@@ -1464,15 +1639,79 @@
                 return;
             }
             
-            // If verification passes, consume the items from the actual player state using sorted indices
             consumedIndices.sort((a, b) => b - a); 
             consumedIndices.forEach(index => newPlayerState.storageBin.splice(index, 1));
             
-            // Add result to storage
             newPlayerState.storageBin.push({ id: recipe.resultId, quality: 0 });
 
             updatePlayerState(newPlayerState);
-            renderRecipeList(); // Re-render to update counts
+            renderRecipeList();
+            updateQuestProgress('cook');
+        }
+
+        async function updateQuestProgress(action, amount = 1) {
+            if (!farmState || !farmState.quests) return;
+            
+            const newFarmState = { ...farmState };
+            let questsUpdated = false;
+
+            const updateQuestList = (list) => {
+                if (!list) return;
+                list.forEach(quest => {
+                    const questData = QUEST_DATA.daily.find(q => q.id === quest.id) || QUEST_DATA.weekly.find(q => q.id === quest.id);
+                    if (questData && questData.action === action && quest.progress < questData.target) {
+                        quest.progress = Math.min(quest.progress + amount, questData.target);
+                        questsUpdated = true;
+                    }
+                });
+            };
+            
+            updateQuestList(newFarmState.quests.daily);
+            updateQuestList(newFarmState.quests.weekly);
+
+            if(questsUpdated) {
+                await updateFarmState(newFarmState);
+            }
+        }
+
+        async function claimQuestReward(type, id) {
+            const currentFarmState = farmState; 
+            const currentPlayerState = playerState;
+
+            const questList = currentFarmState.quests[type];
+            const quest = questList.find(q => q.id === id);
+            const questData = QUEST_DATA[type].find(q => q.id === id);
+
+            if (!quest || !questData || (quest.claimedBy && quest.claimedBy.includes(userId)) || quest.progress < questData.target) {
+                return;
+            }
+
+            const newFarmState = { ...currentFarmState };
+            const questToUpdate = newFarmState.quests[type].find(q => q.id === id);
+            if (!questToUpdate.claimedBy) {
+                questToUpdate.claimedBy = [];
+            }
+            questToUpdate.claimedBy.push(userId);
+
+            const newPlayerState = { ...currentPlayerState };
+            const reward = questData.reward;
+            let rewardId = reward.id;
+
+            if (rewardId === 'random' && reward.type === 'seed') {
+                const allSeedIds = Object.keys(GAME_DATA).filter(k => GAME_DATA[k].type === 'seed');
+                rewardId = allSeedIds[Math.floor(Math.random() * allSeedIds.length)];
+            }
+            
+            if (reward.type === 'produce' || reward.type === 'item') {
+                 for (let i = 0; i < reward.count; i++) {
+                    newPlayerState.storageBin.push({ id: rewardId, quality: 0 });
+                 }
+            } else { 
+                newPlayerState.inventory[rewardId] = (newPlayerState.inventory[rewardId] || 0) + reward.count;
+            }
+            
+            await updateFarmState(newFarmState);
+            await updatePlayerState(newPlayerState);
         }
         
         let gameLoopInterval = null;
@@ -1488,7 +1727,7 @@
             
             if (gameLoopInterval) clearInterval(gameLoopInterval);
             gameLoopInterval = setInterval(() => {
-                checkForMidnightReset();
+                checkForTimeResets();
                 renderAll();
             }, 2000); 
         }
@@ -1505,7 +1744,7 @@
                     if (typeof playerState.fishingRodLevel === 'undefined') playerState.fishingRodLevel = 0;
                     if (typeof playerState.energy === 'undefined') playerState.energy = 100;
                     if (!playerState.ownedKitchenTools) playerState.ownedKitchenTools = [];
-                    checkForMidnightReset();
+                    checkForTimeResets();
                 }
             }, handleFirestoreError);
         }
@@ -1515,6 +1754,9 @@
             onSnapshot(farmDocRef, (docSnap) => {
                 if (docSnap.exists()) {
                     farmState = docSnap.data();
+                    if (!farmState.quests) {
+                        farmState.quests = { daily: [], weekly: [], lastDailyReset: 0, lastWeeklyReset: 0 };
+                    }
                 }
             }, handleFirestoreError);
         }
@@ -1530,6 +1772,12 @@
                     const initialFarmState = {
                         plots: Array(FARM_GRID_SIZE).fill(null).map(defaultPlot),
                         animals: Array(ANIMAL_PEN_SIZE).fill(null).map(defaultAnimalSlot),
+                        quests: {
+                            daily: [],
+                            weekly: [],
+                            lastDailyReset: 0,
+                            lastWeeklyReset: 0,
+                        }
                     };
                     await setDoc(farmDocRef, initialFarmState);
                 }
@@ -1557,6 +1805,7 @@
                 { view: 'bedroom', name: 'ห้องนอน 🛌' },
                 { view: 'fishing', name: 'บ่อปลา 🎣' },
                 { view: 'kitchen', name: 'ห้องครัว 🍳' },
+                { view: 'quests', name: 'เควส 📜' },
             ];
 
             moreModalItems.innerHTML = ''; // Clear any existing items
@@ -1571,7 +1820,6 @@
             document.addEventListener('click', e => {
                 const target = e.target.closest('[data-view]');
 
-                // Handle closing modal
                 if (!moreModal.classList.contains('hidden') && !e.target.closest('#more-modal > div') && !e.target.closest('#more-btn')) {
                     moreModal.classList.add('hidden');
                 }
@@ -1609,21 +1857,7 @@
             document.getElementById('shop-items').addEventListener('click', (e) => {
                 if (e.target.classList.contains('buy-btn')) {
                     const itemId = e.target.dataset.itemid;
-                    const itemData = GAME_DATA[itemId];
-                    if (playerState.money >= itemData.cost) {
-                        const newPlayerState = { ...playerState };
-                        newPlayerState.money -= itemData.cost;
-                        
-                        if (itemData.type === 'kitchen_tool') {
-                            if (!newPlayerState.ownedKitchenTools) newPlayerState.ownedKitchenTools = [];
-                            if (!newPlayerState.ownedKitchenTools.includes(itemId)) {
-                                newPlayerState.ownedKitchenTools.push(itemId);
-                            }
-                        } else {
-                           newPlayerState.inventory[itemId] = (newPlayerState.inventory[itemId] || 0) + 1;
-                        }
-                        updatePlayerState(newPlayerState);
-                    }
+                    buyItem(itemId);
                 }
             });
 
@@ -1663,8 +1897,48 @@
             document.getElementById('cancel-name-btn').addEventListener('click', hideNameModal);
             nameInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') saveNameChange(); });
             document.getElementById('confirm-modal-cancel').addEventListener('click', hideConfirmationModal);
+            document.body.addEventListener('click', e => {
+                if (e.target.classList.contains('claim-quest-btn')) {
+                    const type = e.target.dataset.questType;
+                    const id = e.target.dataset.questId;
+                    claimQuestReward(type, id);
+                }
+            });
         }
         
+        function buyItem(itemId) {
+            const itemData = GAME_DATA[itemId];
+            if (playerState.money >= itemData.cost) {
+                const newPlayerState = { ...playerState };
+                newPlayerState.money -= itemData.cost;
+                
+                if (itemData.type === 'kitchen_tool') {
+                    if (!newPlayerState.ownedKitchenTools) newPlayerState.ownedKitchenTools = [];
+                    if (!newPlayerState.ownedKitchenTools.includes(itemId)) {
+                        newPlayerState.ownedKitchenTools.push(itemId);
+                    }
+                    updateQuestProgress('buy_tool');
+                } else {
+                   newPlayerState.inventory[itemId] = (newPlayerState.inventory[itemId] || 0) + 1;
+                }
+                
+                // Quest updates
+                updateQuestProgress('buy_item');
+                updateQuestProgress('spend_money', itemData.cost);
+                if (itemData.type === 'seed') {
+                    updateQuestProgress('buy_seed');
+                }
+                if (itemData.type === 'item' && itemId.includes('fertilizer')) {
+                    updateQuestProgress('buy_fertilizer');
+                }
+                if (itemData.type === 'animal_deed') {
+                    updateQuestProgress('buy_animal');
+                }
+
+                updatePlayerState(newPlayerState);
+            }
+        }
+
         function showConfirmationModal(text, onConfirm) {
             const confirmModal = document.getElementById('confirm-modal');
             document.getElementById('confirm-modal-text').textContent = text;
@@ -1767,3 +2041,6 @@
     </script>
 </body>
 </html>
+
+
+
