@@ -1620,54 +1620,59 @@
             minigameLoopId = requestAnimationFrame(gameLoop);
         }
         
-        function cook(recipeId) {
+        function cook(recipeId) 
+		{
             const recipe = GAME_DATA.recipes[recipeId];
             if (!recipe) return;
 
-            const newPlayerState = { ...playerState, storageBin: [...playerState.storageBin] };
+            // ตรวจสอบว่ามีเครื่องมือทำครัวที่จำเป็นหรือไม่
+            if (!playerState.ownedKitchenTools.includes(recipe.tool)) {
+                console.error("Cannot cook, missing tool.");
+                return; // ออกจากฟังก์ชันหากไม่มีเครื่องมือ
+            }
 
-            const tempStorage = [...newPlayerState.storageBin];
-            
+            const newStorageBin = [...playerState.storageBin]; // สร้างสำเนาของคลังเก็บของเพื่อดำเนินการ
             let canCook = true;
-            const consumedIndices = [];
 
+            // วนลูปเพื่อตรวจสอบและ "ลบ" วัตถุดิบแต่ละชิ้นออกจากสำเนาของคลัง
             for (const ingredient of recipe.ingredients) {
-                let foundIndexInTemp = -1;
+                let foundIndex = -1;
+                
+                // ค้นหาวัตถุดิบตาม ID หรือ Category
                 if (ingredient.id) {
-                    foundIndexInTemp = tempStorage.findIndex(item => item.id === ingredient.id);
+                    foundIndex = newStorageBin.findIndex(item => item.id === ingredient.id);
                 } else if (ingredient.category) {
-                    foundIndexInTemp = tempStorage.findIndex(item => GAME_DATA[item.id]?.category === ingredient.category);
+                    foundIndex = newStorageBin.findIndex(item => GAME_DATA[item.id]?.category === ingredient.category);
                 }
 
-                if (foundIndexInTemp > -1) {
-                    const itemToConsume = tempStorage[foundIndexInTemp];
-                    const originalIndex = newPlayerState.storageBin.findIndex((item, index) => 
-                        !consumedIndices.includes(index) && item.id === itemToConsume.id && item.quality === itemToConsume.quality
-                    );
-                    if (originalIndex > -1) {
-                         consumedIndices.push(originalIndex);
-                         tempStorage.splice(foundIndexInTemp, 1);
-                    } else {
-                        canCook = false; break;
-                    }
+                if (foundIndex > -1) {
+                    // หากเจอวัตถุดิบ ให้ลบออกจากสำเนาเพื่อไม่ให้ถูกนับซ้ำ
+                    newStorageBin.splice(foundIndex, 1);
                 } else {
-                    canCook = false; break;
+                    // หากไม่เจอวัตถุดิบแม้แต่ชิ้นเดียว ให้หยุดการทำงาน
+                    canCook = false;
+                    break;
                 }
             }
 
-            if (!canCook) {
-                console.error("Cannot cook, missing ingredients.");
-                return;
-            }
-            
-            consumedIndices.sort((a, b) => b - a); 
-            consumedIndices.forEach(index => newPlayerState.storageBin.splice(index, 1));
-            
-            newPlayerState.storageBin.push({ id: recipe.resultId, quality: 0 });
+            // หากตรวจสอบแล้วว่าสามารถทำอาหารได้ (วัตถุดิบครบ)
+            if (canCook) {
+                const newPlayerState = { ...playerState };
 
-            updatePlayerState(newPlayerState);
-            renderRecipeList();
-            updateQuestProgress('cook');
+                // เพิ่มอาหารที่ทำเสร็จแล้วลงในคลัง
+                newStorageBin.push({ id: recipe.resultId, quality: 0 });
+
+                // อัปเดตคลังเก็บของของผู้เล่นด้วยข้อมูลใหม่ที่ผ่านการหักลบวัตถุดิบแล้ว
+                newPlayerState.storageBin = newStorageBin;
+
+                // บันทึกข้อมูลผู้เล่นและอัปเดต UI
+                updatePlayerState(newPlayerState);
+                renderRecipeList(); // แสดงผลรายการอาหารใหม่อีกครั้ง
+                updateQuestProgress('cook'); // อัปเดตความคืบหน้าของเควส
+            } else {
+                console.error("Cannot cook, missing ingredients.");
+                // สามารถเพิ่มการแจ้งเตือนผู้เล่นตรงนี้ได้หากต้องการ
+            }
         }
 
         async function updateQuestProgress(action, amount = 1) {
