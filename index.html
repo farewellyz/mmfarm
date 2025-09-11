@@ -832,6 +832,10 @@
                 if (itemData.energyRestore > 0) {
                     buttonsHTML += `<button class="eat-storage-btn bg-blue-500 text-white font-bold py-1 px-3 rounded-full hover:bg-blue-600 text-xs" data-item-id="${item.id}" data-quality="${item.quality}">กิน (+${itemData.energyRestore}⚡)</button>`;
                 }
+				
+				if (itemData.type === 'item') {
+                     buttonsHTML += `<button class="move-to-inventory-btn bg-purple-500 text-white font-bold py-1 px-3 rounded-full hover:bg-purple-600 text-xs" data-item-id="${item.id}" data-quality="${item.quality}">ย้ายเข้าตัว</button>`;
+                }
                 
                 const iconHTML = itemData.imageUrl 
                     ? `<div class="w-10 h-10 mr-2 bg-contain bg-no-repeat bg-center" style="background-image: url('${itemData.imageUrl}')"></div>`
@@ -1331,6 +1335,19 @@
                 updateQuestProgress('eat');
             }
         }
+		
+		function moveFromStorageToInventory(itemId, quality) {
+            const newPlayerState = { ...playerState };
+            const itemIndex = newPlayerState.storageBin.findIndex(item => item.id === itemId && item.quality === quality);
+            
+            if (itemIndex > -1) {
+                // ลบไอเท็ม 1 ชิ้นออกจากคลัง
+                newPlayerState.storageBin.splice(itemIndex, 1);
+                // เพิ่มไอเท็ม 1 ชิ้นเข้าไปในช่องเก็บของในตัว
+                newPlayerState.inventory[itemId] = (newPlayerState.inventory[itemId] || 0) + 1;
+                updatePlayerState(newPlayerState);
+            }
+        }
         
         function generateRandomQuests(type, count) {
             const sourceQuests = QUEST_DATA[type];
@@ -1702,11 +1719,13 @@
                 rewardId = allSeedIds[Math.floor(Math.random() * allSeedIds.length)];
             }
             
-            if (reward.type === 'produce' || reward.type === 'item') {
+			if (reward.type === 'produce') {
+                 // ผลผลิต (เช่น พืช, ไข่, ปลา) จะถูกส่งไปที่คลังเก็บของ
                  for (let i = 0; i < reward.count; i++) {
                     newPlayerState.storageBin.push({ id: rewardId, quality: 0 });
                  }
             } else { 
+                // ไอเท็มอื่นๆ (เช่น ปุ๋ย, เมล็ดพันธุ์) จะถูกเพิ่มในช่องเก็บของในตัว
                 newPlayerState.inventory[rewardId] = (newPlayerState.inventory[rewardId] || 0) + reward.count;
             }
             
