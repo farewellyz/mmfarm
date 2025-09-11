@@ -749,7 +749,11 @@
 
             Object.values(groupedProduce).forEach(item => {
                 const itemData = GAME_DATA[item.id];
-                const sellPrice = itemData.sellPrice[item.quality];
+                if (!itemData || !itemData.sellPrice) {
+                    console.warn(`Item with invalid sellPrice found in sell box: ${item.id}`);
+                    return; // ข้ามไอเท็มชิ้นนี้ไป
+                }
+				const sellPrice = itemData.sellPrice[item.quality];
                 totalValue += sellPrice * item.count;
                 
                 const itemDiv = document.createElement('div');
