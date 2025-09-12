@@ -230,8 +230,12 @@
                  <div class="w-full max-w-2xl mx-auto text-center">
                     <h2 class="text-3xl font-bold text-green-800 mb-4">ห้องครัว 🍳</h2>
                     <div id="kitchen-display" class="relative w-full aspect-[4/3] rounded-lg shadow-inner overflow-hidden"></div>
+                    <div id="cooking-queue-container" class="mt-4 space-y-3">
+                        <h3 class="text-xl font-bold text-gray-700">กำลังทำอาหาร...</h3>
+                        <div id="cooking-queue-list" class="min-h-[50px]"></div>
+                    </div>
                     <div class="mt-4">
-                        <button id="cook-btn" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-8 rounded-full transition">ทำอาหาร</button>
+                        <button id="cook-btn" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-8 rounded-full transition">เปิดตำราอาหาร</button>
                     </div>
                  </div>
             </div>
@@ -455,27 +459,27 @@
             'winery': {
                 name: 'โรงหมักไวน์', type: 'factory_instance', imageUrl: 'winery.png',
                 recipes: [
-                    { id: 'grape_wine_recipe', name: 'ทำไวน์องุ่น', inputs: [{ id: 'grape_produce', count: 20 }], output: { id: 'grape_wine', count: 1 }, processTime: 86400 } // 24 hrs
+                    { id: 'grape_wine_recipe', name: 'ทำไวน์องุ่น', inputs: [{ id: 'grape_produce', count: 20 }], output: { id: 'grape_wine', count: 1 }, processTime: 7200 } // 2 hrs
                 ]
             },
             'cheese_press': {
                 name: 'โรงทำชีส', type: 'factory_instance', imageUrl: 'cheese_press.png',
                 recipes: [
-                    { id: 'cheese_recipe', name: 'ทำชีส', inputs: [{ id: 'milk', count: 10 }], output: { id: 'cheese', count: 1 }, processTime: 43200 } // 12 hrs
+                    { id: 'cheese_recipe', name: 'ทำชีส', inputs: [{ id: 'milk', count: 10 }], output: { id: 'cheese', count: 1 }, processTime: 6000 } // 1 hr 40 min
                 ]
             },
             'preserves_jar': {
                 name: 'โรงทำแยม', type: 'factory_instance', imageUrl: 'preserves_jar.png',
                 recipes: [
-                    { id: 'strawberry_jam_recipe', name: 'ทำแยมสตรอว์เบอร์รี', inputs: [{ id: 'strawberry_produce', count: 15 }], output: { id: 'strawberry_jam', count: 1 }, processTime: 21600 }, // 6 hrs
-                    { id: 'apple_jam_recipe', name: 'ทำแยมแอปเปิ้ล', inputs: [{ id: 'apple_produce', count: 15 }], output: { id: 'apple_jam', count: 1 }, processTime: 21600 } // 6 hrs
+                    { id: 'strawberry_jam_recipe', name: 'ทำแยมสตรอว์เบอร์รี', inputs: [{ id: 'strawberry_produce', count: 15 }], output: { id: 'strawberry_jam', count: 1 }, processTime: 4800 }, // 1 hr 20 min
+                    { id: 'apple_jam_recipe', name: 'ทำแยมแอปเปิ้ล', inputs: [{ id: 'apple_produce', count: 15 }], output: { id: 'apple_jam', count: 1 }, processTime: 4800 } // 1 hr 20 min
                 ]
             },
             'mayonnaise_machine': {
                 name: 'เครื่องทำมายองเนส', type: 'factory_instance', imageUrl: 'mayonnaise_machine.png',
                 recipes: [
-                    { id: 'mayonnaise_recipe', name: 'ทำมายองเนส', inputs: [{ id: 'egg', count: 5 }], output: { id: 'mayonnaise', count: 1 }, processTime: 10800 }, // 3 hrs
-                    { id: 'duck_mayonnaise_recipe', name: 'ทำมายองเนสไข่เป็ด', inputs: [{ id: 'duck_egg', count: 5 }], output: { id: 'duck_mayonnaise', count: 1 }, processTime: 10800 } // 3 hrs
+                    { id: 'mayonnaise_recipe', name: 'ทำมายองเนส', inputs: [{ id: 'egg', count: 5 }], output: { id: 'mayonnaise', count: 1 }, processTime: 3600 }, // 1 hr
+                    { id: 'duck_mayonnaise_recipe', name: 'ทำมายองเนสไข่เป็ด', inputs: [{ id: 'duck_egg', count: 5 }], output: { id: 'duck_mayonnaise', count: 1 }, processTime: 3600 } // 1 hr
                 ]
             },
 
@@ -583,8 +587,22 @@
             renderStorage();
             renderFishing();
             renderQuests();
+            renderKitchen();
         }
         
+        function calculateExpansionCost(type) {
+            const baseCost = { farm: 250, animals: 500, factory: 1000 };
+            const perSlotCost = { farm: 150, animals: 400, factory: 1200 };
+            const initialSize = { farm: FARM_GRID_SIZE, animals: ANIMAL_PEN_SIZE, factory: FACTORY_GRID_SIZE };
+            const currentSize = {
+                farm: farmState.plots.length,
+                animals: farmState.animals.length,
+                factory: farmState.factories.length
+            };
+            const addedSlots = Math.max(0, currentSize[type] - initialSize[type]);
+            return baseCost[type] + (addedSlots * perSlotCost[type]);
+        }
+
         function renderFarm() {
             if (!farmState || !Array.isArray(farmState.plots)) return;
             const farmGrid = document.getElementById('farm-grid');
@@ -617,6 +635,19 @@
                 plotEl.onclick = () => showContextMenu('plot', index);
                 farmGrid.appendChild(plotEl);
             });
+            
+            const cost = calculateExpansionCost('farm');
+            const expandButton = document.createElement('div');
+            expandButton.className = 'aspect-square rounded-lg shadow-inner cursor-pointer flex items-center justify-center p-2 bg-green-200/50 hover:bg-green-200/80 transition';
+            expandButton.innerHTML = `
+                <div class="text-center">
+                    <span class="text-3xl font-bold text-green-800">➕</span>
+                    <p class="text-xs font-semibold mt-1">ขยายแปลง</p>
+                    <p class="text-xs font-bold text-yellow-900 bg-yellow-300 px-2 py-0.5 rounded-full mt-1">${cost}💰</p>
+                </div>
+            `;
+            expandButton.onclick = () => expandGrid('farm');
+            farmGrid.appendChild(expandButton);
         }
 
         function renderAnimals() {
@@ -655,6 +686,19 @@
                 slotEl.onclick = () => showContextMenu('animal', index);
                 animalPen.appendChild(slotEl);
              });
+             
+            const cost = calculateExpansionCost('animals');
+            const expandButton = document.createElement('div');
+            expandButton.className = 'aspect-square rounded-2xl shadow-inner cursor-pointer flex items-center justify-center p-2 bg-green-200/50 hover:bg-green-200/80 transition';
+            expandButton.innerHTML = `
+                <div class="text-center">
+                    <span class="text-3xl font-bold text-green-800">➕</span>
+                    <p class="text-xs font-semibold mt-1">เพิ่มคอก</p>
+                    <p class="text-xs font-bold text-yellow-900 bg-yellow-300 px-2 py-0.5 rounded-full mt-1">${cost}💰</p>
+                </div>
+            `;
+            expandButton.onclick = () => expandGrid('animals');
+            animalPen.appendChild(expandButton);
         }
 
         function renderFactory() {
@@ -698,6 +742,19 @@
                 slotEl.onclick = () => showContextMenu('factory', index);
                 factoryGrid.appendChild(slotEl);
             });
+
+            const cost = calculateExpansionCost('factory');
+            const expandButton = document.createElement('div');
+            expandButton.className = 'aspect-square rounded-2xl shadow-inner cursor-pointer flex items-center justify-center p-2 bg-gray-300/50 hover:bg-gray-400/50 transition';
+            expandButton.innerHTML = `
+                <div class="text-center">
+                    <span class="text-3xl font-bold text-gray-700">➕</span>
+                    <p class="text-xs font-semibold mt-1">เพิ่มที่ดิน</p>
+                    <p class="text-xs font-bold text-yellow-900 bg-yellow-300 px-2 py-0.5 rounded-full mt-1">${cost}💰</p>
+                </div>
+            `;
+            expandButton.onclick = () => expandGrid('factory');
+            factoryGrid.appendChild(expandButton);
         }
 
         function renderPlayerUI() {
@@ -1023,6 +1080,51 @@
             renderList('daily', 'daily-quests-list');
             renderList('weekly', 'weekly-quests-list');
         }
+
+        function renderKitchen() {
+            if (!farmState || !farmState.kitchen || !farmState.kitchen.queue) return;
+            const container = document.getElementById('cooking-queue-list');
+            container.innerHTML = '';
+
+            if (farmState.kitchen.queue.length === 0) {
+                container.innerHTML = `<p class="text-center text-gray-500">ไม่มีอะไรกำลังทำอยู่</p>`;
+                return;
+            }
+
+            farmState.kitchen.queue.forEach((job, index) => {
+                const recipeData = GAME_DATA.recipes[job.recipeId];
+                const resultData = GAME_DATA[recipeData.resultId];
+                const COOK_TIME_PER_ITEM = 600; // 10 minutes in seconds
+                const totalCookTime = job.quantity * COOK_TIME_PER_ITEM * 1000;
+                const elapsed = Date.now() - job.startTime;
+                const progress = Math.min(elapsed / totalCookTime, 1);
+                const remainingSeconds = Math.max(0, (totalCookTime - elapsed) / 1000);
+
+                const jobEl = document.createElement('div');
+                jobEl.className = 'bg-white/80 p-3 rounded-lg flex items-center gap-3';
+
+                let actionButtonHTML;
+                if (progress >= 1) {
+                    actionButtonHTML = `<button class="collect-food-btn bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg text-sm" data-queue-index="${index}">รับ</button>`;
+                } else {
+                    actionButtonHTML = `<div class="text-sm font-semibold">${formatTime(remainingSeconds)}</div>`;
+                }
+
+                jobEl.innerHTML = `
+                    <div class="w-12 h-12 flex-shrink-0 bg-contain bg-no-repeat bg-center" style="background-image: url('${resultData.imageUrl}')"></div>
+                    <div class="flex-grow">
+                        <p class="font-bold">${resultData.name} x${job.quantity}</p>
+                        <div class="w-full bg-gray-200 rounded-full h-2.5 mt-1">
+                          <div class="bg-orange-500 h-2.5 rounded-full" style="width: ${progress * 100}%"></div>
+                        </div>
+                    </div>
+                    <div class="flex-shrink-0 w-20 text-center">
+                        ${actionButtonHTML}
+                    </div>
+                `;
+                container.appendChild(jobEl);
+            });
+        }
         
         function showContextMenu(type, id) {
             const modal = document.getElementById('context-modal');
@@ -1224,31 +1326,43 @@
             container.innerHTML = '';
             if(!farmState.ownedKitchenTools) farmState.ownedKitchenTools = [];
             
+            const storageCounts = playerState.storageBin.reduce((acc, item) => {
+                const itemData = GAME_DATA[item.id];
+                acc[item.id] = (acc[item.id] || 0) + 1;
+                if (itemData.category) {
+                     acc[`category_${itemData.category}`] = (acc[`category_${itemData.category}`] || 0) + 1;
+                }
+                return acc;
+            }, {});
+
             Object.entries(GAME_DATA.recipes).forEach(([recipeId, recipeData]) => {
                 const resultData = GAME_DATA[recipeData.resultId];
                 const recipeEl = document.createElement('div');
                 recipeEl.className = 'bg-gray-50 p-3 rounded-lg flex items-center gap-4';
 
                 let ingredientsHTML = '';
-                let canCook = true;
-
-                const tempStorage = [...playerState.storageBin];
-
-                for (const ingredient of recipeData.ingredients) {
-                    const foundIndex = tempStorage.findIndex(item => item.id === ingredient.id || GAME_DATA[item.id]?.category === ingredient.category);
-                    const hasIngredient = foundIndex > -1;
-                    if(hasIngredient) tempStorage.splice(foundIndex, 1);
-
-                    const name = ingredient.id ? GAME_DATA[ingredient.id].name : `ประเภท: ${ingredient.category}`;
-                    const icon = ingredient.id ? GAME_DATA[ingredient.id].icon : {egg:'🥚',fish:'🐟',fruit:'🍓',vegetable:'🥕',milk:'🥛'}[ingredient.category];
-                    ingredientsHTML += `<span class="text-sm ${hasIngredient ? 'text-green-600' : 'text-red-500'}">${icon} ${name} ${hasIngredient ? '✔️' : ''}</span>`;
-                    if (!hasIngredient) canCook = false;
-                }
-
+                
                 const hasTool = farmState.ownedKitchenTools.includes(recipeData.tool);
-                if (!hasTool) canCook = false;
                 const toolData = GAME_DATA[recipeData.tool];
                 const toolHTML = `<span class="text-sm ${hasTool ? 'text-green-600' : 'text-red-500'}">${toolData.icon} ${toolData.name} ${hasTool ? '✔️' : ''}</span>`;
+                
+                let maxCookable = hasTool ? Infinity : 0;
+                
+                const ingredientChecks = [];
+
+                for (const ingredient of recipeData.ingredients) {
+                    const requiredCount = ingredient.count || 1;
+                    const key = ingredient.id ? ingredient.id : `category_${ingredient.category}`;
+                    const hasCount = storageCounts[key] || 0;
+                    
+                    ingredientChecks.push(Math.floor(hasCount / requiredCount));
+                    
+                    const name = ingredient.id ? GAME_DATA[ingredient.id].name : `ประเภท: ${ingredient.category}`;
+                    const icon = ingredient.id ? GAME_DATA[ingredient.id].icon : {egg:'🥚',fish:'🐟',fruit:'🍓',vegetable:'🥕',milk:'🥛'}[ingredient.category];
+                    ingredientsHTML += `<span class="text-sm ${hasCount > 0 ? 'text-green-600' : 'text-red-500'}">${icon} ${name}</span>`;
+                }
+                
+                maxCookable = ingredientChecks.length > 0 ? Math.min(...ingredientChecks, maxCookable) : 0;
                 
                 recipeEl.innerHTML = `
                     <div class="w-12 h-12 flex-shrink-0 bg-contain bg-no-repeat bg-center" style="background-image: url('${resultData.imageUrl}')"></div>
@@ -1257,7 +1371,10 @@
                         <p class="text-xs text-gray-500">ส่วนผสม: ${ingredientsHTML}</p>
                         <p class="text-xs text-gray-500">อุปกรณ์: ${toolHTML}</p>
                     </div>
-                    <button class="cook-recipe-btn bg-orange-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-orange-600 disabled:bg-gray-400" data-recipe-id="${recipeId}" ${!canCook ? 'disabled' : ''}>ทำ</button>
+                    <div class="flex flex-col items-center gap-1">
+                        <input type="number" value="1" min="1" max="${maxCookable}" class="w-20 text-center border rounded-md p-1 recipe-quantity-input" ${maxCookable === 0 ? 'disabled' : ''}>
+                        <button class="cook-recipe-btn bg-orange-500 text-white font-bold py-1 px-4 rounded-lg hover:bg-orange-600 disabled:bg-gray-400 text-sm" data-recipe-id="${recipeId}" ${maxCookable === 0 ? 'disabled' : ''}>ทำ</button>
+                    </div>
                 `;
                 container.appendChild(recipeEl);
             });
@@ -1659,25 +1776,108 @@
             minigameLoopId = requestAnimationFrame(gameLoop);
         }
         
-        function cook(recipeId) {
+        function cook(recipeId, quantity) {
             const recipe = GAME_DATA.recipes[recipeId];
-            if (!recipe || !farmState.ownedKitchenTools.includes(recipe.tool)) return;
-            const newStorageBin = [...playerState.storageBin];
+            if (!recipe || !farmState.ownedKitchenTools.includes(recipe.tool) || quantity <= 0) return;
+            
+            const newPlayerState = { ...playerState };
+            let tempStorageBin = [...newPlayerState.storageBin];
             let canCook = true;
+            
+            // Create a temporary copy of storage counts to check against
+            const tempStorageCounts = tempStorageBin.reduce((acc, item) => {
+                const itemData = GAME_DATA[item.id];
+                acc[item.id] = (acc[item.id] || 0) + 1;
+                if (itemData.category) {
+                     acc[`category_${itemData.category}`] = (acc[`category_${itemData.category}`] || 0) + 1;
+                }
+                return acc;
+            }, {});
+
+            // Check if there are enough ingredients for the whole batch
             for (const ingredient of recipe.ingredients) {
-                const foundIndex = newStorageBin.findIndex(item => item.id === ingredient.id || GAME_DATA[item.id]?.category === ingredient.category);
-                if (foundIndex > -1) newStorageBin.splice(foundIndex, 1);
-                else { canCook = false; break; }
+                 const requiredCount = (ingredient.count || 1) * quantity;
+                 const key = ingredient.id ? ingredient.id : `category_${ingredient.category}`;
+                 if ((tempStorageCounts[key] || 0) < requiredCount) {
+                    canCook = false;
+                    break;
+                 }
             }
+
             if (canCook) {
-                const newPlayerState = { ...playerState };
-                newStorageBin.push({ id: recipe.resultId, quality: 0 });
-                newPlayerState.storageBin = newStorageBin;
+                // Remove ingredients from the actual storage bin
+                for (let i = 0; i < quantity; i++) {
+                    for (const ingredient of recipe.ingredients) {
+                        const foundIndex = newPlayerState.storageBin.findIndex(item => item.id === ingredient.id || GAME_DATA[item.id]?.category === ingredient.category);
+                        if (foundIndex > -1) {
+                            newPlayerState.storageBin.splice(foundIndex, 1);
+                        }
+                    }
+                }
+
+                const newFarmState = { ...farmState };
+                if (!newFarmState.kitchen) newFarmState.kitchen = { queue: [] };
+                newFarmState.kitchen.queue.push({
+                    recipeId: recipeId,
+                    quantity: quantity,
+                    startTime: Date.now(),
+                    cookedBy: { uid: userId, nickname: playerState.nickname }
+                });
+
                 updatePlayerState(newPlayerState);
-                renderRecipeList();
-                updateQuestProgress('cook');
+                updateFarmState(newFarmState);
+                hideCookingModal();
+                updateQuestProgress('cook', quantity);
+            } else {
+                alert("ส่วนผสมไม่เพียงพอ!");
             }
         }
+
+        function collectCookedFood(queueIndex) {
+            const newFarmState = { ...farmState };
+            const job = newFarmState.kitchen.queue[queueIndex];
+            if (!job) return;
+
+            const recipe = GAME_DATA.recipes[job.recipeId];
+            const newPlayerState = { ...playerState };
+
+            for (let i = 0; i < job.quantity; i++) {
+                newPlayerState.storageBin.push({ id: recipe.resultId, quality: 0 });
+            }
+            
+            newFarmState.kitchen.queue.splice(queueIndex, 1);
+            
+            updateFarmState(newFarmState);
+            updatePlayerState(newPlayerState);
+        }
+
+        function expandGrid(type) {
+            const cost = calculateExpansionCost(type);
+            const typeMap = {
+                farm: { name: 'แปลง', array: farmState.plots, newItem: { plantId: null } },
+                animals: { name: 'คอกสัตว์', array: farmState.animals, newItem: { animalId: null } },
+                factory: { name: 'ที่ดินโรงงาน', array: farmState.factories, newItem: { factoryId: null } }
+            };
+
+            const info = typeMap[type];
+            if (!info) return;
+
+            if (playerState.money >= cost) {
+                showConfirmationModal(`คุณต้องการซื้อ${info.name}เพิ่มในราคา ${cost}💰 หรือไม่?`, () => {
+                    const newPlayerState = { ...playerState };
+                    newPlayerState.money -= cost;
+                    
+                    const newFarmState = { ...farmState };
+                    info.array.push(info.newItem);
+
+                    updatePlayerState(newPlayerState);
+                    updateFarmState(newFarmState);
+                });
+            } else {
+                alert("เงินไม่พอ!");
+            }
+        }
+
 
         async function updateQuestProgress(action, amount = 1) {
             if (!farmState || !farmState.quests) return;
@@ -1761,6 +1961,7 @@
                     if (!farmState.quests) farmState.quests = { daily: [], weekly: [], lastDailyReset: 0, lastWeeklyReset: 0 };
                     if (!farmState.ownedKitchenTools) farmState.ownedKitchenTools = [];
                     if (!farmState.factories) farmState.factories = Array(FACTORY_GRID_SIZE).fill(null).map(() => ({ factoryId: null }));
+                    if (!farmState.kitchen) farmState.kitchen = { queue: [] };
                 }
             }, handleFirestoreError);
         }
@@ -1776,7 +1977,8 @@
                         animals: Array(ANIMAL_PEN_SIZE).fill(null).map(() => ({ animalId: null })),
                         factories: Array(FACTORY_GRID_SIZE).fill(null).map(() => ({ factoryId: null })),
                         quests: { daily: [], weekly: [], lastDailyReset: 0, lastWeeklyReset: 0 },
-                        ownedKitchenTools: []
+                        ownedKitchenTools: [],
+                        kitchen: { queue: [] }
                     };
                     await setDoc(farmDocRef, initialFarmState);
                 }
@@ -1829,10 +2031,14 @@
                     return;
                 }
                 document.querySelectorAll('#tab-content-area > div').forEach(div => div.classList.add('hidden'));
-                document.getElementById(`${view}-view`)?.classList.remove('hidden');
+                const viewEl = document.getElementById(`${view}-view`);
+                if (viewEl) viewEl.classList.remove('hidden');
+
                 document.querySelectorAll('#footer-nav .nav-btn').forEach(b => b.classList.remove('active'));
-                if (primaryViews.includes(view)) {
-                    document.querySelector(`.nav-btn[data-view="${view}"]`).classList.add('active');
+                
+                const primaryBtn = document.querySelector(`.nav-btn[data-view="${view}"]`);
+                if (primaryViews.includes(view) && primaryBtn) {
+                    primaryBtn.classList.add('active');
                 } else if (secondaryViews.some(sv => sv.view === view)) {
                     moreBtn.classList.add('active');
                 }
@@ -1840,20 +2046,41 @@
             });
             document.querySelector('.nav-btn[data-view="farm"]').classList.add('active');
             
+            // --- Safely add event listeners ---
             document.getElementById('context-modal-close').onclick = hideContextMenu;
             document.getElementById('submenu-modal-close').onclick = hideSubMenu;
 
-            document.getElementById('shop-items').addEventListener('click', (e) => {
+            const shopItemsEl = document.getElementById('shop-items');
+            if (shopItemsEl) shopItemsEl.addEventListener('click', (e) => {
                 if (e.target.classList.contains('buy-btn')) buyItem(e.target.dataset.itemid);
             });
 
-            document.getElementById('storage-items').addEventListener('click', e => {
+            const storageItemsEl = document.getElementById('storage-items');
+            if(storageItemsEl) storageItemsEl.addEventListener('click', e => {
                 const button = e.target;
                 const itemId = button.dataset.itemId;
                 const quality = parseInt(button.dataset.quality, 10);
                 if (button.classList.contains('sell-storage-btn')) sellFromStorage(itemId, quality);
                 else if (button.classList.contains('eat-storage-btn')) eatFromStorage(itemId, quality);
                 else if (button.classList.contains('move-to-inventory-btn')) moveFromStorageToInventory(itemId, quality);
+            });
+
+            const recipeListEl = document.getElementById('recipe-list');
+            if(recipeListEl) recipeListEl.addEventListener('click', e => {
+                if (e.target.classList.contains('cook-recipe-btn')) {
+                     const button = e.target;
+                     const recipeId = button.dataset.recipeId;
+                     const quantityInput = button.previousElementSibling;
+                     const quantity = parseInt(quantityInput.value, 10);
+                     cook(recipeId, quantity);
+                }
+            });
+
+            const kitchenQueueListEl = document.getElementById('kitchen-queue-list');
+            if(kitchenQueueListEl) kitchenQueueListEl.addEventListener('click', e => {
+                if (e.target.classList.contains('collect-food-btn')) {
+                    collectCookedFood(parseInt(e.target.dataset.queueIndex, 10));
+                }
             });
 
             document.getElementById('upgrade-house-btn').onclick = upgradeHouse;
@@ -1864,14 +2091,13 @@
             document.getElementById('fish-catch-ok').onclick = () => document.getElementById('fish-catch-modal').classList.add('hidden');
             document.getElementById('cook-btn').onclick = showCookingModal;
             document.getElementById('cooking-modal-close').onclick = hideCookingModal;
-            document.getElementById('recipe-list').addEventListener('click', e => {
-                if (e.target.classList.contains('cook-recipe-btn')) cook(e.target.dataset.recipeId);
-            });
+
             playerNameEl.onclick = () => showNameModal(false);
             document.getElementById('save-name-btn').onclick = saveNameChange;
             document.getElementById('cancel-name-btn').onclick = hideNameModal;
             nameInput.onkeypress = (e) => { if (e.key === 'Enter') saveNameChange(); };
             document.getElementById('confirm-modal-cancel').onclick = hideConfirmationModal;
+
             document.body.addEventListener('click', e => {
                 if (e.target.classList.contains('claim-quest-btn')) {
                     claimQuestReward(e.target.dataset.questType, e.target.dataset.questId);
