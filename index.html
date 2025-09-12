@@ -2107,28 +2107,29 @@
         }
         
         async function ensureFarmDataExists() {
-            const farmDocRef = doc(db, "publicFarmData", "farmState");
-            try {
-                const farmSnap = await getDoc(farmDocRef);
-                if (!farmSnap.exists()) {
-                    console.log("Farm data not found, creating initial state...");
-                    const initialFarmState = {
-                        plots: Array(FARM_GRID_SIZE).fill(null).map(() => ({ plantId: null })),
-                        animals: Array(ANIMAL_PEN_SIZE).fill(null).map(() => ({ animalId: null })),
-                        factories: Array(FACTORY_GRID_SIZE).fill(null).map(() => ({ factoryId: null })),
-                        quests: { daily: generateRandomQuests('daily', 5), weekly: generateRandomQuests('weekly', 5), lastDailyReset: Date.now(), lastWeeklyReset: Date.now() },
-                        ownedKitchenTools: [],
-                        kitchen: { queue: [] },
-                        marketPrices: {},
-                        salesVolume: {}
-                    };
-                    await setDoc(farmDocRef, initialFarmState);
-                }
-            } catch (error) {
-                console.warn("Could not ensure farm data existence.", error.message);
-                throw error;
-            }
-        }
+			const farmDocRef = doc(db, "publicFarmData", "farmState");
+			try {
+				const farmSnap = await getDoc(farmDocRef);
+				if (!farmSnap.exists()) {
+					console.log("Farm data not found, creating initial state...");
+					const initialFarmState = {
+						plots: Array(FARM_GRID_SIZE).fill(null).map(() => ({ plantId: null })),
+						animals: Array(ANIMAL_PEN_SIZE).fill(null).map(() => ({ animalId: null })),
+						factories: Array(FACTORY_GRID_SIZE).fill(null).map(() => ({ factoryId: null })),
+						quests: { daily: generateRandomQuests('daily', 5), weekly: generateRandomQuests('weekly', 5), lastDailyReset: Date.now(), lastWeeklyReset: Date.now() },
+						ownedKitchenTools: [],
+						kitchen: { queue: [] },
+						marketPrices: {},
+						salesVolume: {},
+						sharedHouseLevel: 2 // <--- เพิ่มบรรทัดนี้เข้าไป
+					};
+					await setDoc(farmDocRef, initialFarmState);
+				}
+			} catch (error) {
+				console.warn("Could not ensure farm data existence.", error.message);
+				throw error;
+			}
+		}
         
         function handleFirestoreError(error) { console.error("Firestore connection error:", error); }
         
