@@ -12,14 +12,14 @@
             touch-action: manipulation; 
             background: linear-gradient(to bottom, #a7f3d0, #f0fdf4);
         }
-        .plot, .animal-slot { 
+        .plot, .animal-slot, .factory-slot { 
             transition: all 0.2s ease-in-out; 
             background-size: contain; 
             background-position: center; 
             background-repeat: no-repeat; 
             image-rendering: pixelated; /* For pixel art style */
         }
-        .plot:hover, .animal-slot:hover { transform: scale(1.05); }
+        .plot:hover, .animal-slot:hover, .factory-slot:hover { transform: scale(1.05); }
 
         @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
         @keyframes fadeOut { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(0.95); } }
@@ -146,7 +146,7 @@
             </div>
         </div>
          <div id="submenu-modal" class="hidden fixed inset-0 bg-black/60 z-[51] flex items-center justify-center p-4">
-            <div class="bg-white rounded-2xl shadow-xl p-5 w-full max-w-xs">
+            <div class="bg-white rounded-2xl shadow-xl p-5 w-full max-w-md">
                 <h3 id="submenu-modal-title" class="text-xl font-bold text-gray-800 mb-4 text-center"></h3>
                 <div id="submenu-modal-items" class="grid grid-cols-3 gap-3 text-center"></div>
                 <button id="submenu-modal-close" class="mt-4 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg w-full">กลับ</button>
@@ -209,6 +209,10 @@
             </div>
             <div id="animals-view" class="hidden">
                  <div id="animal-pen" class="grid grid-cols-3 sm:grid-cols-4 gap-2 md:gap-4"></div>
+            </div>
+             <div id="factory-view" class="hidden">
+                <h2 class="text-3xl font-bold text-green-800 mb-4 text-center">โรงงานแปรรูป 🏭</h2>
+                <div id="factory-grid" class="grid grid-cols-3 sm:grid-cols-4 gap-2 md:gap-4"></div>
             </div>
             <div id="bedroom-view" class="hidden">
                  <div class="w-full max-w-2xl mx-auto text-center">
@@ -323,10 +327,12 @@
 
         const FARM_GRID_SIZE = 24;
         const ANIMAL_PEN_SIZE = 8;
+        const FACTORY_GRID_SIZE = 8;
         const ADMIN_UID = "p7Ujrm9dBZcL6bK5EHYEsrJOCvl2";
 
         // --- MASTER GAME DATA ---
         const GAME_DATA = {
+            // --- UPGRADES ---
             'house_upgrades': [
                 { name: 'เต็นท์', cost: 500, imageUrl: 'beadroom1.png' },
                 { name: 'กระท่อมไม้', cost: 2500, imageUrl: 'beadroom2.png' },
@@ -341,6 +347,8 @@
                 { name: 'เบ็ดทอง', cost: 15000, imageUrl: 'rod4.png' },
                 { name: 'เบ็ดในตำนาน', cost: 0, imageUrl: 'rod5.png' },
             ],
+            
+            // --- RECIPES & FOOD ---
             'recipes': {
                 'fried_egg': { resultId: 'fried_egg_food', ingredients: [{ category: 'egg' }], tool: 'kitchen_pan' },
                 'sashimi': { resultId: 'sashimi_food', ingredients: [{ category: 'fish' }], tool: 'kitchen_knife' },
@@ -354,8 +362,6 @@
                 'vegetable_soup': { resultId: 'vegetable_soup_food', ingredients: [{ category: 'vegetable' }, { category: 'vegetable' }], tool: 'kitchen_pot' },
                 'spicy_fish_soup': { resultId: 'spicy_fish_soup_food', ingredients: [{ category: 'fish' }, { id: 'tomato_produce' }], tool: 'kitchen_pot' },
             },
-            
-            // Food
             'fried_egg_food': { name: 'ไข่ดาว', icon: '🍳', type: 'produce', sellPrice: [25, 35, 45], energyRestore: 15, imageUrl: 'fried_egg_food.png' },
             'sashimi_food': { name: 'ซาชิมิ', icon: '🍣', type: 'produce', sellPrice: [75, 90, 110], energyRestore: 25, imageUrl: 'sashimi_food.png' },
             'fruit_smoothie_food': { name: 'น้ำผลไม้ปั่น', icon: '🥤', type: 'produce', sellPrice: [80, 100, 120], energyRestore: 30, imageUrl: 'fruit_smoothie_food.png' },
@@ -368,13 +374,13 @@
             'vegetable_soup_food': { name: 'ซุปผัก', icon: '🥣', type: 'produce', sellPrice: [60, 80, 100], energyRestore: 25, imageUrl: 'vegetable_soup_food.png' },
             'spicy_fish_soup_food': { name: 'ต้มยำปลา', icon: '🌶️', type: 'produce', sellPrice: [180, 220, 260], energyRestore: 50, imageUrl: 'spicy_fish_soup_food.png' },
             
-            // Kitchen Tools
+            // --- KITCHEN TOOLS ---
             'kitchen_knife': { name: 'มีดทำครัว', type: 'kitchen_tool', cost: 1000, icon: '🔪', imageUrl: 'knife.png' },
             'kitchen_pan': { name: 'กระทะ', type: 'kitchen_tool', cost: 1500, icon: '🍳', imageUrl: 'pan.png' },
             'kitchen_blender': { name: 'เครื่องปั่น', type: 'kitchen_tool', cost: 2000, icon: '🌪️', imageUrl: 'mixer.png' },
             'kitchen_pot': { name: 'หม้อ', type: 'kitchen_tool', cost: 2000, icon: '🍲', imageUrl: 'pot.png' },
 
-            // Fish
+            // --- FISH ---
             'carp': { name: 'ปลาคาร์ป', icon: '🐟', rarity: 'Common', sellPrice: [15, 20, 25], type: 'produce', energyRestore: 3, imageUrl: 'carp.png', category: 'fish' },
             'sardine': { name: 'ปลาซาร์ดีน', icon: '🐠', rarity: 'Common', sellPrice: [20, 25, 30], type: 'produce', energyRestore: 4, imageUrl: 'sardine.png', category: 'fish' },
             'tuna': { name: 'ปลาทูน่า', icon: '🐟', rarity: 'Uncommon', sellPrice: [35, 50, 65], type: 'produce', energyRestore: 15, imageUrl: 'tuna.png', category: 'fish' },
@@ -382,77 +388,104 @@
             'eel': { name: 'ปลาไหล', icon: '鰻', rarity: 'Rare', sellPrice: [150, 200, 250], type: 'produce', energyRestore: 30, imageUrl: 'eel.png', category: 'fish' },
             'pufferfish': { name: 'ปลาปักเป้า', icon: '🐡', rarity: 'Rare', sellPrice: [200, 250, 300], type: 'produce', energyRestore: 35, imageUrl: 'pufferfish.png', category: 'fish' },
             
-            // Seeds & Produce
+            // --- SEEDS & PRODUCE ---
             'carrot_seed':   { name: 'เมล็ดแครอท', type: 'seed', cost: 5, plantId: 'carrot', icon: '🥕', imageUrl: 'carrot.png' },
             'carrot':        { name: 'แครอท', type: 'crop', growTime: 9600, produceId: 'carrot_produce', icon: '🥕', imageUrl: 'carrot.png' },
             'carrot_produce':{ name: 'แครอท', type: 'produce', sellPrice: [8, 12, 16], icon: '🥕', energyRestore: 2, category: 'vegetable' },
-            
             'tomato_seed':   { name: 'เมล็ดมะเขือเทศ', type: 'seed', cost: 10, plantId: 'tomato', icon: '🍅', imageUrl: 'tomato.png' },
             'tomato':        { name: 'มะเขือเทศ', type: 'crop', growTime: 14400, produceId: 'tomato_produce', icon: '🍅', imageUrl: 'tomato.png' },
             'tomato_produce':{ name: 'มะเขือเทศ', type: 'produce', sellPrice: [18, 25, 35], icon: '🍅', energyRestore: 3, category: 'vegetable' },
-
             'strawberry_seed': { name: 'เมล็ดสตรอว์เบอร์รี', type: 'seed', cost: 15, plantId: 'strawberry', icon: '🍓', imageUrl: 'stawberry.png' },
             'strawberry':      { name: 'สตรอว์เบอร์รี', type: 'crop', growTime: 16800, produceId: 'strawberry_produce', icon: '🍓', imageUrl: 'stawberry.png' },
             'strawberry_produce': { name: 'สตรอว์เบอร์รี', type: 'produce', sellPrice: [25, 35, 50], icon: '🍓', energyRestore: 4, category: 'fruit' },
-
             'grape_seed': { name: 'เมล็ดองุ่น', type: 'seed', cost: 20, plantId: 'grape', icon: '🍇', imageUrl: 'grape.png' },
             'grape':      { name: 'องุ่น', type: 'crop', growTime: 21000, produceId: 'grape_produce', icon: '🍇', imageUrl: 'grape.png' },
             'grape_produce': { name: 'องุ่น', type: 'produce', sellPrice: [35, 50, 70], icon: '🍇', energyRestore: 6, category: 'fruit' },
-
             'peach_seed': { name: 'เมล็ดพีช', type: 'seed', cost: 25, plantId: 'peach', icon: '🍑', imageUrl: 'peach.png' },
             'peach':      { name: 'พีช', type: 'crop', growTime: 21600, produceId: 'peach_produce', icon: '🍑', imageUrl: 'peach.png' },
             'peach_produce': { name: 'พีช', type: 'produce', sellPrice: [45, 65, 90], icon: '🍑', energyRestore: 8, category: 'fruit' },
-
             'orange_seed': { name: 'เมล็ดส้ม', type: 'seed', cost: 30, plantId: 'orange', icon: '🍊', imageUrl: 'orange.png' },
             'orange':      { name: 'ส้ม', type: 'crop', growTime: 25200, produceId: 'orange_produce', icon: '🍊', imageUrl: 'orange.png' },
             'orange_produce': { name: 'ส้ม', type: 'produce', sellPrice: [55, 80, 110], icon: '🍊', energyRestore: 9, category: 'fruit' },
-
             'mango_seed': { name: 'เมล็ดมะม่วง', type: 'seed', cost: 35, plantId: 'mango', icon: '🥭', imageUrl: 'mango.png' },
             'mango':      { name: 'มะม่วง', type: 'crop', growTime: 28800, produceId: 'mango_produce', icon: '🥭', imageUrl: 'mango.png' },
             'mango_produce': { name: 'มะม่วง', type: 'produce', sellPrice: [65, 95, 130], icon: '🥭', energyRestore: 11, category: 'fruit' },
-
             'pineapple_seed': { name: 'เมล็ดสับปะรด', type: 'seed', cost: 40, plantId: 'pineapple', icon: '🍍', imageUrl: 'pineapple.png' },
             'pineapple':      { name: 'สับปะรด', type: 'crop', growTime: 32400, produceId: 'pineapple_produce', icon: '🍍', imageUrl: 'pineapple.png' },
             'pineapple_produce': { name: 'สับปะรด', type: 'produce', sellPrice: [75, 110, 150], icon: '🍍', energyRestore: 12, category: 'fruit' },
-
             'guava_seed': { name: 'เมล็ดฝรั่ง', type: 'seed', cost: 18, plantId: 'guava', icon: '🍈', imageUrl: 'guava.png' },
             'guava':      { name: 'ฝรั่ง', type: 'crop', growTime: 22400, produceId: 'guava_produce', icon: '🍈', imageUrl: 'guava.png' },
             'guava_produce': { name: 'ฝรั่ง', type: 'produce', sellPrice: [30, 45, 65], icon: '🍈', energyRestore: 5, category: 'fruit' },
-
             'roseapple_seed': { name: 'เมล็ดชมพู่', type: 'seed', cost: 22, plantId: 'roseapple', icon: '🍐', imageUrl: 'chompu.png' },
             'roseapple':      { name: 'ชมพู่', type: 'crop', growTime: 25600, produceId: 'roseapple_produce', icon: '🍐', imageUrl: 'chompu.png' },
             'roseapple_produce': { name: 'ชมพู่', type: 'produce', sellPrice: [40, 60, 85], icon: '🍐', energyRestore: 7, category: 'fruit' },
-
             'apple_seed': { name: 'เมล็ดแอปเปิ้ล', type: 'seed', cost: 28, plantId: 'apple', icon: '🍎', imageUrl: 'apple.png' },
             'apple':      { name: 'แอปเปิ้ล', type: 'crop', growTime: 32000, produceId: 'apple_produce', icon: '🍎', imageUrl: 'apple.png' },
             'apple_produce': { name: 'แอปเปิ้ล', type: 'produce', sellPrice: [50, 75, 105], icon: '🍎', energyRestore: 10, category: 'fruit' },
-            
+
+            // --- FERTILIZERS ---
             'fertilizer_1': { name: 'ปุ๋ยธรรมดา', type: 'item', cost: 10, qualityBonus: 0.3, icon: '💩', imageUrl: 'manure.png' },
             'fertilizer_2': { name: 'ปุ๋ยอย่างดี', type: 'item', cost: 25, qualityBonus: 0.6, icon: '✨', imageUrl: 'fertilizer.png' },
             
+            // --- ANIMALS & ANIMAL PRODUCTS ---
             'chicken_deed': { name: 'กรรมสิทธิ์ไก่', type: 'animal_deed', cost: 100, animalId: 'chicken', icon: '🐔', imageUrl: 'chicken.png' },
             'chicken':      { name: 'ไก่', type: 'animal_instance', produceTime: 600, produceId: 'egg', icon: '🐔', imageUrl: 'chicken.png' },
             'egg':          { name: 'ไข่', type: 'produce', sellPrice: [12, 18, 25], icon: '🥚', energyRestore: 5, category: 'egg' },
-
             'cow_deed':     { name: 'กรรมสิทธิ์วัว', type: 'animal_deed', cost: 500, animalId: 'cow', icon: '🐄', imageUrl: 'cow.png' },
             'cow':          { name: 'วัว', type: 'animal_instance', produceTime: 3600, produceId: 'milk', icon: '🐄', imageUrl: 'cow.png' },
             'milk':         { name: 'นม', type: 'produce', sellPrice: [50, 70, 90], icon: '🥛', energyRestore: 10, category: 'milk' },
-
-            'pig_deed':     { name: 'กรรมสิทธิ์หมู', type: 'animal_deed', cost: 300, animalId: 'pig', icon: '🐖', imageUrl: 'pig.png' },
-            'pig':          { name: 'หมู', type: 'animal_instance', produceTime: 4800, produceId: 'truffle', icon: '🐖', imageUrl: 'pig.png' },
-            'truffle':      { name: 'เห็ดทรัฟเฟิล', type: 'produce', sellPrice: [80, 110, 150], icon: '🍄', energyRestore: 15, category: 'vegetable' },
-
             'duck_deed':    { name: 'กรรมสิทธิ์เป็ด', type: 'animal_deed', cost: 120, animalId: 'duck', icon: '🦆', imageUrl: 'duck.png' },
             'duck':         { name: 'เป็ด', type: 'animal_instance', produceTime: 900, produceId: 'duck_egg', icon: '🦆', imageUrl: 'duck.png' },
             'duck_egg':     { name: 'ไข่เป็ด', type: 'produce', sellPrice: [15, 22, 30], icon: '🥚', energyRestore: 6, category: 'egg' },
-
             'goose_deed':   { name: 'กรรมสิทธิ์ห่าน', type: 'animal_deed', cost: 150, animalId: 'goose', icon: '🦢', imageUrl: 'swan.png' },
             'goose':        { name: 'ห่าน', type: 'animal_instance', produceTime: 1800, produceId: 'feather', icon: '🦢', imageUrl: 'swan.png' },
-            'feather':      { name: 'ขนนก', type: 'produce', sellPrice: [25, 38, 55], icon: '🪶', energyRestore: 0 }, // Feathers can't be eaten
-
+            'feather':      { name: 'ขนนก', type: 'produce', sellPrice: [25, 38, 55], icon: '🪶', energyRestore: 0 },
             'turtle_deed':  { name: 'กรรมสิทธิ์เต่า', type: 'animal_deed', cost: 1000, animalId: 'turtle', icon: '🐢', imageUrl: 'turtle.png' },
             'turtle':       { name: 'เต่า', type: 'animal_instance', produceTime: 86400, produceId: 'gem', icon: '🐢', imageUrl: 'turtle.png' },
-            'gem':          { name: 'อัญมณี', type: 'produce', sellPrice: [200, 300, 500], icon: '💎', energyRestore: 0 }, // Gems can't be eaten
+            'gem':          { name: 'อัญมณี', type: 'produce', sellPrice: [200, 300, 500], icon: '💎', energyRestore: 0 },
+
+            // --- FACTORIES & PROCESSED GOODS ---
+            // Factory Deeds (for buying)
+            'winery_deed': { name: 'แบบแปลนโรงหมักไวน์', type: 'factory_deed', cost: 15000, factoryId: 'winery', icon: '🍇', imageUrl: 'winery.png' },
+            'cheese_press_deed': { name: 'แบบแปลนโรงทำชีส', type: 'factory_deed', cost: 10000, factoryId: 'cheese_press', icon: '🧀', imageUrl: 'cheese_press.png' },
+            'preserves_jar_deed': { name: 'แบบแปลนโรงทำแยม', type: 'factory_deed', cost: 7500, factoryId: 'preserves_jar', icon: '🍓', imageUrl: 'preserves_jar.png' },
+            'mayonnaise_machine_deed': { name: 'แบบแปลนเครื่องทำมายองเนส', type: 'factory_deed', cost: 5000, factoryId: 'mayonnaise_machine', icon: '🥚', imageUrl: 'mayonnaise_machine.png' },
+
+            // Factory Definitions
+            'winery': {
+                name: 'โรงหมักไวน์', type: 'factory_instance', imageUrl: 'winery.png',
+                recipes: [
+                    { id: 'grape_wine_recipe', name: 'ทำไวน์องุ่น', inputs: [{ id: 'grape_produce', count: 20 }], output: { id: 'grape_wine', count: 1 }, processTime: 86400 } // 24 hrs
+                ]
+            },
+            'cheese_press': {
+                name: 'โรงทำชีส', type: 'factory_instance', imageUrl: 'cheese_press.png',
+                recipes: [
+                    { id: 'cheese_recipe', name: 'ทำชีส', inputs: [{ id: 'milk', count: 10 }], output: { id: 'cheese', count: 1 }, processTime: 43200 } // 12 hrs
+                ]
+            },
+            'preserves_jar': {
+                name: 'โรงทำแยม', type: 'factory_instance', imageUrl: 'preserves_jar.png',
+                recipes: [
+                    { id: 'strawberry_jam_recipe', name: 'ทำแยมสตรอว์เบอร์รี', inputs: [{ id: 'strawberry_produce', count: 15 }], output: { id: 'strawberry_jam', count: 1 }, processTime: 21600 }, // 6 hrs
+                    { id: 'apple_jam_recipe', name: 'ทำแยมแอปเปิ้ล', inputs: [{ id: 'apple_produce', count: 15 }], output: { id: 'apple_jam', count: 1 }, processTime: 21600 } // 6 hrs
+                ]
+            },
+            'mayonnaise_machine': {
+                name: 'เครื่องทำมายองเนส', type: 'factory_instance', imageUrl: 'mayonnaise_machine.png',
+                recipes: [
+                    { id: 'mayonnaise_recipe', name: 'ทำมายองเนส', inputs: [{ id: 'egg', count: 5 }], output: { id: 'mayonnaise', count: 1 }, processTime: 10800 }, // 3 hrs
+                    { id: 'duck_mayonnaise_recipe', name: 'ทำมายองเนสไข่เป็ด', inputs: [{ id: 'duck_egg', count: 5 }], output: { id: 'duck_mayonnaise', count: 1 }, processTime: 10800 } // 3 hrs
+                ]
+            },
+
+            // Processed Goods
+            'grape_wine': { name: 'ไวน์องุ่น', type: 'produce', sellPrice: [800, 1200, 1600], icon: '🍷', energyRestore: 20, imageUrl: 'wine.png' },
+            'cheese': { name: 'ชีส', type: 'produce', sellPrice: [600, 850, 1100], icon: '🧀', energyRestore: 30, imageUrl: 'cheese.png' },
+            'strawberry_jam': { name: 'แยมสตรอว์เบอร์รี', type: 'produce', sellPrice: [250, 350, 450], icon: '🍓', energyRestore: 15, imageUrl: 'jam.png' },
+            'apple_jam': { name: 'แยมแอปเปิ้ล', type: 'produce', sellPrice: [300, 420, 550], icon: '🍎', energyRestore: 18, imageUrl: 'jam_apple.png' },
+            'mayonnaise': { name: 'มายองเนส', type: 'produce', sellPrice: [150, 200, 250], icon: '🥚', energyRestore: 10, imageUrl: 'mayonnaise.png' },
+            'duck_mayonnaise': { name: 'มายองเนสไข่เป็ด', type: 'produce', sellPrice: [180, 240, 300], icon: '🥚', energyRestore: 12, imageUrl: 'mayonnaise_duck.png' },
         };
         
         const QUEST_DATA = {
@@ -542,6 +575,7 @@
             if (!farmState || !playerState) return; 
             renderFarm();
             renderAnimals();
+            renderFactory();
             renderBedroom();
             renderPlayerUI();
             renderShop();
@@ -591,42 +625,79 @@
              animalPen.innerHTML = '';
              farmState.animals.forEach((animal, index) => {
                 const slotEl = document.createElement('div');
-                slotEl.className = 'animal-slot aspect-square rounded-2xl shadow-inner cursor-pointer flex flex-col items-center justify-center p-1 bg-green-200/50';
+                slotEl.className = 'animal-slot aspect-square rounded-2xl shadow-inner cursor-pointer flex flex-col items-center justify-center p-1 bg-green-200/50 relative';
                 
                 if (animal.animalId) {
                     const animalData = GAME_DATA[animal.animalId];
-                    if (!animalData) {
-                        console.error(`Invalid animalId "${animal.animalId}" found for slot ${index}.`);
-                        slotEl.innerHTML = `❓`;
-                        slotEl.style.backgroundColor = 'rgba(255, 100, 100, 0.5)';
-                    } else {
-                        const content = document.createElement('div');
-                        content.style.backgroundImage = `url(${animalData.imageUrl})`;
-                        content.className = 'w-full h-full bg-contain bg-no-repeat bg-center';
+                    slotEl.style.backgroundImage = `url(${animalData.imageUrl})`;
 
-                        const progressEl = document.createElement('div');
-                        progressEl.className = 'w-full h-1 bg-gray-300 rounded-full mt-1';
-                        const progressFill = document.createElement('div');
-                        const progress = (Date.now() - animal.startTime) / (animalData.produceTime * 1000);
-                        progressFill.className = 'h-1 bg-yellow-400 rounded-full';
-                        progressFill.style.width = `${Math.min(progress, 1) * 100}%`;
-                        progressEl.appendChild(progressFill);
+                    const progressContainer = document.createElement('div');
+                    progressContainer.className = 'absolute bottom-1 left-1 right-1 h-2 bg-gray-300/70 rounded-full overflow-hidden';
+                    const progressFill = document.createElement('div');
+                    const progress = (Date.now() - animal.startTime) / (animalData.produceTime * 1000);
+                    progressFill.className = 'h-full bg-yellow-400 rounded-full';
+                    progressFill.style.width = `${Math.min(progress, 1) * 100}%`;
+                    progressContainer.appendChild(progressFill);
+                    slotEl.appendChild(progressContainer);
 
-                        slotEl.appendChild(content);
-                        slotEl.appendChild(progressEl);
-
-                        if (progress >= 1) {
-                            slotEl.classList.add('animate-bounce');
-                        }
+                    if (progress >= 1) {
+                        slotEl.classList.add('animate-bounce');
+                        const produceData = GAME_DATA[animalData.produceId];
+                        const produceIcon = document.createElement('div');
+                        produceIcon.className = 'absolute top-1 right-1 text-2xl z-10';
+                        produceIcon.textContent = produceData.icon;
+                        slotEl.appendChild(produceIcon);
                     }
                 } else {
-                    slotEl.textContent = '+';
-                    slotEl.className += ' text-3xl text-gray-400';
+                    slotEl.textContent = '➕';
+                    slotEl.className += ' text-4xl text-gray-400 hover:bg-green-200/70';
                 }
-
                 slotEl.onclick = () => showContextMenu('animal', index);
                 animalPen.appendChild(slotEl);
              });
+        }
+
+        function renderFactory() {
+            if (!farmState || !Array.isArray(farmState.factories)) return;
+            const factoryGrid = document.getElementById('factory-grid');
+            factoryGrid.innerHTML = '';
+            farmState.factories.forEach((factory, index) => {
+                const slotEl = document.createElement('div');
+                slotEl.className = 'factory-slot aspect-square rounded-2xl shadow-inner cursor-pointer flex flex-col items-center justify-center p-1 bg-gray-300/50 relative';
+                
+                if (factory.factoryId) {
+                    const factoryData = GAME_DATA[factory.factoryId];
+                    slotEl.style.backgroundImage = `url(${factoryData.imageUrl})`;
+
+                    if(factory.isProcessing) {
+                        const recipe = factoryData.recipes.find(r => r.id === factory.recipeId);
+                        const progress = (Date.now() - factory.startTime) / (recipe.processTime * 1000);
+                        
+                        const progressContainer = document.createElement('div');
+                        progressContainer.className = 'absolute bottom-1 left-1 right-1 h-2 bg-gray-800/70 rounded-full overflow-hidden';
+                        const progressFill = document.createElement('div');
+                        progressFill.className = 'h-full bg-green-400 rounded-full';
+                        progressFill.style.width = `${Math.min(progress, 1) * 100}%`;
+                        progressContainer.appendChild(progressFill);
+                        slotEl.appendChild(progressContainer);
+
+                        if (progress >= 1) {
+                            slotEl.classList.add('animate-bounce');
+                            const produceData = GAME_DATA[recipe.output.id];
+                            const produceIcon = document.createElement('div');
+                            produceIcon.className = 'absolute top-1 right-1 text-2xl z-10';
+                            produceIcon.style.backgroundImage = `url(${produceData.imageUrl})`;
+                            produceIcon.className += ' w-8 h-8 bg-contain bg-no-repeat bg-center';
+                            slotEl.appendChild(produceIcon);
+                        }
+                    }
+                } else {
+                    slotEl.textContent = '➕';
+                    slotEl.className += ' text-4xl text-gray-500 hover:bg-gray-400/50';
+                }
+                slotEl.onclick = () => showContextMenu('factory', index);
+                factoryGrid.appendChild(slotEl);
+            });
         }
 
         function renderPlayerUI() {
@@ -663,14 +734,23 @@
         function renderShop() {
             const shopItems = document.getElementById('shop-items');
             shopItems.innerHTML = '';
-            ['seed', 'item', 'animal_deed', 'kitchen_tool'].forEach(category => {
+            ['seed', 'item', 'animal_deed', 'kitchen_tool', 'factory_deed'].forEach(category => {
+                const itemsInCategory = Object.entries(GAME_DATA).filter(([_, data]) => data.type === category);
+                if (itemsInCategory.length === 0) return;
+
                 const categoryEl = document.createElement('div');
-                const title = {seed:'เมล็ดพันธุ์', item:'ไอเท็ม', animal_deed:'สัตว์เลี้ยง', kitchen_tool: 'อุปกรณ์ครัว'}[category];
+                const title = {
+                    seed:'เมล็ดพันธุ์', 
+                    item:'ไอเท็ม', 
+                    animal_deed:'สัตว์เลี้ยง', 
+                    kitchen_tool: 'อุปกรณ์ครัว',
+                    factory_deed: 'แบบแปลนโรงงาน'
+                }[category];
                 categoryEl.innerHTML = `<h3 class="text-xl font-bold text-green-700 mb-2">${title}</h3>`;
                 const grid = document.createElement('div');
                 grid.className = 'grid grid-cols-2 md:grid-cols-3 gap-2';
 
-                Object.entries(GAME_DATA).filter(([_, data]) => data.type === category).forEach(([id, data]) => {
+                itemsInCategory.forEach(([id, data]) => {
                     const itemEl = document.createElement('div');
                     itemEl.className = 'bg-white/80 p-3 rounded-xl shadow-md flex flex-col items-center gap-2';
                     
@@ -682,9 +762,24 @@
                         iconContainer.textContent = data.icon;
                     }
 
+                    let buttonText = `ซื้อ ${data.cost}💰`;
+                    let isDisabled = false;
+
+                    // ตรวจสอบถ้าเป็นของที่ไม่ควรซื้อซ้ำ
+                    if (data.type === 'kitchen_tool' && farmState.ownedKitchenTools?.includes(id)) {
+                        buttonText = 'มีแล้ว';
+                        isDisabled = true;
+                    }
+                    if (data.type === 'factory_deed' && farmState.factories?.some(f => f.factoryId === data.factoryId)) {
+                        buttonText = 'สร้างแล้ว';
+                        isDisabled = true;
+                    }
+
                     itemEl.innerHTML = `
                         <div class="font-semibold text-center text-sm">${data.name}</div>
-                        <button data-itemid="${id}" class="buy-btn bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-bold py-1 px-4 rounded-full w-full">ซื้อ ${data.cost}💰</button>
+                        <button data-itemid="${id}" class="buy-btn bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-bold py-1 px-4 rounded-full w-full ${isDisabled ? 'bg-gray-400 text-gray-600 cursor-not-allowed hover:bg-gray-400' : ''}" ${isDisabled ? 'disabled' : ''}>
+                            ${buttonText}
+                        </button>
                     `;
                     itemEl.prepend(iconContainer);
                     grid.appendChild(itemEl);
@@ -727,7 +822,7 @@
                 const itemData = GAME_DATA[item.id];
                 if (!itemData || !itemData.sellPrice) {
                     console.warn(`Item with invalid sellPrice found in sell box: ${item.id}`);
-                    return; // ข้ามไอเท็มชิ้นนี้ไป
+                    return;
                 }
 				const sellPrice = itemData.sellPrice[item.quality];
                 totalValue += sellPrice * item.count;
@@ -813,7 +908,7 @@
                     buttonsHTML += `<button class="eat-storage-btn bg-blue-500 text-white font-bold py-1 px-3 rounded-full hover:bg-blue-600 text-xs" data-item-id="${item.id}" data-quality="${item.quality}">กิน (+${itemData.energyRestore}⚡)</button>`;
                 }
 				
-				if (itemData.type === 'item') {
+				if (itemData.type === 'item' || itemData.type === 'factory_deed' || itemData.type === 'animal_deed') {
                      buttonsHTML += `<button class="move-to-inventory-btn bg-purple-500 text-white font-bold py-1 px-3 rounded-full hover:bg-purple-600 text-xs" data-item-id="${item.id}" data-quality="${item.quality}">ย้ายเข้าตัว</button>`;
                 }
                 
@@ -956,95 +1051,90 @@
                      actionsEl.appendChild(createButton('🌱 ปลูก', () => showSubMenu('plant', index, plantableItems), plantableItems.length === 0));
                 } else {
                     const plantData = GAME_DATA[plot.plantId];
-                    if (!plantData) {
-                        detailsEl.innerHTML = `<p class="text-red-500">ข้อมูลพืชเสียหาย</p>`;
-                        actionsEl.before(detailsEl);
-                        actionsEl.appendChild(createButton('❌ เคลียแปลง (บังคับ)', () => clearPlot(index), false, 'bg-red-500 hover:bg-red-600 text-white'));
-                    } else {
-                        let effectiveGrowth = 0;
-                        if (plot.plantTime) {
-                            const elapsedSeconds = (Date.now() - plot.plantTime) / 1000;
-                            const growthMultiplier = 1 + ((plot.wateredBy?.length || 0) * 0.5);
-                            effectiveGrowth = elapsedSeconds * growthMultiplier;
-                        }
-
-                        const isGrown = effectiveGrowth >= plantData.growTime;
-                        const growthMultiplierForRemainingTime = 1 + ((plot.wateredBy?.length || 0) * 0.5);
-                        const remainingSeconds = Math.max(0, (plantData.growTime - effectiveGrowth) / growthMultiplierForRemainingTime);
-                        
-                        if(plot.plantedBy && plot.plantedBy.nickname){
-                             detailsEl.innerHTML += `<p>ปลูกโดย: <span class="font-semibold">${plot.plantedBy.nickname}</span></p>`;
-                        }
-                        detailsEl.innerHTML += `<p>เหลือเวลา: <span class="font-semibold">${formatTime(remainingSeconds)}</span></p>`;
-                        
-                        if (plot.wateredBy && plot.wateredBy.length > 0) {
-                            const waterers = plot.wateredBy.filter(p => p && p.nickname).map(p => p.nickname).join(', ');
-                            detailsEl.innerHTML += `<div class="mt-2"><p>รดน้ำแล้วโดย:</p><p class="font-semibold text-green-700">${waterers}</p></div>`;
-                        }
-                        actionsEl.before(detailsEl);
-                        
-                        if (isGrown) {
-                            const involvedUids = new Set([plot.plantedBy?.uid, ...(plot.wateredBy?.map(p => p.uid).filter(uid => uid) || [])]);
-                            const harvestedUids = new Set(plot.harvestedBy?.map(p => p.uid) || []);
-                            const hasHarvested = harvestedUids.has(userId);
-
-                            actionsEl.appendChild(createButton('🌾 เก็บเกี่ยว', () => harvest(index), hasHarvested));
-                            actionsEl.appendChild(createButton('❌ เคลียแปลง (บังคับ)', () => clearPlot(index), false, 'bg-red-500 hover:bg-red-600 text-white'));
-                            
-                            const playerMap = new Map();
-                            if (plot.plantedBy && plot.plantedBy.uid) {
-                                playerMap.set(plot.plantedBy.uid, plot.plantedBy.nickname);
-                            }
-                            if (plot.wateredBy) {
-                                plot.wateredBy.forEach(p => {
-                                    if (p && p.uid) playerMap.set(p.uid, p.nickname);
-                                });
-                            }
-
-                            let harvestStatusHTML = '<div class="mt-2 text-xs"><p>สถานะการเก็บเกี่ยว:</p>';
-                            involvedUids.forEach(uid => {
-                                const status = harvestedUids.has(uid) ? '✅' : 'รอ...';
-                                const playerNickname = playerMap.get(uid) || 'ผู้เล่นไม่ทราบชื่อ';
-                                harvestStatusHTML += `<p>${status} ${playerNickname}</p>`;
-                            });
-                            harvestStatusHTML += '</div>';
-                            detailsEl.innerHTML += harvestStatusHTML;
-
-                        } else {
-                             const hasWatered = plot.wateredBy && plot.wateredBy.some(p => p.uid === userId);
-                             actionsEl.appendChild(createButton('💧 รดน้ำ', () => water(index), hasWatered));
-                             const fertilizers = Object.keys(playerState.inventory).filter(id => GAME_DATA[id] && GAME_DATA[id].type === 'item' && playerState.inventory[id] > 0);
-                             actionsEl.appendChild(createButton('💩 ใส่ปุ๋ย', () => showSubMenu('fertilize', index, fertilizers), fertilizers.length === 0));
-                             actionsEl.appendChild(createButton('❌ เคลียแปลง', () => clearPlot(index), false, 'bg-red-500 hover:bg-red-600 text-white'));
-                        }
+                    const elapsedSeconds = (Date.now() - plot.plantTime) / 1000;
+                    const growthMultiplier = 1 + ((plot.wateredBy?.length || 0) * 0.5);
+                    const effectiveGrowth = elapsedSeconds * growthMultiplier;
+                    const isGrown = effectiveGrowth >= plantData.growTime;
+                    const remainingSeconds = Math.max(0, (plantData.growTime - effectiveGrowth) / (1 + ((plot.wateredBy?.length || 0) * 0.5)));
+                    
+                    detailsEl.innerHTML = `<p>ปลูกโดย: ${plot.plantedBy?.nickname || '??'}</p><p>เหลือเวลา: ${formatTime(remainingSeconds)}</p>`;
+                    if (plot.wateredBy && plot.wateredBy.length > 0) {
+                        const waterers = plot.wateredBy.map(p => p.nickname).join(', ');
+                        detailsEl.innerHTML += `<div class="mt-2"><p>รดน้ำแล้วโดย:</p><p class="font-semibold text-green-700">${waterers}</p></div>`;
                     }
+                    actionsEl.before(detailsEl);
+                    
+                    if (isGrown) {
+                        const hasHarvested = plot.harvestedBy?.some(p => p.uid === userId);
+                        actionsEl.appendChild(createButton('🌾 เก็บเกี่ยว', () => harvest(index), hasHarvested));
+
+                        const involvedUids = new Set([plot.plantedBy?.uid, ...(plot.wateredBy?.map(p => p.uid).filter(uid => uid) || [])]);
+                        const harvestedUids = new Set(plot.harvestedBy?.map(p => p.uid) || []);
+                        
+                        let harvestStatusHTML = '<div class="mt-2 text-xs text-left border-t pt-2">';
+                        harvestStatusHTML += '<p class="font-bold">สถานะการเก็บเกี่ยว:</p>';
+
+                        involvedUids.forEach(uid => {
+                            const planterName = plot.plantedBy?.uid === uid ? plot.plantedBy.nickname : null;
+                            const waterer = plot.wateredBy?.find(p => p.uid === uid);
+                            const nickname = planterName || waterer?.nickname || 'ผู้เล่น';
+                            const statusIcon = harvestedUids.has(uid) ? '✅' : '❌';
+                            harvestStatusHTML += `<p>${statusIcon} ${nickname}</p>`;
+                        });
+                        harvestStatusHTML += '</div>';
+                        detailsEl.innerHTML += harvestStatusHTML;
+
+                    } else {
+                         const hasWatered = plot.wateredBy?.some(p => p.uid === userId);
+                         actionsEl.appendChild(createButton('💧 รดน้ำ', () => water(index), hasWatered));
+                         const fertilizers = Object.keys(playerState.inventory).filter(id => GAME_DATA[id]?.type === 'item');
+                         actionsEl.appendChild(createButton('💩 ใส่ปุ๋ย', () => showSubMenu('fertilize', index, fertilizers), fertilizers.length === 0));
+                    }
+                    actionsEl.appendChild(createButton('❌ เคลียแปลง', () => clearPlot(index), false, 'bg-red-500 hover:bg-red-600 text-white'));
                 }
             } else if (type === 'animal') {
                 const index = id;
                 const animal = farmState.animals[index];
                 titleEl.textContent = `คอกที่ ${index + 1}`;
                 if (!animal.animalId) {
-                     const buyableItems = Object.keys(playerState.inventory).filter(id => GAME_DATA[id] && GAME_DATA[id].type === 'animal_deed' && playerState.inventory[id] > 0);
+                     const buyableItems = Object.keys(playerState.inventory).filter(id => GAME_DATA[id]?.type === 'animal_deed' && playerState.inventory[id] > 0);
                      actionsEl.appendChild(createButton('➕ วางสัตว์', () => showSubMenu('placeAnimal', index, buyableItems), buyableItems.length === 0));
                 } else {
                     const animalData = GAME_DATA[animal.animalId];
-                    if(!animalData){
-                        detailsEl.innerHTML = `<p class="text-red-500">ข้อมูลสัตว์เสียหาย</p>`;
+                    const isReady = (Date.now() - animal.startTime) >= (animalData.produceTime * 1000);
+                    const remainingMillis = Math.max(0, (animal.startTime + animalData.produceTime * 1000) - Date.now());
+                    detailsEl.innerHTML = `<p><b>${animalData.name}</b></p><p>พร้อมเก็บใน: <span class="font-semibold">${formatTime(remainingMillis / 1000)}</span></p>`;
+                    actionsEl.before(detailsEl);
+                    if(isReady){
+                        actionsEl.appendChild(createButton(`เก็บ${GAME_DATA[animalData.produceId].name}`, () => collectAnimalProduct(index)));
+                    }
+                }
+            } else if (type === 'factory') {
+                const index = id;
+                const factory = farmState.factories[index];
+                titleEl.textContent = `โรงงานช่องที่ ${index + 1}`;
+                if (!factory.factoryId) {
+                    const placeableItems = Object.keys(playerState.inventory).filter(id => GAME_DATA[id]?.type === 'factory_deed' && playerState.inventory[id] > 0);
+                    actionsEl.appendChild(createButton('➕ ตั้งโรงงาน', () => showSubMenu('placeFactory', index, placeableItems), placeableItems.length === 0));
+                } else {
+                    const factoryData = GAME_DATA[factory.factoryId];
+                    if (!factory.isProcessing) {
+                        detailsEl.innerHTML = `<p><b>${factoryData.name}</b> (ว่าง)</p>`;
                         actionsEl.before(detailsEl);
+                        actionsEl.appendChild(createButton('⚙️ เริ่มผลิต', () => showSubMenu('useFactory', index, factoryData.recipes.map(r => r.id))));
                     } else {
-                        const isReady = (Date.now() - animal.startTime) >= (animalData.produceTime * 1000);
-                        const remainingMillis = Math.max(0, (animal.startTime + animalData.produceTime * 1000) - Date.now());
-                        detailsEl.innerHTML = `<p>พร้อมเก็บใน: <span class="font-semibold">${formatTime(remainingMillis / 1000)}</span></p>`;
+                        const recipe = factoryData.recipes.find(r => r.id === factory.recipeId);
+                        const isReady = (Date.now() - factory.startTime) >= (recipe.processTime * 1000);
+                        const remainingMillis = Math.max(0, (factory.startTime + recipe.processTime * 1000) - Date.now());
+                        detailsEl.innerHTML = `<p><b>${factoryData.name}</b></p><p>กำลังผลิต: ${recipe.name}</p><p>เสร็จใน: ${formatTime(remainingMillis / 1000)}</p>`;
                         actionsEl.before(detailsEl);
-                        
-                        if(isReady){
-                            actionsEl.appendChild(createButton(`เก็บ${GAME_DATA[animalData.produceId].name}`, () => collectProduct(index)));
-                        } else {
-                             actionsEl.appendChild(createButton('ให้อาหาร (เร็วขึ้น)', () => {}, true));
+
+                        if(isReady) {
+                            actionsEl.appendChild(createButton(`📦 เก็บของ`, () => collectFactoryProduct(index)));
                         }
                     }
                 }
-            } 
+            }
             
             modal.classList.remove('hidden', 'modal-leave');
             modal.classList.add('modal-enter');
@@ -1061,20 +1151,51 @@
             const titleEl = document.getElementById('submenu-modal-title');
             const itemsEl = document.getElementById('submenu-modal-items');
             itemsEl.innerHTML = '';
-            titleEl.textContent = actionType === 'plant' ? 'เลือกเมล็ดที่จะปลูก' : actionType === 'fertilize' ? 'เลือกปุ๋ย' : 'เลือกสัตว์ที่จะวาง';
+            
+            const titles = {
+                plant: 'เลือกเมล็ดที่จะปลูก',
+                fertilize: 'เลือกปุ๋ย',
+                placeAnimal: 'เลือกสัตว์ที่จะวาง',
+                placeFactory: 'เลือกโรงงานที่จะสร้าง',
+                useFactory: 'เลือกสูตรการผลิต'
+            };
+            titleEl.textContent = titles[actionType] || 'เลือกรายการ';
 
             itemIds.forEach(itemId => {
-                const itemData = GAME_DATA[itemId];
+                let itemData, clickAction, name, iconHTML;
+                
+                if (actionType === 'useFactory') {
+                    const factoryData = GAME_DATA[farmState.factories[index].factoryId];
+                    const recipe = factoryData.recipes.find(r => r.id === itemId);
+                    const outputData = GAME_DATA[recipe.output.id];
+                    
+                    let ingredientsText = recipe.inputs.map(inp => `${GAME_DATA[inp.id].name} x${inp.count}`).join(', ');
+                    
+                    itemData = recipe;
+                    name = `${recipe.name}<br><small class="font-normal text-gray-500">${ingredientsText}</small>`;
+                    iconHTML = `<img src="${outputData.imageUrl}" class="w-10 h-10 object-contain">`;
+                    clickAction = () => startProcessing(index, recipe.id);
+                } else {
+                    itemData = GAME_DATA[itemId];
+                    name = itemData.name;
+                    iconHTML = itemData.imageUrl 
+                        ? `<img src="${itemData.imageUrl}" class="w-10 h-10 object-contain">`
+                        : `<div class="text-3xl">${itemData.icon}</div>`;
+
+                    const actions = {
+                        plant: () => plant(index, itemId),
+                        fertilize: () => fertilize(index, itemId),
+                        placeAnimal: () => placeAnimal(index, itemId),
+                        placeFactory: () => placeFactory(index, itemId),
+                    };
+                    clickAction = actions[actionType];
+                }
+
                 const itemButton = document.createElement('button');
                 itemButton.className = 'p-2 bg-gray-100 rounded-lg hover:bg-green-100 flex flex-col items-center justify-center gap-1';
-                const iconHTML = itemData.imageUrl 
-                    ? `<img src="${itemData.imageUrl}" class="w-10 h-10 object-contain">`
-                    : `<div class="text-3xl">${itemData.icon}</div>`;
-                itemButton.innerHTML = `${iconHTML}<div class="text-xs">${itemData.name}</div>`;
+                itemButton.innerHTML = `${iconHTML}<div class="text-xs">${name}</div>`;
                 itemButton.onclick = () => {
-                    if (actionType === 'plant') plant(index, itemId);
-                    else if (actionType === 'fertilize') fertilize(index, itemId);
-                    else if (actionType === 'placeAnimal') placeAnimal(index, itemId);
+                    clickAction();
                     hideSubMenu();
                 };
                 itemsEl.appendChild(itemButton);
@@ -1101,6 +1222,7 @@
         function renderRecipeList() {
             const container = document.getElementById('recipe-list');
             container.innerHTML = '';
+            if(!farmState.ownedKitchenTools) farmState.ownedKitchenTools = [];
             
             Object.entries(GAME_DATA.recipes).forEach(([recipeId, recipeData]) => {
                 const resultData = GAME_DATA[recipeData.resultId];
@@ -1113,19 +1235,10 @@
                 const tempStorage = [...playerState.storageBin];
 
                 for (const ingredient of recipeData.ingredients) {
-                    let hasIngredient = false;
-                    let foundIndex = -1;
-                    if(ingredient.id) {
-                        foundIndex = tempStorage.findIndex(item => item.id === ingredient.id);
-                    } else if (ingredient.category) {
-                        foundIndex = tempStorage.findIndex(item => GAME_DATA[item.id]?.category === ingredient.category);
-                    }
+                    const foundIndex = tempStorage.findIndex(item => item.id === ingredient.id || GAME_DATA[item.id]?.category === ingredient.category);
+                    const hasIngredient = foundIndex > -1;
+                    if(hasIngredient) tempStorage.splice(foundIndex, 1);
 
-                    if (foundIndex > -1) {
-                        hasIngredient = true;
-                        tempStorage.splice(foundIndex, 1);
-                    }
-                    
                     const name = ingredient.id ? GAME_DATA[ingredient.id].name : `ประเภท: ${ingredient.category}`;
                     const icon = ingredient.id ? GAME_DATA[ingredient.id].icon : {egg:'🥚',fish:'🐟',fruit:'🍓',vegetable:'🥕',milk:'🥛'}[ingredient.category];
                     ingredientsHTML += `<span class="text-sm ${hasIngredient ? 'text-green-600' : 'text-red-500'}">${icon} ${name} ${hasIngredient ? '✔️' : ''}</span>`;
@@ -1235,8 +1348,6 @@
 
             if (allHarvested) {
                 newFarmState.plots[plotIndex] = { plantId: null };
-            } else {
-                newFarmState.plots[plotIndex] = plot;
             }
 
             updatePlayerState(newPlayerState);
@@ -1250,12 +1361,11 @@
             const deedData = GAME_DATA[deedId];
             newFarmState.animals[slotIndex] = { animalId: deedData.animalId, startTime: Date.now() };
             newPlayerState.inventory[deedId]--;
-            document.querySelector(`#animal-pen > div:nth-child(${slotIndex + 1})`).classList.add('pop-animation');
             updateFarmState(newFarmState);
             updatePlayerState(newPlayerState);
         }
 
-        function collectProduct(slotIndex) {
+        function collectAnimalProduct(slotIndex) {
             const newPlayerState = { ...playerState };
             const newFarmState = { ...farmState };
             const animal = newFarmState.animals[slotIndex];
@@ -1263,13 +1373,86 @@
 
             newPlayerState.storageBin.push({ id: animalData.produceId, quality: 0 });
             animal.startTime = Date.now();
-            newFarmState.animals[slotIndex] = animal;
             
             updatePlayerState(newPlayerState);
             updateFarmState(newFarmState);
             updateQuestProgress('collect_product');
         }
         
+        function placeFactory(slotIndex, deedId) {
+            const newFarmState = { ...farmState };
+            const newPlayerState = { ...playerState };
+            const deedData = GAME_DATA[deedId];
+            newFarmState.factories[slotIndex] = { factoryId: deedData.factoryId, isProcessing: false };
+            newPlayerState.inventory[deedId]--;
+            updateFarmState(newFarmState);
+            updatePlayerState(newPlayerState);
+            updateQuestProgress('place_factory');
+        }
+        
+        function startProcessing(slotIndex, recipeId) {
+            const newFarmState = { ...farmState };
+            const newPlayerState = { ...playerState };
+            
+            const factory = newFarmState.factories[slotIndex];
+            const factoryData = GAME_DATA[factory.factoryId];
+            const recipe = factoryData.recipes.find(r => r.id === recipeId);
+
+            const storageCounts = newPlayerState.storageBin.reduce((acc, item) => {
+                acc[item.id] = (acc[item.id] || 0) + 1;
+                return acc;
+            }, {});
+
+            let canProcess = true;
+            for (const input of recipe.inputs) {
+                if ((storageCounts[input.id] || 0) < input.count) {
+                    canProcess = false;
+                    break;
+                }
+            }
+
+            if (canProcess) {
+                for (const input of recipe.inputs) {
+                    let countToRemove = input.count;
+                    newPlayerState.storageBin = newPlayerState.storageBin.filter(item => {
+                        if (item.id === input.id && countToRemove > 0) {
+                            countToRemove--;
+                            return false;
+                        }
+                        return true;
+                    });
+                }
+                
+                factory.isProcessing = true;
+                factory.recipeId = recipeId;
+                factory.startTime = Date.now();
+
+                updateFarmState(newFarmState);
+                updatePlayerState(newPlayerState);
+            } else {
+                alert("วัตถุดิบไม่เพียงพอ!");
+            }
+        }
+
+        function collectFactoryProduct(slotIndex) {
+            const newPlayerState = { ...playerState };
+            const newFarmState = { ...farmState };
+            const factory = newFarmState.factories[slotIndex];
+            const factoryData = GAME_DATA[factory.factoryId];
+            const recipe = factoryData.recipes.find(r => r.id === factory.recipeId);
+            
+            for (let i = 0; i < recipe.output.count; i++) {
+                newPlayerState.storageBin.push({ id: recipe.output.id, quality: 0 });
+            }
+
+            factory.isProcessing = false;
+            delete factory.recipeId;
+            delete factory.startTime;
+
+            updateFarmState(newFarmState);
+            updatePlayerState(newPlayerState);
+        }
+
         function upgradeHouse() {
             const newPlayerState = { ...playerState };
             const currentLevel = newPlayerState.houseLevel || 0;
@@ -1321,9 +1504,7 @@
             const itemIndex = newPlayerState.storageBin.findIndex(item => item.id === itemId && item.quality === quality);
             
             if (itemIndex > -1) {
-                // ลบไอเท็ม 1 ชิ้นออกจากคลัง
                 newPlayerState.storageBin.splice(itemIndex, 1);
-                // เพิ่มไอเท็ม 1 ชิ้นเข้าไปในช่องเก็บของในตัว
                 newPlayerState.inventory[itemId] = (newPlayerState.inventory[itemId] || 0) + 1;
                 updatePlayerState(newPlayerState);
             }
@@ -1343,83 +1524,47 @@
         
         async function checkForTimeResets() {
             if (!playerState || !farmState) return;
-
             const now = new Date();
-            
-            // --- Player-specific resets ---
-            const lastPlayerReset = new Date(playerState.lastResetTime || 0);
             let playerNeedsUpdate = false;
-            const newPlayerState = { ...playerState };
-
+            let farmNeedsUpdate = false;
+            
+            const lastPlayerReset = new Date(playerState.lastResetTime || 0);
             if (lastPlayerReset.getDate() !== now.getDate() || lastPlayerReset.getMonth() !== now.getMonth() || lastPlayerReset.getFullYear() !== now.getFullYear()) {
-                console.log("Processing daily player reset...");
-
+                const newPlayerState = { ...playerState };
                 if (newPlayerState.produceBin && newPlayerState.produceBin.length > 0) {
                     let totalValue = 0;
                     newPlayerState.produceBin.forEach(item => {
                         const itemData = GAME_DATA[item.id];
-                        if (itemData && itemData.sellPrice) {
-                            totalValue += itemData.sellPrice[item.quality];
-                        }
+                        if (itemData && itemData.sellPrice) totalValue += itemData.sellPrice[item.quality];
                     });
                     newPlayerState.money = (newPlayerState.money || 0) + totalValue;
                     newPlayerState.produceBin = [];
                 }
                 newPlayerState.energy = 100;
                 newPlayerState.lastResetTime = now.getTime();
-                playerNeedsUpdate = true;
-            }
-
-            // --- Farm-wide quest resets ---
-            const lastDailyQuestReset = new Date(farmState.quests?.lastDailyReset || 0);
-            let farmNeedsUpdate = false;
-            const newFarmState = { ...farmState };
-
-            if (lastDailyQuestReset.getDate() !== now.getDate() || lastDailyQuestReset.getMonth() !== now.getMonth() || lastDailyQuestReset.getFullYear() !== now.getFullYear()) {
-                console.log("Resetting daily quests for the farm...");
-                newFarmState.quests.daily = generateRandomQuests('daily', 5);
-                newFarmState.quests.lastDailyReset = now.getTime();
-                farmNeedsUpdate = true;
-            }
-
-            const lastWeeklyQuestReset = new Date(farmState.quests?.lastWeeklyReset || 0);
-            const startOfWeek = new Date(now);
-            startOfWeek.setHours(0, 0, 0, 0);
-            startOfWeek.setDate(now.getDate() - now.getDay()); 
-            if (lastWeeklyQuestReset < startOfWeek) {
-                 console.log("Resetting weekly quests for the farm...");
-                 newFarmState.quests.weekly = generateRandomQuests('weekly', 5);
-                 newFarmState.quests.lastWeeklyReset = now.getTime();
-                 farmNeedsUpdate = true;
-            }
-
-            if (playerNeedsUpdate) {
                 await updatePlayerState(newPlayerState);
             }
-            if (farmNeedsUpdate) {
-                await updateFarmState(newFarmState);
+
+            const lastDailyQuestReset = new Date(farmState.quests?.lastDailyReset || 0);
+            if (lastDailyQuestReset.getDate() !== now.getDate() || lastDailyQuestReset.getMonth() !== now.getMonth() || lastDailyQuestReset.getFullYear() !== now.getFullYear()) {
+                 const newFarmState = { ...farmState };
+                 newFarmState.quests.daily = generateRandomQuests('daily', 5);
+                 newFarmState.quests.lastDailyReset = now.getTime();
+                 await updateFarmState(newFarmState);
             }
         }
         
         function forceResetFarm() {
-            showConfirmationModal('คุณแน่ใจ 100% หรือไม่? การกระทำนี้จะล้างข้อมูลแปลงผักและคอกสัตว์ทั้งหมดสำหรับผู้เล่นทุกคน และไม่สามารถย้อนกลับได้!', async () => {
-                console.log("Admin is resetting the farm...");
-                const defaultPlot = () => ({ plantId: null });
-                const defaultAnimalSlot = () => ({ animalId: null });
-                const initialFarmState = {
-                    plots: Array(FARM_GRID_SIZE).fill(null).map(defaultPlot),
-                    animals: Array(ANIMAL_PEN_SIZE).fill(null).map(defaultAnimalSlot),
-                };
+            showConfirmationModal('คุณแน่ใจ 100% หรือไม่? การกระทำนี้จะล้างข้อมูลฟาร์มทั้งหมด และไม่สามารถย้อนกลับได้!', async () => {
                 const farmDocRef = doc(db, "publicFarmData", "farmState");
-                await setDoc(farmDocRef, initialFarmState);
-                console.log("Farm has been reset by admin.");
+                await deleteDoc(farmDocRef);
+                window.location.reload();
             });
         }
         
         function resetPlayerProgress() {
-            showConfirmationModal('คุณแน่ใจจริงๆ หรือไม่? การกระทำนี้จะลบข้อมูลส่วนตัวทั้งหมดของคุณ (เงิน, ของในตัว, บ้าน) และเริ่มเกมใหม่ทั้งหมด ไม่สามารถย้อนกลับได้!', async () => {
+            showConfirmationModal('คุณแน่ใจจริงๆ หรือไม่? การกระทำนี้จะลบข้อมูลส่วนตัวทั้งหมดของคุณ และเริ่มเกมใหม่ทั้งหมด ไม่สามารถย้อนกลับได้!', async () => {
                 if (!userId) return;
-                console.log("Resetting player progress for user:", userId);
                 const playerDocRef = doc(db, "players", userId);
                 await deleteDoc(playerDocRef);
                 window.location.reload();
@@ -1430,7 +1575,6 @@
             const newPlayerState = { ...playerState };
             const currentLevel = newPlayerState.fishingRodLevel || 0;
             if (currentLevel >= GAME_DATA.fishing_rods.length - 1) return;
-
             const nextLevelData = GAME_DATA.fishing_rods[currentLevel + 1];
             if (newPlayerState.money >= nextLevelData.cost) {
                 newPlayerState.money -= nextLevelData.cost;
@@ -1441,40 +1585,20 @@
         
         function fish() {
             if (playerState.energy < 5) return;
-            
             const newPlayerState = { ...playerState };
             newPlayerState.energy -= 5;
-            updatePlayerState(newPlayerState); // Update energy immediately
-
+            updatePlayerState(newPlayerState);
             const rodLevel = newPlayerState.fishingRodLevel || 0;
-            
-            const probabilities = [
-                [0.8, 0.15, 0.05], // Level 1
-                [0.6, 0.3, 0.1],   // Level 2
-                [0.4, 0.4, 0.2],   // Level 3
-                [0.2, 0.5, 0.3],   // Level 4
-                [0.1, 0.4, 0.5],   // Level 5
-            ];
-            
+            const probabilities = [[0.8, 0.15, 0.05], [0.6, 0.3, 0.1], [0.4, 0.4, 0.2], [0.2, 0.5, 0.3], [0.1, 0.4, 0.5]];
             const fishTypes = {
-                'Common': Object.keys(GAME_DATA).filter(id => GAME_DATA[id].type === 'produce' && GAME_DATA[id].rarity === 'Common'),
-                'Uncommon': Object.keys(GAME_DATA).filter(id => GAME_DATA[id].type === 'produce' && GAME_DATA[id].rarity === 'Uncommon'),
-                'Rare': Object.keys(GAME_DATA).filter(id => GAME_DATA[id].type === 'produce' && GAME_DATA[id].rarity === 'Rare')
+                'Common': Object.keys(GAME_DATA).filter(id => GAME_DATA[id].rarity === 'Common'),
+                'Uncommon': Object.keys(GAME_DATA).filter(id => GAME_DATA[id].rarity === 'Uncommon'),
+                'Rare': Object.keys(GAME_DATA).filter(id => GAME_DATA[id].rarity === 'Rare')
             };
-
             const rand = Math.random();
-            let caughtRarity;
-            if (rand < probabilities[rodLevel][0]) {
-                caughtRarity = 'Common';
-            } else if (rand < probabilities[rodLevel][0] + probabilities[rodLevel][1]) {
-                caughtRarity = 'Uncommon';
-            } else {
-                caughtRarity = 'Rare';
-            }
-            
+            let caughtRarity = rand < probabilities[rodLevel][0] ? 'Common' : (rand < probabilities[rodLevel][0] + probabilities[rodLevel][1] ? 'Uncommon' : 'Rare');
             const possibleFish = fishTypes[caughtRarity];
             const caughtFishId = possibleFish[Math.floor(Math.random() * possibleFish.length)];
-            
             startFishingMinigame(caughtFishId);
         }
 
@@ -1483,13 +1607,9 @@
             document.getElementById('fish-catch-title').textContent = `คุณตกได้ ${fishData.name}!`;
             const iconEl = document.getElementById('fish-catch-icon');
             iconEl.style.backgroundImage = `url(${fishData.imageUrl})`;
-            
             const rarityEl = document.getElementById('fish-catch-rarity');
             rarityEl.textContent = `ความหายาก: ${fishData.rarity}`;
-            if(fishData.rarity === 'Uncommon') rarityEl.className = 'text-green-600 mb-4';
-            else if (fishData.rarity === 'Rare') rarityEl.className = 'text-purple-600 mb-4';
-            else rarityEl.className = 'text-gray-600 mb-4';
-
+            rarityEl.className = fishData.rarity === 'Uncommon' ? 'text-green-600 mb-4' : (fishData.rarity === 'Rare' ? 'text-purple-600 mb-4' : 'text-gray-600 mb-4');
             document.getElementById('fish-catch-modal').classList.remove('hidden');
         }
         
@@ -1497,93 +1617,37 @@
         function startFishingMinigame(fishId) {
             const modal = document.getElementById('fishing-minigame-modal');
             modal.classList.remove('hidden');
-
-            const track = document.getElementById('fishing-minigame-track');
-            const fishEl = document.getElementById('fishing-minigame-fish');
-            const barEl = document.getElementById('fishing-minigame-bar');
-            const progressFill = document.getElementById('fishing-minigame-progress-fill');
-
-            fishEl.textContent = '🐠'; // Always use the same emoji in-game
-
-            const trackHeight = track.clientHeight;
-            const barHeight = 80; // Make bar a bit bigger
+            const track = document.getElementById('fishing-minigame-track'), fishEl = document.getElementById('fishing-minigame-fish'), barEl = document.getElementById('fishing-minigame-bar'), progressFill = document.getElementById('fishing-minigame-progress-fill');
+            fishEl.textContent = '🐠';
+            const trackHeight = track.clientHeight, barHeight = 80;
             barEl.style.height = `${barHeight}px`;
-
-            let fishPos = trackHeight / 2;
-            let fishTargetPos = Math.random() * (trackHeight - 20);
-
-            let barPos = trackHeight / 2;
-            let barVelocity = 0;
-            const gravity = 0.4; // Softer gravity
-            const lift = -1.2; // Less aggressive lift
+            let fishPos = trackHeight / 2, barPos = trackHeight / 2, barVelocity = 0, progress = 30;
             let mouseDown = false;
-
-            let progress = 30; // Start with a bit more progress
-
-            function gameLoop() {
-                // Bar physics
-                if (mouseDown) barVelocity += lift;
-                barVelocity += gravity;
-                barVelocity *= 0.9; // Damping
-                barPos += barVelocity;
-                
-                // Clamp bar position
-                if (barPos < 0) barPos = 0;
-                if (barPos > trackHeight - barHeight) barPos = trackHeight - barHeight;
-
-                // Fish AI (slower and smoother)
+            let fishTargetPos = Math.random() * (trackHeight - 20);
+            const gameLoop = () => {
+                if (mouseDown) barVelocity -= 1.2;
+                barVelocity += 0.4; barVelocity *= 0.9; barPos += barVelocity;
+                if (barPos < 0) barPos = 0; if (barPos > trackHeight - barHeight) barPos = trackHeight - barHeight;
                 const fishData = GAME_DATA[fishId];
-                const speedMultiplier = fishData.rarity === 'Rare' ? 2.5 : (fishData.rarity === 'Uncommon' ? 1.8 : 1.2);
-                if (Math.abs(fishTargetPos - fishPos) < 5 || Math.random() < 0.01) { // Add some randomness
-                    fishTargetPos = Math.random() * (trackHeight - 20);
-                }
-                fishPos += (fishTargetPos - fishPos) * 0.05 * speedMultiplier;
-
-                // Check for catch (more forgiving)
-                const barTop = barPos;
-                const barBottom = barPos + barHeight;
-                if (fishPos > barTop && fishPos < barBottom) {
-                    progress += 1.5; // Catch a bit faster
-                } else {
-                    progress -= 0.5; // Escape slower
-                }
+                const speed = fishData.rarity === 'Rare' ? 2.5 : (fishData.rarity === 'Uncommon' ? 1.8 : 1.2);
+                if (Math.abs(fishTargetPos - fishPos) < 5 || Math.random() < 0.02) fishTargetPos = Math.random() * (trackHeight - 20);
+                fishPos += (fishTargetPos - fishPos) * 0.1 * speed;
+                if (fishPos > barPos && fishPos < barPos + barHeight) progress += 1.5; else progress -= 0.5;
                 progress = Math.max(0, Math.min(100, progress));
-
-                // Update UI
-                barEl.style.top = `${barPos}px`;
-                fishEl.style.top = `${fishPos}px`;
-                progressFill.style.height = `${progress}%`;
-
-                // Check for win/loss
-                if (progress >= 100) {
-                    endFishingMinigame(true, fishId);
-                    return;
-                }
-                if (progress <= 0) {
-                    endFishingMinigame(false, null);
-                    return;
-                }
-
+                barEl.style.top = `${barPos}px`; fishEl.style.top = `${fishPos}px`; progressFill.style.height = `${progress}%`;
+                if (progress >= 100) return endFishingMinigame(true, fishId);
+                if (progress <= 0) return endFishingMinigame(false, null);
                 minigameLoopId = requestAnimationFrame(gameLoop);
-            }
-            
+            };
             const area = document.getElementById('fishing-minigame-area');
-            const startListener = () => mouseDown = true;
-            const endListener = () => mouseDown = false;
-            
-            area.addEventListener('mousedown', startListener);
-            area.addEventListener('mouseup', endListener);
-            area.addEventListener('touchstart', startListener, { passive: true });
-            area.addEventListener('touchend', endListener);
-            
-            function endFishingMinigame(success, caughtFishId) {
+            const startListener = () => mouseDown = true, endListener = () => mouseDown = false;
+            area.addEventListener('mousedown', startListener); area.addEventListener('mouseup', endListener);
+            area.addEventListener('touchstart', startListener, { passive: true }); area.addEventListener('touchend', endListener);
+            const endFishingMinigame = (success, caughtFishId) => {
                 cancelAnimationFrame(minigameLoopId);
-                area.removeEventListener('mousedown', startListener);
-                area.removeEventListener('mouseup', endListener);
-                area.removeEventListener('touchstart', startListener);
-                area.removeEventListener('touchend', endListener);
+                area.removeEventListener('mousedown', startListener); area.removeEventListener('mouseup', endListener);
+                area.removeEventListener('touchstart', startListener); area.removeEventListener('touchend', endListener);
                 modal.classList.add('hidden');
-                
                 if (success) {
                     const newPlayerState = { ...playerState };
                     newPlayerState.storageBin.push({ id: caughtFishId, quality: 0 });
@@ -1591,125 +1655,65 @@
                     showFishCatchModal(caughtFishId);
                     updateQuestProgress('fish');
                 }
-            }
-
+            };
             minigameLoopId = requestAnimationFrame(gameLoop);
         }
         
         function cook(recipeId) {
             const recipe = GAME_DATA.recipes[recipeId];
-            if (!recipe) return;
-
-            // ตรวจสอบว่ามีเครื่องมือทำครัวที่จำเป็นหรือไม่
-            if (!farmState.ownedKitchenTools.includes(recipe.tool)) {
-                console.error("Cannot cook, missing tool.");
-                return; // ออกจากฟังก์ชันหากไม่มีเครื่องมือ
-            }
-
-            const newStorageBin = [...playerState.storageBin]; // สร้างสำเนาของคลังเก็บของเพื่อดำเนินการ
+            if (!recipe || !farmState.ownedKitchenTools.includes(recipe.tool)) return;
+            const newStorageBin = [...playerState.storageBin];
             let canCook = true;
-
-            // วนลูปเพื่อตรวจสอบและ "ลบ" วัตถุดิบแต่ละชิ้นออกจากสำเนาของคลัง
             for (const ingredient of recipe.ingredients) {
-                let foundIndex = -1;
-                
-                // ค้นหาวัตถุดิบตาม ID หรือ Category
-                if (ingredient.id) {
-                    foundIndex = newStorageBin.findIndex(item => item.id === ingredient.id);
-                } else if (ingredient.category) {
-                    foundIndex = newStorageBin.findIndex(item => GAME_DATA[item.id]?.category === ingredient.category);
-                }
-
-                if (foundIndex > -1) {
-                    // หากเจอวัตถุดิบ ให้ลบออกจากสำเนาเพื่อไม่ให้ถูกนับซ้ำ
-                    newStorageBin.splice(foundIndex, 1);
-                } else {
-                    // หากไม่เจอวัตถุดิบแม้แต่ชิ้นเดียว ให้หยุดการทำงาน
-                    canCook = false;
-                    break;
-                }
+                const foundIndex = newStorageBin.findIndex(item => item.id === ingredient.id || GAME_DATA[item.id]?.category === ingredient.category);
+                if (foundIndex > -1) newStorageBin.splice(foundIndex, 1);
+                else { canCook = false; break; }
             }
-
-            // หากตรวจสอบแล้วว่าสามารถทำอาหารได้ (วัตถุดิบครบ)
             if (canCook) {
                 const newPlayerState = { ...playerState };
-
-                // เพิ่มอาหารที่ทำเสร็จแล้วลงในคลัง
                 newStorageBin.push({ id: recipe.resultId, quality: 0 });
-
-                // อัปเดตคลังเก็บของของผู้เล่นด้วยข้อมูลใหม่ที่ผ่านการหักลบวัตถุดิบแล้ว
                 newPlayerState.storageBin = newStorageBin;
-
-                // บันทึกข้อมูลผู้เล่นและอัปเดต UI
                 updatePlayerState(newPlayerState);
-                renderRecipeList(); // แสดงผลรายการอาหารใหม่อีกครั้ง
-                updateQuestProgress('cook'); // อัปเดตความคืบหน้าของเควส
-            } else {
-                console.error("Cannot cook, missing ingredients.");
-                // สามารถเพิ่มการแจ้งเตือนผู้เล่นตรงนี้ได้หากต้องการ
+                renderRecipeList();
+                updateQuestProgress('cook');
             }
         }
 
         async function updateQuestProgress(action, amount = 1) {
             if (!farmState || !farmState.quests) return;
-            
             const newFarmState = { ...farmState };
             let questsUpdated = false;
-
-            const updateQuestList = (list) => {
-                if (!list) return;
-                list.forEach(quest => {
-                    const questData = QUEST_DATA.daily.find(q => q.id === quest.id) || QUEST_DATA.weekly.find(q => q.id === quest.id);
-                    if (questData && questData.action === action && quest.progress < questData.target) {
+            ['daily', 'weekly'].forEach(type => {
+                newFarmState.quests[type]?.forEach(quest => {
+                    const questData = QUEST_DATA[type].find(q => q.id === quest.id);
+                    if (questData?.action === action && quest.progress < questData.target) {
                         quest.progress = Math.min(quest.progress + amount, questData.target);
                         questsUpdated = true;
                     }
                 });
-            };
-            
-            updateQuestList(newFarmState.quests.daily);
-            updateQuestList(newFarmState.quests.weekly);
-
-            if(questsUpdated) {
-                await updateFarmState(newFarmState);
-            }
+            });
+            if (questsUpdated) await updateFarmState(newFarmState);
         }
 
         async function claimQuestReward(type, id) {
-            const currentFarmState = farmState; 
-            const currentPlayerState = playerState;
-
-            const questList = currentFarmState.quests[type];
-            const quest = questList.find(q => q.id === id);
+            const quest = farmState.quests[type].find(q => q.id === id);
             const questData = QUEST_DATA[type].find(q => q.id === id);
+            if (!quest || !questData || quest.claimedBy?.includes(userId) || quest.progress < questData.target) return;
 
-            if (!quest || !questData || (quest.claimedBy && quest.claimedBy.includes(userId)) || quest.progress < questData.target) {
-                return;
-            }
-
-            const newFarmState = { ...currentFarmState };
+            const newFarmState = { ...farmState };
             const questToUpdate = newFarmState.quests[type].find(q => q.id === id);
-            if (!questToUpdate.claimedBy) {
-                questToUpdate.claimedBy = [];
-            }
+            if (!questToUpdate.claimedBy) questToUpdate.claimedBy = [];
             questToUpdate.claimedBy.push(userId);
 
-            const newPlayerState = { ...currentPlayerState };
-            const reward = questData.reward;
-            let rewardId = reward.id;
-
-            if (rewardId === 'random' && reward.type === 'seed') {
-                const allSeedIds = Object.keys(GAME_DATA).filter(k => GAME_DATA[k].type === 'seed');
-                rewardId = allSeedIds[Math.floor(Math.random() * allSeedIds.length)];
-            }
+            const newPlayerState = { ...playerState };
+            const { reward } = questData;
+            let rewardId = reward.id === 'random' && reward.type === 'seed' 
+                ? Object.keys(GAME_DATA).filter(k => GAME_DATA[k].type === 'seed')[Math.floor(Math.random() * Object.keys(GAME_DATA).filter(k => GAME_DATA[k].type === 'seed').length)] 
+                : reward.id;
             
 			if (reward.type === 'produce') {
-                 // ผลผลิต (เช่น พืช, ไข่, ปลา) จะถูกส่งไปที่คลังเก็บของ
-                 for (let i = 0; i < reward.count; i++) {
-                    newPlayerState.storageBin.push({ id: rewardId, quality: 0 });
-                 }
+                 for (let i = 0; i < reward.count; i++) newPlayerState.storageBin.push({ id: rewardId, quality: 0 });
             } else { 
-                // ไอเท็มอื่นๆ (เช่น ปุ๋ย, เมล็ดพันธุ์) จะถูกเพิ่มในช่องเก็บของในตัว
                 newPlayerState.inventory[rewardId] = (newPlayerState.inventory[rewardId] || 0) + reward.count;
             }
             
@@ -1730,7 +1734,6 @@
             
             if (gameLoopInterval) clearInterval(gameLoopInterval);
             gameLoopInterval = setInterval(() => {
-                checkForTimeResets();
                 renderAll();
             }, 2000); 
         }
@@ -1743,10 +1746,8 @@
                     if (!playerState.produceBin) playerState.produceBin = [];
                     if (!playerState.storageBin) playerState.storageBin = [];
                     if (typeof playerState.houseLevel === 'undefined') playerState.houseLevel = 0;
-                    if (typeof playerState.lastResetTime === 'undefined') playerState.lastResetTime = 0;
                     if (typeof playerState.fishingRodLevel === 'undefined') playerState.fishingRodLevel = 0;
                     if (typeof playerState.energy === 'undefined') playerState.energy = 100;
-                    // Note: ownedKitchenTools is no longer managed here
                     checkForTimeResets();
                 }
             }, handleFirestoreError);
@@ -1757,12 +1758,9 @@
             onSnapshot(farmDocRef, (docSnap) => {
                 if (docSnap.exists()) {
                     farmState = docSnap.data();
-                    if (!farmState.quests) {
-                        farmState.quests = { daily: [], weekly: [], lastDailyReset: 0, lastWeeklyReset: 0 };
-                    }
-                    if (!farmState.ownedKitchenTools) { // Ensure shared kitchen tools array exists
-                        farmState.ownedKitchenTools = [];
-                    }
+                    if (!farmState.quests) farmState.quests = { daily: [], weekly: [], lastDailyReset: 0, lastWeeklyReset: 0 };
+                    if (!farmState.ownedKitchenTools) farmState.ownedKitchenTools = [];
+                    if (!farmState.factories) farmState.factories = Array(FACTORY_GRID_SIZE).fill(null).map(() => ({ factoryId: null }));
                 }
             }, handleFirestoreError);
         }
@@ -1773,17 +1771,11 @@
                 const farmSnap = await getDoc(farmDocRef);
                 if (!farmSnap.exists()) {
                     console.log("Farm data not found, creating initial state...");
-                    const defaultPlot = () => ({ plantId: null });
-                    const defaultAnimalSlot = () => ({ animalId: null });
                     const initialFarmState = {
-                        plots: Array(FARM_GRID_SIZE).fill(null).map(defaultPlot),
-                        animals: Array(ANIMAL_PEN_SIZE).fill(null).map(defaultAnimalSlot),
-                        quests: {
-                            daily: [],
-                            weekly: [],
-                            lastDailyReset: 0,
-                            lastWeeklyReset: 0,
-                        },
+                        plots: Array(FARM_GRID_SIZE).fill(null).map(() => ({ plantId: null })),
+                        animals: Array(ANIMAL_PEN_SIZE).fill(null).map(() => ({ animalId: null })),
+                        factories: Array(FACTORY_GRID_SIZE).fill(null).map(() => ({ factoryId: null })),
+                        quests: { daily: [], weekly: [], lastDailyReset: 0, lastWeeklyReset: 0 },
                         ownedKitchenTools: []
                     };
                     await setDoc(farmDocRef, initialFarmState);
@@ -1812,10 +1804,11 @@
                 { view: 'bedroom', name: 'ห้องนอน 🛌' },
                 { view: 'fishing', name: 'บ่อปลา 🎣' },
                 { view: 'kitchen', name: 'ห้องครัว 🍳' },
+                { view: 'factory', name: 'โรงงาน 🏭' },
                 { view: 'quests', name: 'เควส 📜' },
             ];
 
-            moreModalItems.innerHTML = ''; // Clear any existing items
+            moreModalItems.innerHTML = '';
             secondaryViews.forEach(secView => {
                 const button = document.createElement('button');
                 button.textContent = secView.name;
@@ -1826,35 +1819,24 @@
             
             document.addEventListener('click', e => {
                 const target = e.target.closest('[data-view]');
-
                 if (!moreModal.classList.contains('hidden') && !e.target.closest('#more-modal > div') && !e.target.closest('#more-btn')) {
                     moreModal.classList.add('hidden');
                 }
-
                 if (!target) return;
-
                 const view = target.dataset.view;
-
                 if (view === 'more') {
                     moreModal.classList.toggle('hidden');
                     return;
                 }
-
                 document.querySelectorAll('#tab-content-area > div').forEach(div => div.classList.add('hidden'));
-                const viewEl = document.getElementById(`${view}-view`);
-                if (viewEl) viewEl.classList.remove('hidden');
-
+                document.getElementById(`${view}-view`)?.classList.remove('hidden');
                 document.querySelectorAll('#footer-nav .nav-btn').forEach(b => b.classList.remove('active'));
-                
                 if (primaryViews.includes(view)) {
                     document.querySelector(`.nav-btn[data-view="${view}"]`).classList.add('active');
                 } else if (secondaryViews.some(sv => sv.view === view)) {
                     moreBtn.classList.add('active');
                 }
-                
-                if (view !== 'more') {
-                    moreModal.classList.add('hidden');
-                }
+                if (view !== 'more') moreModal.classList.add('hidden');
             });
             document.querySelector('.nav-btn[data-view="farm"]').classList.add('active');
             
@@ -1862,53 +1844,37 @@
             document.getElementById('submenu-modal-close').onclick = hideSubMenu;
 
             document.getElementById('shop-items').addEventListener('click', (e) => {
-                if (e.target.classList.contains('buy-btn')) {
-                    const itemId = e.target.dataset.itemid;
-                    buyItem(itemId);
-                }
+                if (e.target.classList.contains('buy-btn')) buyItem(e.target.dataset.itemid);
             });
 
             document.getElementById('storage-items').addEventListener('click', e => {
-                if (e.target.classList.contains('sell-storage-btn')) {
-                    const itemId = e.target.dataset.itemId;
-                    const quality = parseInt(e.target.dataset.quality, 10);
-                    sellFromStorage(itemId, quality);
-                } else if (e.target.classList.contains('eat-storage-btn')) {
-                    const itemId = e.target.dataset.itemId;
-                    const quality = parseInt(e.target.dataset.quality, 10);
-                    eatFromStorage(itemId, quality);
-                }
+                const button = e.target;
+                const itemId = button.dataset.itemId;
+                const quality = parseInt(button.dataset.quality, 10);
+                if (button.classList.contains('sell-storage-btn')) sellFromStorage(itemId, quality);
+                else if (button.classList.contains('eat-storage-btn')) eatFromStorage(itemId, quality);
+                else if (button.classList.contains('move-to-inventory-btn')) moveFromStorageToInventory(itemId, quality);
             });
 
-            document.getElementById('upgrade-house-btn').addEventListener('click', upgradeHouse);
-            document.getElementById('admin-reset-btn').addEventListener('click', forceResetFarm);
-            document.getElementById('reset-player-btn').addEventListener('click', resetPlayerProgress);
-            
-            document.getElementById('fish-btn').addEventListener('click', fish);
-            document.getElementById('upgrade-rod-btn').addEventListener('click', upgradeRod);
-            document.getElementById('fish-catch-ok').addEventListener('click', () => {
-                document.getElementById('fish-catch-modal').classList.add('hidden');
-            });
-            document.getElementById('cook-btn').addEventListener('click', showCookingModal);
-            document.getElementById('cooking-modal-close').addEventListener('click', hideCookingModal);
+            document.getElementById('upgrade-house-btn').onclick = upgradeHouse;
+            document.getElementById('admin-reset-btn').onclick = forceResetFarm;
+            document.getElementById('reset-player-btn').onclick = resetPlayerProgress;
+            document.getElementById('fish-btn').onclick = fish;
+            document.getElementById('upgrade-rod-btn').onclick = upgradeRod;
+            document.getElementById('fish-catch-ok').onclick = () => document.getElementById('fish-catch-modal').classList.add('hidden');
+            document.getElementById('cook-btn').onclick = showCookingModal;
+            document.getElementById('cooking-modal-close').onclick = hideCookingModal;
             document.getElementById('recipe-list').addEventListener('click', e => {
-                if (e.target.classList.contains('cook-recipe-btn')) {
-                    const recipeId = e.target.dataset.recipeId;
-                    cook(recipeId);
-                }
+                if (e.target.classList.contains('cook-recipe-btn')) cook(e.target.dataset.recipeId);
             });
-
-
-            playerNameEl.addEventListener('click', () => showNameModal(false));
-            document.getElementById('save-name-btn').addEventListener('click', () => saveNameChange());
-            document.getElementById('cancel-name-btn').addEventListener('click', hideNameModal);
-            nameInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') saveNameChange(); });
-            document.getElementById('confirm-modal-cancel').addEventListener('click', hideConfirmationModal);
+            playerNameEl.onclick = () => showNameModal(false);
+            document.getElementById('save-name-btn').onclick = saveNameChange;
+            document.getElementById('cancel-name-btn').onclick = hideNameModal;
+            nameInput.onkeypress = (e) => { if (e.key === 'Enter') saveNameChange(); };
+            document.getElementById('confirm-modal-cancel').onclick = hideConfirmationModal;
             document.body.addEventListener('click', e => {
                 if (e.target.classList.contains('claim-quest-btn')) {
-                    const type = e.target.dataset.questType;
-                    const id = e.target.dataset.questId;
-                    claimQuestReward(type, id);
+                    claimQuestReward(e.target.dataset.questType, e.target.dataset.questId);
                 }
             });
         }
@@ -1922,30 +1888,22 @@
                 if (itemData.type === 'kitchen_tool') {
                     const newFarmState = { ...farmState };
                     if (!newFarmState.ownedKitchenTools) newFarmState.ownedKitchenTools = [];
-
                     if (!newFarmState.ownedKitchenTools.includes(itemId)) {
                         newFarmState.ownedKitchenTools.push(itemId);
-                        updateFarmState(newFarmState); // บันทึกข้อมูลฟาร์มส่วนกลาง
+                        updateFarmState(newFarmState);
                     }
-                    updateQuestProgress('buy_tool');
                 } else {
                    newPlayerState.inventory[itemId] = (newPlayerState.inventory[itemId] || 0) + 1;
                 }
                 
-                // Quest updates
                 updateQuestProgress('buy_item');
                 updateQuestProgress('spend_money', itemData.cost);
-                if (itemData.type === 'seed') {
-                    updateQuestProgress('buy_seed');
-                }
-                if (itemData.type === 'item' && itemId.includes('fertilizer')) {
-                    updateQuestProgress('buy_fertilizer');
-                }
-                if (itemData.type === 'animal_deed') {
-                    updateQuestProgress('buy_animal');
-                }
+                if (itemData.type === 'seed') updateQuestProgress('buy_seed');
+                if (itemData.type === 'item' && itemId.includes('fertilizer')) updateQuestProgress('buy_fertilizer');
+                if (itemData.type === 'animal_deed') updateQuestProgress('buy_animal');
+                if (itemData.type === 'kitchen_tool' || itemData.type === 'factory_deed') updateQuestProgress('buy_tool');
 
-                updatePlayerState(newPlayerState); // บันทึกข้อมูลผู้เล่น (เพื่อหักเงิน)
+                updatePlayerState(newPlayerState);
             }
         }
 
@@ -1953,10 +1911,8 @@
             const confirmModal = document.getElementById('confirm-modal');
             document.getElementById('confirm-modal-text').textContent = text;
             const okButton = document.getElementById('confirm-modal-ok');
-            
             const newOkButton = okButton.cloneNode(true);
             okButton.parentNode.replaceChild(newOkButton, okButton);
-
             newOkButton.addEventListener('click', () => {
                 onConfirm();
                 hideConfirmationModal();
@@ -1972,21 +1928,13 @@
             isInitialNameSetup = isInitial;
             nameInput.value = isInitial ? '' : playerState.nickname;
             nameModal.classList.remove('hidden');
-            nameModal.querySelector('div').classList.remove('modal-leave');
             nameModal.querySelector('div').classList.add('modal-enter');
             nameInput.focus();
-
-            if (isInitial) {
-                document.getElementById('cancel-name-btn').style.display = 'none';
-                document.getElementById('name-modal-title').textContent = "ยินดีต้อนรับ! ตั้งชื่อเล่นของคุณ";
-            } else {
-                 document.getElementById('cancel-name-btn').style.display = 'inline-block';
-                 document.getElementById('name-modal-title').textContent = "เปลี่ยนชื่อเล่น";
-            }
+            document.getElementById('cancel-name-btn').style.display = isInitial ? 'none' : 'inline-block';
+            document.getElementById('name-modal-title').textContent = isInitial ? "ยินดีต้อนรับ! ตั้งชื่อเล่นของคุณ" : "เปลี่ยนชื่อเล่น";
         };
         const hideNameModal = () => {
             const modalContent = nameModal.querySelector('div');
-            modalContent.classList.remove('modal-enter');
             modalContent.classList.add('modal-leave');
             setTimeout(() => nameModal.classList.add('hidden'), 200);
         };
@@ -1995,21 +1943,14 @@
             if (newName.length > 0 && newName.length <= 15) {
                 if (isInitialNameSetup) {
                     playerState = { 
-                        money: 20, 
-                        inventory: {}, 
-                        produceBin: [],
-                        storageBin: [],
-                        nickname: newName,
-                        houseLevel: 0,
-                        lastResetTime: 0,
-                        fishingRodLevel: 0,
-                        energy: 100,
+                        money: 20, inventory: {}, produceBin: [], storageBin: [],
+                        nickname: newName, houseLevel: 0, lastResetTime: 0,
+                        fishingRodLevel: 0, energy: 100,
                     };
                     await setDoc(doc(db, "players", userId), playerState);
                     await startGame(userId);
                 } else {
-                    const newState = {...playerState, nickname: newName};
-                    await updatePlayerState(newState);
+                    await updatePlayerState({...playerState, nickname: newName});
                 }
                 hideNameModal();
             }
@@ -2023,25 +1964,18 @@
                     if (user) {
                         userId = user.uid;
                         const playerDocRef = doc(db, "players", userId);
-                        
                         try {
                             await ensureFarmDataExists();
                             const docSnap = await getDoc(playerDocRef);
-                            
                             if (docSnap.exists()) {
                                 await startGame(userId);
                             } else {
                                 document.getElementById('loading-screen').classList.add('loading-hidden');
                                 showNameModal(true);
                             }
-                        } catch (error) {
-                            handleFirestoreError(error);
-                        }
-                    } else {
-                        await signInAnonymously(auth);
-                    }
+                        } catch (error) { handleFirestoreError(error); }
+                    } else { await signInAnonymously(auth); }
                 });
-
             } catch (error) { 
                 console.error("Authentication failed:", error); 
                 document.body.innerHTML = `<div class="p-4 text-center text-red-700 bg-red-100">เกิดข้อผิดพลาดในการเชื่อมต่อ: ไม่สามารถยืนยันตัวตนได้ กรุณาตรวจสอบ Firebase Config ของคุณ</div>`;
