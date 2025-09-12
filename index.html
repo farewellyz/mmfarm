@@ -298,6 +298,15 @@
                     <div id="shop-items" class="space-y-4"></div>
                 </div>
             </div>
+            
+            <div id="market-view" class="hidden">
+                <div class="w-full max-w-lg mx-auto">
+                    <h2 class="text-3xl font-bold text-green-800 mb-4 text-center">ราคาตลาดวันนี้ 📈</h2>
+                    <div id="market-items-list" class="space-y-2 max-h-[60vh] overflow-y-auto bg-white/80 p-3 rounded-lg">
+                    </div>
+                </div>
+            </div>
+
         </main>
     </div>
     
@@ -336,7 +345,6 @@
 
         // --- MASTER GAME DATA ---
         const GAME_DATA = {
-            // --- UPGRADES ---
             'house_upgrades': [
                 { name: 'เต็นท์', cost: 500, imageUrl: 'beadroom1.png' },
                 { name: 'กระท่อมไม้', cost: 2500, imageUrl: 'beadroom2.png' },
@@ -351,8 +359,6 @@
                 { name: 'เบ็ดทอง', cost: 15000, imageUrl: 'rod4.png' },
                 { name: 'เบ็ดในตำนาน', cost: 0, imageUrl: 'rod5.png' },
             ],
-            
-            // --- RECIPES & FOOD ---
             'recipes': {
                 'fried_egg': { resultId: 'fried_egg_food', ingredients: [{ category: 'egg' }], tool: 'kitchen_pan' },
                 'sashimi': { resultId: 'sashimi_food', ingredients: [{ category: 'fish' }], tool: 'kitchen_knife' },
@@ -367,7 +373,7 @@
                 'spicy_fish_soup': { resultId: 'spicy_fish_soup_food', ingredients: [{ category: 'fish' }, { id: 'tomato_produce' }], tool: 'kitchen_pot' },
             },
             'fried_egg_food': { name: 'ไข่ดาว', icon: '🍳', type: 'produce', sellPrice: [25, 35, 45], energyRestore: 15, imageUrl: 'fried_egg_food.png' },
-            'sashimi_food': { name: 'ซาชิมิ', icon: '🍣', type: 'produce', sellPrice: [75, 90, 110], energyRestore: 25, imageUrl: 'sashimi_food.png' },
+            'sashimi_food': { name: 'ซาชิมิ', icon: '🍣', type: 'produce', sellPrice: [50, 75, 95], energyRestore: 25, imageUrl: 'sashimi_food.png' },
             'fruit_smoothie_food': { name: 'น้ำผลไม้ปั่น', icon: '🥤', type: 'produce', sellPrice: [80, 100, 120], energyRestore: 30, imageUrl: 'fruit_smoothie_food.png' },
             'vegetable_juice_food': { name: 'น้ำผักปั่น', icon: '🧃', type: 'produce', sellPrice: [40, 55, 70], energyRestore: 20, imageUrl: 'vegetable_juice_food.png' },
             'salad_food': { name: 'สลัด', icon: '🥗', type: 'produce', sellPrice: [50, 70, 90], energyRestore: 22, imageUrl: 'salad_food.png' },
@@ -377,113 +383,92 @@
             'milkshake_food': { name: 'มิลค์เชค', icon: '🥛', type: 'produce', sellPrice: [100, 125, 150], energyRestore: 40, imageUrl: 'milkshake_food.png' },
             'vegetable_soup_food': { name: 'ซุปผัก', icon: '🥣', type: 'produce', sellPrice: [60, 80, 100], energyRestore: 25, imageUrl: 'vegetable_soup_food.png' },
             'spicy_fish_soup_food': { name: 'ต้มยำปลา', icon: '🌶️', type: 'produce', sellPrice: [180, 220, 260], energyRestore: 50, imageUrl: 'spicy_fish_soup_food.png' },
-            
-            // --- KITCHEN TOOLS ---
             'kitchen_knife': { name: 'มีดทำครัว', type: 'kitchen_tool', cost: 1000, icon: '🔪', imageUrl: 'knife.png' },
             'kitchen_pan': { name: 'กระทะ', type: 'kitchen_tool', cost: 1500, icon: '🍳', imageUrl: 'pan.png' },
             'kitchen_blender': { name: 'เครื่องปั่น', type: 'kitchen_tool', cost: 2000, icon: '🌪️', imageUrl: 'mixer.png' },
             'kitchen_pot': { name: 'หม้อ', type: 'kitchen_tool', cost: 2000, icon: '🍲', imageUrl: 'pot.png' },
-
-            // --- FISH ---
             'carp': { name: 'ปลาคาร์ป', icon: '🐟', rarity: 'Common', sellPrice: [15, 20, 25], type: 'produce', energyRestore: 3, imageUrl: 'carp.png', category: 'fish' },
             'sardine': { name: 'ปลาซาร์ดีน', icon: '🐠', rarity: 'Common', sellPrice: [20, 25, 30], type: 'produce', energyRestore: 4, imageUrl: 'sardine.png', category: 'fish' },
             'tuna': { name: 'ปลาทูน่า', icon: '🐟', rarity: 'Uncommon', sellPrice: [35, 50, 65], type: 'produce', energyRestore: 15, imageUrl: 'tuna.png', category: 'fish' },
             'salmon': { name: 'ปลาแซลมอน', icon: '🐠', rarity: 'Uncommon', sellPrice: [45, 60, 80], type: 'produce', energyRestore: 18, imageUrl: 'salmon.png', category: 'fish' },
             'eel': { name: 'ปลาไหล', icon: '鰻', rarity: 'Rare', sellPrice: [150, 200, 250], type: 'produce', energyRestore: 30, imageUrl: 'eel.png', category: 'fish' },
             'pufferfish': { name: 'ปลาปักเป้า', icon: '🐡', rarity: 'Rare', sellPrice: [200, 250, 300], type: 'produce', energyRestore: 35, imageUrl: 'pufferfish.png', category: 'fish' },
-            
-            // --- SEEDS & PRODUCE ---
             'carrot_seed':   { name: 'เมล็ดแครอท', type: 'seed', cost: 5, plantId: 'carrot', icon: '🥕', imageUrl: 'carrot.png' },
             'carrot':        { name: 'แครอท', type: 'crop', growTime: 9600, produceId: 'carrot_produce', icon: '🥕', imageUrl: 'carrot.png' },
-            'carrot_produce':{ name: 'แครอท', type: 'produce', sellPrice: [8, 12, 16], icon: '🥕', energyRestore: 2, category: 'vegetable' },
+            'carrot_produce':{ name: 'แครอท', type: 'produce', sellPrice: [8, 12, 16], icon: '🥕', imageUrl: 'carrot.png', energyRestore: 2, category: 'vegetable' },
             'tomato_seed':   { name: 'เมล็ดมะเขือเทศ', type: 'seed', cost: 10, plantId: 'tomato', icon: '🍅', imageUrl: 'tomato.png' },
             'tomato':        { name: 'มะเขือเทศ', type: 'crop', growTime: 14400, produceId: 'tomato_produce', icon: '🍅', imageUrl: 'tomato.png' },
-            'tomato_produce':{ name: 'มะเขือเทศ', type: 'produce', sellPrice: [18, 25, 35], icon: '🍅', energyRestore: 3, category: 'vegetable' },
+            'tomato_produce':{ name: 'มะเขือเทศ', type: 'produce', sellPrice: [18, 25, 35], icon: '🍅', imageUrl: 'tomato.png', energyRestore: 3, category: 'vegetable' },
             'strawberry_seed': { name: 'เมล็ดสตรอว์เบอร์รี', type: 'seed', cost: 15, plantId: 'strawberry', icon: '🍓', imageUrl: 'stawberry.png' },
             'strawberry':      { name: 'สตรอว์เบอร์รี', type: 'crop', growTime: 16800, produceId: 'strawberry_produce', icon: '🍓', imageUrl: 'stawberry.png' },
-            'strawberry_produce': { name: 'สตรอว์เบอร์รี', type: 'produce', sellPrice: [25, 35, 50], icon: '🍓', energyRestore: 4, category: 'fruit' },
+            'strawberry_produce': { name: 'สตรอว์เบอร์รี', type: 'produce', sellPrice: [25, 35, 50], icon: '🍓', imageUrl: 'stawberry.png', energyRestore: 4, category: 'fruit' },
             'grape_seed': { name: 'เมล็ดองุ่น', type: 'seed', cost: 20, plantId: 'grape', icon: '🍇', imageUrl: 'grape.png' },
             'grape':      { name: 'องุ่น', type: 'crop', growTime: 21000, produceId: 'grape_produce', icon: '🍇', imageUrl: 'grape.png' },
-            'grape_produce': { name: 'องุ่น', type: 'produce', sellPrice: [35, 50, 70], icon: '🍇', energyRestore: 6, category: 'fruit' },
+            'grape_produce': { name: 'องุ่น', type: 'produce', sellPrice: [35, 50, 70], icon: '🍇', imageUrl: 'grape.png', energyRestore: 6, category: 'fruit' },
             'peach_seed': { name: 'เมล็ดพีช', type: 'seed', cost: 25, plantId: 'peach', icon: '🍑', imageUrl: 'peach.png' },
             'peach':      { name: 'พีช', type: 'crop', growTime: 21600, produceId: 'peach_produce', icon: '🍑', imageUrl: 'peach.png' },
-            'peach_produce': { name: 'พีช', type: 'produce', sellPrice: [45, 65, 90], icon: '🍑', energyRestore: 8, category: 'fruit' },
+            'peach_produce': { name: 'พีช', type: 'produce', sellPrice: [45, 65, 90], icon: '🍑', imageUrl: 'peach.png', energyRestore: 8, category: 'fruit' },
             'orange_seed': { name: 'เมล็ดส้ม', type: 'seed', cost: 30, plantId: 'orange', icon: '🍊', imageUrl: 'orange.png' },
             'orange':      { name: 'ส้ม', type: 'crop', growTime: 25200, produceId: 'orange_produce', icon: '🍊', imageUrl: 'orange.png' },
-            'orange_produce': { name: 'ส้ม', type: 'produce', sellPrice: [55, 80, 110], icon: '🍊', energyRestore: 9, category: 'fruit' },
+            'orange_produce': { name: 'ส้ม', type: 'produce', sellPrice: [55, 80, 110], icon: '🍊', imageUrl: 'orange.png', energyRestore: 9, category: 'fruit' },
             'mango_seed': { name: 'เมล็ดมะม่วง', type: 'seed', cost: 35, plantId: 'mango', icon: '🥭', imageUrl: 'mango.png' },
             'mango':      { name: 'มะม่วง', type: 'crop', growTime: 28800, produceId: 'mango_produce', icon: '🥭', imageUrl: 'mango.png' },
-            'mango_produce': { name: 'มะม่วง', type: 'produce', sellPrice: [65, 95, 130], icon: '🥭', energyRestore: 11, category: 'fruit' },
+            'mango_produce': { name: 'มะม่วง', type: 'produce', sellPrice: [65, 95, 130], icon: '🥭', imageUrl: 'mango.png', energyRestore: 11, category: 'fruit' },
             'pineapple_seed': { name: 'เมล็ดสับปะรด', type: 'seed', cost: 40, plantId: 'pineapple', icon: '🍍', imageUrl: 'pineapple.png' },
             'pineapple':      { name: 'สับปะรด', type: 'crop', growTime: 32400, produceId: 'pineapple_produce', icon: '🍍', imageUrl: 'pineapple.png' },
-            'pineapple_produce': { name: 'สับปะรด', type: 'produce', sellPrice: [75, 110, 150], icon: '🍍', energyRestore: 12, category: 'fruit' },
+            'pineapple_produce': { name: 'สับปะรด', type: 'produce', sellPrice: [75, 110, 150], icon: '🍍', imageUrl: 'pineapple.png', energyRestore: 12, category: 'fruit' },
             'guava_seed': { name: 'เมล็ดฝรั่ง', type: 'seed', cost: 18, plantId: 'guava', icon: '🍈', imageUrl: 'guava.png' },
             'guava':      { name: 'ฝรั่ง', type: 'crop', growTime: 22400, produceId: 'guava_produce', icon: '🍈', imageUrl: 'guava.png' },
-            'guava_produce': { name: 'ฝรั่ง', type: 'produce', sellPrice: [30, 45, 65], icon: '🍈', energyRestore: 5, category: 'fruit' },
+            'guava_produce': { name: 'ฝรั่ง', type: 'produce', sellPrice: [30, 45, 65], icon: '🍈', imageUrl: 'guava.png', energyRestore: 5, category: 'fruit' },
             'roseapple_seed': { name: 'เมล็ดชมพู่', type: 'seed', cost: 22, plantId: 'roseapple', icon: '🍐', imageUrl: 'chompu.png' },
             'roseapple':      { name: 'ชมพู่', type: 'crop', growTime: 25600, produceId: 'roseapple_produce', icon: '🍐', imageUrl: 'chompu.png' },
-            'roseapple_produce': { name: 'ชมพู่', type: 'produce', sellPrice: [40, 60, 85], icon: '🍐', energyRestore: 7, category: 'fruit' },
+            'roseapple_produce': { name: 'ชมพู่', type: 'produce', sellPrice: [40, 60, 85], icon: '🍐', imageUrl: 'chompu.png', energyRestore: 7, category: 'fruit' },
             'apple_seed': { name: 'เมล็ดแอปเปิ้ล', type: 'seed', cost: 28, plantId: 'apple', icon: '🍎', imageUrl: 'apple.png' },
             'apple':      { name: 'แอปเปิ้ล', type: 'crop', growTime: 32000, produceId: 'apple_produce', icon: '🍎', imageUrl: 'apple.png' },
-            'apple_produce': { name: 'แอปเปิ้ล', type: 'produce', sellPrice: [50, 75, 105], icon: '🍎', energyRestore: 10, category: 'fruit' },
-
-            // --- FERTILIZERS ---
+            'apple_produce': { name: 'แอปเปิ้ล', type: 'produce', sellPrice: [50, 75, 105], icon: '🍎', imageUrl: 'apple.png', energyRestore: 10, category: 'fruit' },
             'fertilizer_1': { name: 'ปุ๋ยธรรมดา', type: 'item', cost: 10, qualityBonus: 0.3, icon: '💩', imageUrl: 'manure.png' },
             'fertilizer_2': { name: 'ปุ๋ยอย่างดี', type: 'item', cost: 25, qualityBonus: 0.6, icon: '✨', imageUrl: 'fertilizer.png' },
-            
-            // --- ANIMALS & ANIMAL PRODUCTS ---
             'chicken_deed': { name: 'กรรมสิทธิ์ไก่', type: 'animal_deed', cost: 100, animalId: 'chicken', icon: '🐔', imageUrl: 'chicken.png' },
             'chicken':      { name: 'ไก่', type: 'animal_instance', produceTime: 600, produceId: 'egg', icon: '🐔', imageUrl: 'chicken.png' },
-            'egg':          { name: 'ไข่', type: 'produce', sellPrice: [12, 18, 25], icon: '🥚', energyRestore: 5, category: 'egg' },
+            'egg':          { name: 'ไข่', type: 'produce', sellPrice: [12, 18, 25], icon: '🥚', imageUrl: 'egg.png', energyRestore: 5, category: 'egg' },
             'cow_deed':     { name: 'กรรมสิทธิ์วัว', type: 'animal_deed', cost: 500, animalId: 'cow', icon: '🐄', imageUrl: 'cow.png' },
             'cow':          { name: 'วัว', type: 'animal_instance', produceTime: 3600, produceId: 'milk', icon: '🐄', imageUrl: 'cow.png' },
-            'milk':         { name: 'นม', type: 'produce', sellPrice: [50, 70, 90], icon: '🥛', energyRestore: 10, category: 'milk' },
+            'milk':         { name: 'นม', type: 'produce', sellPrice: [50, 70, 90], icon: '🥛', imageUrl: 'milk.png', energyRestore: 10, category: 'milk' },
             'duck_deed':    { name: 'กรรมสิทธิ์เป็ด', type: 'animal_deed', cost: 120, animalId: 'duck', icon: '🦆', imageUrl: 'duck.png' },
             'duck':         { name: 'เป็ด', type: 'animal_instance', produceTime: 900, produceId: 'duck_egg', icon: '🦆', imageUrl: 'duck.png' },
-            'duck_egg':     { name: 'ไข่เป็ด', type: 'produce', sellPrice: [15, 22, 30], icon: '🥚', energyRestore: 6, category: 'egg' },
+            'duck_egg':     { name: 'ไข่เป็ด', type: 'produce', sellPrice: [15, 22, 30], icon: '🥚', imageUrl: 'egg_duck.png', energyRestore: 6, category: 'egg' },
             'goose_deed':   { name: 'กรรมสิทธิ์ห่าน', type: 'animal_deed', cost: 150, animalId: 'goose', icon: '🦢', imageUrl: 'swan.png' },
             'goose':        { name: 'ห่าน', type: 'animal_instance', produceTime: 1800, produceId: 'feather', icon: '🦢', imageUrl: 'swan.png' },
-            'feather':      { name: 'ขนนก', type: 'produce', sellPrice: [25, 38, 55], icon: '🪶', energyRestore: 0 },
+            'feather':      { name: 'ขนนก', type: 'produce', sellPrice: [25, 38, 55], icon: '🪶', imageUrl: 'feather.png', energyRestore: 0 },
             'turtle_deed':  { name: 'กรรมสิทธิ์เต่า', type: 'animal_deed', cost: 1000, animalId: 'turtle', icon: '🐢', imageUrl: 'turtle.png' },
             'turtle':       { name: 'เต่า', type: 'animal_instance', produceTime: 86400, produceId: 'gem', icon: '🐢', imageUrl: 'turtle.png' },
-            'gem':          { name: 'อัญมณี', type: 'produce', sellPrice: [200, 300, 500], icon: '💎', energyRestore: 0 },
-
-            // --- FACTORIES & PROCESSED GOODS ---
-            // Factory Deeds (for buying)
+            'gem':          { name: 'อัญมณี', type: 'produce', sellPrice: [200, 300, 500], icon: '💎', imageUrl: 'gem.png', energyRestore: 0 },
             'winery_deed': { name: 'แบบแปลนโรงหมักไวน์', type: 'factory_deed', cost: 15000, factoryId: 'winery', icon: '🍇', imageUrl: 'winery.png' },
             'cheese_press_deed': { name: 'แบบแปลนโรงทำชีส', type: 'factory_deed', cost: 10000, factoryId: 'cheese_press', icon: '🧀', imageUrl: 'cheese_press.png' },
             'preserves_jar_deed': { name: 'แบบแปลนโรงทำแยม', type: 'factory_deed', cost: 7500, factoryId: 'preserves_jar', icon: '🍓', imageUrl: 'preserves_jar.png' },
             'mayonnaise_machine_deed': { name: 'แบบแปลนเครื่องทำมายองเนส', type: 'factory_deed', cost: 5000, factoryId: 'mayonnaise_machine', icon: '🥚', imageUrl: 'mayonnaise_machine.png' },
-
-            // Factory Definitions
             'winery': {
                 name: 'โรงหมักไวน์', type: 'factory_instance', imageUrl: 'winery.png',
-                recipes: [
-                    { id: 'grape_wine_recipe', name: 'ทำไวน์องุ่น', inputs: [{ id: 'grape_produce', count: 20 }], output: { id: 'grape_wine', count: 1 }, processTime: 7200 } // 2 hrs
-                ]
+                recipes: [ { id: 'grape_wine_recipe', name: 'ทำไวน์องุ่น', inputs: [{ id: 'grape_produce', count: 20 }], output: { id: 'grape_wine', count: 1 }, processTime: 7200 } ]
             },
             'cheese_press': {
                 name: 'โรงทำชีส', type: 'factory_instance', imageUrl: 'cheese_press.png',
-                recipes: [
-                    { id: 'cheese_recipe', name: 'ทำชีส', inputs: [{ id: 'milk', count: 10 }], output: { id: 'cheese', count: 1 }, processTime: 6000 } // 1 hr 40 min
-                ]
+                recipes: [ { id: 'cheese_recipe', name: 'ทำชีส', inputs: [{ id: 'milk', count: 10 }], output: { id: 'cheese', count: 1 }, processTime: 6000 } ]
             },
             'preserves_jar': {
                 name: 'โรงทำแยม', type: 'factory_instance', imageUrl: 'preserves_jar.png',
                 recipes: [
-                    { id: 'strawberry_jam_recipe', name: 'ทำแยมสตรอว์เบอร์รี', inputs: [{ id: 'strawberry_produce', count: 15 }], output: { id: 'strawberry_jam', count: 1 }, processTime: 4800 }, // 1 hr 20 min
-                    { id: 'apple_jam_recipe', name: 'ทำแยมแอปเปิ้ล', inputs: [{ id: 'apple_produce', count: 15 }], output: { id: 'apple_jam', count: 1 }, processTime: 4800 } // 1 hr 20 min
+                    { id: 'strawberry_jam_recipe', name: 'ทำแยมสตรอว์เบอร์รี', inputs: [{ id: 'strawberry_produce', count: 15 }], output: { id: 'strawberry_jam', count: 1 }, processTime: 4800 },
+                    { id: 'apple_jam_recipe', name: 'ทำแยมแอปเปิ้ล', inputs: [{ id: 'apple_produce', count: 15 }], output: { id: 'apple_jam', count: 1 }, processTime: 4800 }
                 ]
             },
             'mayonnaise_machine': {
                 name: 'เครื่องทำมายองเนส', type: 'factory_instance', imageUrl: 'mayonnaise_machine.png',
                 recipes: [
-                    { id: 'mayonnaise_recipe', name: 'ทำมายองเนส', inputs: [{ id: 'egg', count: 5 }], output: { id: 'mayonnaise', count: 1 }, processTime: 3600 }, // 1 hr
-                    { id: 'duck_mayonnaise_recipe', name: 'ทำมายองเนสไข่เป็ด', inputs: [{ id: 'duck_egg', count: 5 }], output: { id: 'duck_mayonnaise', count: 1 }, processTime: 3600 } // 1 hr
+                    { id: 'mayonnaise_recipe', name: 'ทำมายองเนส', inputs: [{ id: 'egg', count: 5 }], output: { id: 'mayonnaise', count: 1 }, processTime: 3600 },
+                    { id: 'duck_mayonnaise_recipe', name: 'ทำมายองเนสไข่เป็ด', inputs: [{ id: 'duck_egg', count: 5 }], output: { id: 'duck_mayonnaise', count: 1 }, processTime: 3600 }
                 ]
             },
-
-            // Processed Goods
             'grape_wine': { name: 'ไวน์องุ่น', type: 'produce', sellPrice: [800, 1200, 1600], icon: '🍷', energyRestore: 20, imageUrl: 'wine.png' },
             'cheese': { name: 'ชีส', type: 'produce', sellPrice: [600, 850, 1100], icon: '🧀', energyRestore: 30, imageUrl: 'cheese.png' },
             'strawberry_jam': { name: 'แยมสตรอว์เบอร์รี', type: 'produce', sellPrice: [250, 350, 450], icon: '🍓', energyRestore: 15, imageUrl: 'jam.png' },
@@ -491,7 +476,6 @@
             'mayonnaise': { name: 'มายองเนส', type: 'produce', sellPrice: [150, 200, 250], icon: '🥚', energyRestore: 10, imageUrl: 'mayonnaise.png' },
             'duck_mayonnaise': { name: 'มายองเนสไข่เป็ด', type: 'produce', sellPrice: [180, 240, 300], icon: '🥚', energyRestore: 12, imageUrl: 'mayonnaise_duck.png' },
         };
-        
         const QUEST_DATA = {
             daily: [
                 { id: 'water_25', action: 'water', description: 'ช่วยกันรดน้ำต้นไม้ 25 ครั้ง', target: 25, reward: { type: 'item', id: 'fertilizer_1', count: 3 } },
@@ -538,16 +522,11 @@
                 { id: 'buy_tool_1', action: 'buy_tool', description: 'ช่วยกันซื้ออุปกรณ์ครัว 1 ชิ้น', target: 1, reward: { type: 'produce', id: 'gem', count: 2 } },
             ]
         };
-
-        // --- Game State ---
         let userId = null;
         let farmState = null;
         let playerState = null;
-        
-        // --- UI Elements ---
         const playerNameEl = document.getElementById('player-name');
         
-        // --- Helper Functions ---
         function formatTime(seconds) {
             if (seconds < 0) seconds = 0;
             const h = Math.floor(seconds / 3600);
@@ -560,7 +539,6 @@
             return parts.join(' ');
         }
         
-        // --- State Management ---
         async function updateFarmState(newState) {
              if (!userId) return;
              farmState = newState;
@@ -574,7 +552,6 @@
              await setDoc(playerDocRef, newState, { merge: true });
         }
         
-        // --- Rendering ---
         function renderAll() {
             if (!farmState || !playerState) return; 
             renderFarm();
@@ -588,8 +565,47 @@
             renderFishing();
             renderQuests();
             renderKitchen();
+            renderMarket();
         }
         
+        function renderMarket() {
+            if (!farmState) return;
+            const container = document.getElementById('market-items-list');
+            if (!container) return;
+            container.innerHTML = '';
+            
+            const sellableItems = Object.entries(GAME_DATA).filter(([_, data]) => data.type === 'produce' && data.sellPrice);
+            
+            sellableItems.forEach(([id, data]) => {
+                const basePrice = data.sellPrice[0];
+                const currentPrice = farmState.marketPrices[id] || basePrice;
+                
+                let statusIcon = '<span class="font-bold w-6 text-center">-</span>';
+                if (currentPrice > basePrice) {
+                    statusIcon = '<span class="font-bold w-6 text-center text-green-600">▲</span>';
+                } else if (currentPrice < basePrice) {
+                    statusIcon = '<span class="font-bold w-6 text-center text-red-600">▼</span>';
+                }
+
+                const itemEl = document.createElement('div');
+                itemEl.className = 'flex items-center justify-between p-2 bg-white/70 rounded-md';
+                
+                const iconHTML = data.imageUrl ? `<img src="${data.imageUrl}" class="w-8 h-8 object-contain">` : `<span>${data.icon}</span>`;
+
+                itemEl.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        ${iconHTML}
+                        <span class="font-semibold">${data.name}</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        ${statusIcon}
+                        <span class="font-bold text-right w-20">${currentPrice}💰</span>
+                    </div>
+                `;
+                container.appendChild(itemEl);
+            });
+        }
+
         function calculateExpansionCost(type) {
             const baseCost = { farm: 250, animals: 500, factory: 1000 };
             const perSlotCost = { farm: 150, animals: 400, factory: 1200 };
@@ -822,7 +838,6 @@
                     let buttonText = `ซื้อ ${data.cost}💰`;
                     let isDisabled = false;
 
-                    // ตรวจสอบถ้าเป็นของที่ไม่ควรซื้อซ้ำ
                     if (data.type === 'kitchen_tool' && farmState.ownedKitchenTools?.includes(id)) {
                         buttonText = 'มีแล้ว';
                         isDisabled = true;
@@ -850,7 +865,6 @@
             const itemsEl = document.getElementById('sell-box-items');
             const totalEl = document.getElementById('sell-box-total');
             const countdownEl = document.getElementById('sell-countdown');
-
             const now = new Date();
             const tomorrow = new Date(now);
             tomorrow.setDate(tomorrow.getDate() + 1);
@@ -868,29 +882,25 @@
             let totalValue = 0;
             const groupedProduce = playerState.produceBin.reduce((acc, item) => {
                 const key = `${item.id}_q${item.quality}`;
-                if (!acc[key]) {
-                    acc[key] = { ...item, count: 0 };
-                }
+                if (!acc[key]) { acc[key] = { ...item, count: 0 }; }
                 acc[key].count++;
                 return acc;
             }, {});
 
             Object.values(groupedProduce).forEach(item => {
                 const itemData = GAME_DATA[item.id];
-                if (!itemData || !itemData.sellPrice) {
-                    console.warn(`Item with invalid sellPrice found in sell box: ${item.id}`);
-                    return;
-                }
-				const sellPrice = itemData.sellPrice[item.quality];
-                totalValue += sellPrice * item.count;
+                if (!itemData || !itemData.sellPrice) return;
+				
+                const marketBasePrice = farmState.marketPrices[item.id] || itemData.sellPrice[0];
+                const qualityRatio = itemData.sellPrice[item.quality] / itemData.sellPrice[0];
+                const finalSellPrice = Math.round(marketBasePrice * qualityRatio);
+                totalValue += finalSellPrice * item.count;
                 
                 const itemDiv = document.createElement('div');
                 itemDiv.className = 'flex justify-between items-center bg-white/50 p-2 rounded';
-                
                 const iconHTML = itemData.imageUrl 
                     ? `<div class="w-8 h-8 mr-2 bg-contain bg-no-repeat bg-center" style="background-image: url('${itemData.imageUrl}')"></div>`
                     : `<span class="text-lg">${itemData.icon}</span>`;
-
                 itemDiv.innerHTML = `
                     <div class="flex items-center">
                         ${iconHTML}
@@ -898,11 +908,10 @@
                         <span class="quality-star ml-1">${'★'.repeat(item.quality)}</span>
                         <span class="text-gray-600 text-sm ml-2">x${item.count}</span>
                     </div>
-                    <span class="font-semibold">${sellPrice * item.count}💰</span>
+                    <span class="font-semibold">${finalSellPrice * item.count}💰</span>
                 `;
                 itemsEl.appendChild(itemDiv);
             });
-
             totalEl.textContent = totalValue;
         }
         
@@ -911,7 +920,6 @@
             const container = document.getElementById('bedroom-display');
             const infoP = document.getElementById('bedroom-info').querySelector('p');
             const upgradeBtn = document.getElementById('upgrade-house-btn');
-
             const houseLevel = playerState.houseLevel || 0;
 
             if (houseLevel === 0) {
@@ -1094,7 +1102,7 @@
             farmState.kitchen.queue.forEach((job, index) => {
                 const recipeData = GAME_DATA.recipes[job.recipeId];
                 const resultData = GAME_DATA[recipeData.resultId];
-                const COOK_TIME_PER_ITEM = 600; // 10 minutes in seconds
+                const COOK_TIME_PER_ITEM = 600;
                 const totalCookTime = job.quantity * COOK_TIME_PER_ITEM * 1000;
                 const elapsed = Date.now() - job.startTime;
                 const progress = Math.min(elapsed / totalCookTime, 1);
@@ -1103,25 +1111,33 @@
                 const jobEl = document.createElement('div');
                 jobEl.className = 'bg-white/80 p-3 rounded-lg flex items-center gap-3';
 
-                let actionButtonHTML;
-                if (progress >= 1) {
-                    actionButtonHTML = `<button class="collect-food-btn bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg text-sm" data-queue-index="${index}">รับ</button>`;
-                } else {
-                    actionButtonHTML = `<div class="text-sm font-semibold">${formatTime(remainingSeconds)}</div>`;
-                }
-
-                jobEl.innerHTML = `
-                    <div class="w-12 h-12 flex-shrink-0 bg-contain bg-no-repeat bg-center" style="background-image: url('${resultData.imageUrl}')"></div>
+                const iconHTML = `<div class="w-12 h-12 flex-shrink-0 bg-contain bg-no-repeat bg-center" style="background-image: url('${resultData.imageUrl}')"></div>`;
+                const detailsHTML = `
                     <div class="flex-grow">
                         <p class="font-bold">${resultData.name} x${job.quantity}</p>
                         <div class="w-full bg-gray-200 rounded-full h-2.5 mt-1">
                           <div class="bg-orange-500 h-2.5 rounded-full" style="width: ${progress * 100}%"></div>
                         </div>
                     </div>
-                    <div class="flex-shrink-0 w-20 text-center">
-                        ${actionButtonHTML}
-                    </div>
                 `;
+                
+                const actionContainer = document.createElement('div');
+                actionContainer.className = 'flex-shrink-0 w-20 text-center';
+
+                if (progress >= 1) {
+                    const collectButton = document.createElement('button');
+                    collectButton.className = 'bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg text-sm';
+                    collectButton.textContent = 'รับ';
+                    collectButton.onclick = () => {
+                        collectCookedFood(index);
+                    };
+                    actionContainer.appendChild(collectButton);
+                } else {
+                    actionContainer.innerHTML = `<div class="text-sm font-semibold">${formatTime(remainingSeconds)}</div>`;
+                }
+                
+                jobEl.innerHTML = iconHTML + detailsHTML;
+                jobEl.appendChild(actionContainer);
                 container.appendChild(jobEl);
             });
         }
@@ -1305,6 +1321,7 @@
             modal.classList.remove('hidden', 'modal-leave');
             modal.classList.add('modal-enter');
         }
+
         function hideSubMenu() {
             const modal = document.getElementById('submenu-modal');
             modal.classList.add('modal-leave');
@@ -1341,13 +1358,11 @@
                 recipeEl.className = 'bg-gray-50 p-3 rounded-lg flex items-center gap-4';
 
                 let ingredientsHTML = '';
-                
                 const hasTool = farmState.ownedKitchenTools.includes(recipeData.tool);
                 const toolData = GAME_DATA[recipeData.tool];
                 const toolHTML = `<span class="text-sm ${hasTool ? 'text-green-600' : 'text-red-500'}">${toolData.icon} ${toolData.name} ${hasTool ? '✔️' : ''}</span>`;
                 
                 let maxCookable = hasTool ? Infinity : 0;
-                
                 const ingredientChecks = [];
 
                 for (const ingredient of recipeData.ingredients) {
@@ -1380,7 +1395,6 @@
             });
         }
         
-        // --- Game Actions ---
         function plant(plotIndex, seedId) {
             const newFarmState = { ...farmState };
             const newPlayerState = { ...playerState };
@@ -1404,7 +1418,6 @@
              const newFarmState = { ...farmState };
              const plot = newFarmState.plots[plotIndex];
              if (plot.wateredBy && plot.wateredBy.some(p => p.uid === userId)) return; 
-
              plot.wateredBy.push({ uid: userId, nickname: playerState.nickname });
              document.querySelector(`#farm-grid > div:nth-child(${plotIndex + 1})`).classList.add('watered');
              updateFarmState(newFarmState);
@@ -1426,7 +1439,6 @@
         function clearPlot(plotIndex) {
             const plot = farmState.plots[plotIndex];
             if (!plot) return;
-
             showConfirmationModal('คุณแน่ใจหรือไม่ว่าต้องการเคลียแปลงนี้? พืชที่ปลูกไว้จะหายไปทันที', () => {
                 const newFarmState = { ...farmState };
                 newFarmState.plots[plotIndex] = { plantId: null };
@@ -1438,23 +1450,16 @@
             const newPlayerState = { ...playerState };
             const newFarmState = { ...farmState };
             const plot = newFarmState.plots[plotIndex];
-            if (!plot || !plot.plantId || (plot.harvestedBy && plot.harvestedBy.some(p => p.uid === userId))) {
-                return;
-            }
+            if (!plot || !plot.plantId || (plot.harvestedBy && plot.harvestedBy.some(p => p.uid === userId))) return;
             const cropData = GAME_DATA[plot.plantId];
-
             let quality = 0;
             if (Math.random() < plot.fertilizerLevel) quality = 1;
             if (Math.random() < plot.fertilizerLevel - 1) quality = 2;
-
             newPlayerState.storageBin.push({ id: cropData.produceId, quality: quality });
-            
             if (!plot.harvestedBy) plot.harvestedBy = [];
             plot.harvestedBy.push({ uid: userId, nickname: playerState.nickname });
-            
             const involvedUids = new Set([plot.plantedBy?.uid, ...(plot.wateredBy?.map(p => p.uid).filter(uid => uid) || [])]);
             const harvestedUids = new Set(plot.harvestedBy.map(p => p.uid));
-            
             let allHarvested = true;
             for (const uid of involvedUids) {
                 if (!harvestedUids.has(uid)) {
@@ -1462,11 +1467,9 @@
                     break;
                 }
             }
-
             if (allHarvested) {
                 newFarmState.plots[plotIndex] = { plantId: null };
             }
-
             updatePlayerState(newPlayerState);
             updateFarmState(newFarmState);
             updateQuestProgress('harvest');
@@ -1487,10 +1490,8 @@
             const newFarmState = { ...farmState };
             const animal = newFarmState.animals[slotIndex];
             const animalData = GAME_DATA[animal.animalId];
-
             newPlayerState.storageBin.push({ id: animalData.produceId, quality: 0 });
             animal.startTime = Date.now();
-            
             updatePlayerState(newPlayerState);
             updateFarmState(newFarmState);
             updateQuestProgress('collect_product');
@@ -1510,16 +1511,13 @@
         function startProcessing(slotIndex, recipeId) {
             const newFarmState = { ...farmState };
             const newPlayerState = { ...playerState };
-            
             const factory = newFarmState.factories[slotIndex];
             const factoryData = GAME_DATA[factory.factoryId];
             const recipe = factoryData.recipes.find(r => r.id === recipeId);
-
             const storageCounts = newPlayerState.storageBin.reduce((acc, item) => {
                 acc[item.id] = (acc[item.id] || 0) + 1;
                 return acc;
             }, {});
-
             let canProcess = true;
             for (const input of recipe.inputs) {
                 if ((storageCounts[input.id] || 0) < input.count) {
@@ -1527,7 +1525,6 @@
                     break;
                 }
             }
-
             if (canProcess) {
                 for (const input of recipe.inputs) {
                     let countToRemove = input.count;
@@ -1539,11 +1536,9 @@
                         return true;
                     });
                 }
-                
                 factory.isProcessing = true;
                 factory.recipeId = recipeId;
                 factory.startTime = Date.now();
-
                 updateFarmState(newFarmState);
                 updatePlayerState(newPlayerState);
             } else {
@@ -1555,17 +1550,13 @@
             const newPlayerState = { ...playerState };
             const newFarmState = { ...farmState };
             const factory = newFarmState.factories[slotIndex];
-            const factoryData = GAME_DATA[factory.factoryId];
-            const recipe = factoryData.recipes.find(r => r.id === factory.recipeId);
-            
+            const recipe = GAME_DATA[factory.factoryId].recipes.find(r => r.id === factory.recipeId);
             for (let i = 0; i < recipe.output.count; i++) {
                 newPlayerState.storageBin.push({ id: recipe.output.id, quality: 0 });
             }
-
             factory.isProcessing = false;
             delete factory.recipeId;
             delete factory.startTime;
-
             updateFarmState(newFarmState);
             updatePlayerState(newPlayerState);
         }
@@ -1574,7 +1565,6 @@
             const newPlayerState = { ...playerState };
             const currentLevel = newPlayerState.houseLevel || 0;
             if (currentLevel >= GAME_DATA.house_upgrades.length) return;
-
             const nextLevelData = GAME_DATA.house_upgrades[currentLevel];
             if (newPlayerState.money >= nextLevelData.cost) {
                 newPlayerState.money -= nextLevelData.cost;
@@ -1586,7 +1576,6 @@
         function sellFromStorage(itemId, quality) {
             const newPlayerState = { ...playerState };
             const itemIndex = newPlayerState.storageBin.findIndex(item => item.id === itemId && item.quality === quality);
-            
             if (itemIndex > -1) {
                 const itemToSell = newPlayerState.storageBin.splice(itemIndex, 1)[0];
                 newPlayerState.produceBin.push(itemToSell);
@@ -1601,16 +1590,12 @@
         function eatFromStorage(itemId, quality) {
             const newPlayerState = { ...playerState };
             const itemIndex = newPlayerState.storageBin.findIndex(item => item.id === itemId && item.quality === quality);
-            
             if (itemIndex > -1) {
                 const itemData = GAME_DATA[itemId];
                 if (!itemData.energyRestore || itemData.energyRestore === 0) return;
-
                 newPlayerState.storageBin.splice(itemIndex, 1);
-                
                 const MAX_ENERGY = 100;
                 newPlayerState.energy = Math.min(MAX_ENERGY, (newPlayerState.energy || 0) + itemData.energyRestore);
-                
                 updatePlayerState(newPlayerState);
                 updateQuestProgress('eat');
             }
@@ -1619,7 +1604,6 @@
 		function moveFromStorageToInventory(itemId, quality) {
             const newPlayerState = { ...playerState };
             const itemIndex = newPlayerState.storageBin.findIndex(item => item.id === itemId && item.quality === quality);
-            
             if (itemIndex > -1) {
                 newPlayerState.storageBin.splice(itemIndex, 1);
                 newPlayerState.inventory[itemId] = (newPlayerState.inventory[itemId] || 0) + 1;
@@ -1631,28 +1615,65 @@
             const sourceQuests = QUEST_DATA[type];
             const shuffled = [...sourceQuests].sort(() => 0.5 - Math.random());
             const selected = shuffled.slice(0, count);
-            return selected.map(q => ({
-                id: q.id,
-                action: q.action,
-                progress: 0,
-                claimedBy: []
-            }));
+            return selected.map(q => ({ id: q.id, action: q.action, progress: 0, claimedBy: [] }));
         }
         
+        async function updateMarketPrices() {
+            if (!farmState) return;
+            const newFarmState = { ...farmState };
+            const newMarketPrices = { ...newFarmState.marketPrices };
+            const salesVolume = newFarmState.salesVolume || {};
+            const VOLATILITY = 0.1; 
+            const PRICE_RECOVERY_RATE = 0.05;
+
+            for (const itemId in GAME_DATA) {
+                const itemData = GAME_DATA[itemId];
+                if (itemData.type !== 'produce' || !itemData.sellPrice) continue;
+                const basePrice = itemData.sellPrice[0];
+                const currentPrice = newMarketPrices[itemId] || basePrice;
+                const soldAmount = salesVolume[itemId] || 0;
+                let newPrice;
+
+                if (soldAmount > 0) {
+                    const pressure = Math.log10(soldAmount + 1);
+                    const reduction = pressure * VOLATILITY;
+                    newPrice = currentPrice * (1 - reduction);
+                } else {
+                    if (currentPrice < basePrice) {
+                        newPrice = currentPrice * (1 + PRICE_RECOVERY_RATE);
+                        if (newPrice > basePrice) newPrice = basePrice;
+                    } else {
+                        newPrice = currentPrice * (1 - PRICE_RECOVERY_RATE);
+                        if (newPrice < basePrice) newPrice = basePrice;
+                    }
+                }
+                const minPrice = basePrice * 0.2;
+                const maxPrice = basePrice * 2.5;
+                newPrice = Math.max(minPrice, Math.min(newPrice, maxPrice));
+                newMarketPrices[itemId] = Math.round(newPrice);
+            }
+            newFarmState.marketPrices = newMarketPrices;
+            newFarmState.salesVolume = {};
+            await updateFarmState(newFarmState);
+        }
+
         async function checkForTimeResets() {
             if (!playerState || !farmState) return;
             const now = new Date();
-            let playerNeedsUpdate = false;
-            let farmNeedsUpdate = false;
-            
             const lastPlayerReset = new Date(playerState.lastResetTime || 0);
-            if (lastPlayerReset.getDate() !== now.getDate() || lastPlayerReset.getMonth() !== now.getMonth() || lastPlayerReset.getFullYear() !== now.getFullYear()) {
+            if (lastPlayerReset.getDate() !== now.getDate() || lastPlayerReset.getMonth() !== now.getMonth()) {
+                const tempFarmState = { ...farmState };
+                if (!tempFarmState.salesVolume) tempFarmState.salesVolume = {};
                 const newPlayerState = { ...playerState };
                 if (newPlayerState.produceBin && newPlayerState.produceBin.length > 0) {
                     let totalValue = 0;
                     newPlayerState.produceBin.forEach(item => {
                         const itemData = GAME_DATA[item.id];
-                        if (itemData && itemData.sellPrice) totalValue += itemData.sellPrice[item.quality];
+                        const marketBasePrice = tempFarmState.marketPrices[item.id] || itemData.sellPrice[0];
+                        const qualityRatio = itemData.sellPrice[item.quality] / itemData.sellPrice[0];
+                        const finalSellPrice = Math.round(marketBasePrice * qualityRatio);
+                        totalValue += finalSellPrice;
+                        tempFarmState.salesVolume[item.id] = (tempFarmState.salesVolume[item.id] || 0) + 1;
                     });
                     newPlayerState.money = (newPlayerState.money || 0) + totalValue;
                     newPlayerState.produceBin = [];
@@ -1660,10 +1681,11 @@
                 newPlayerState.energy = 100;
                 newPlayerState.lastResetTime = now.getTime();
                 await updatePlayerState(newPlayerState);
+                await updateFarmState(tempFarmState);
+                await updateMarketPrices(); 
             }
-
             const lastDailyQuestReset = new Date(farmState.quests?.lastDailyReset || 0);
-            if (lastDailyQuestReset.getDate() !== now.getDate() || lastDailyQuestReset.getMonth() !== now.getMonth() || lastDailyQuestReset.getFullYear() !== now.getFullYear()) {
+            if (lastDailyQuestReset.getDate() !== now.getDate() || lastDailyQuestReset.getMonth() !== now.getMonth()) {
                  const newFarmState = { ...farmState };
                  newFarmState.quests.daily = generateRandomQuests('daily', 5);
                  newFarmState.quests.lastDailyReset = now.getTime();
@@ -1779,22 +1801,14 @@
         function cook(recipeId, quantity) {
             const recipe = GAME_DATA.recipes[recipeId];
             if (!recipe || !farmState.ownedKitchenTools.includes(recipe.tool) || quantity <= 0) return;
-            
             const newPlayerState = { ...playerState };
-            let tempStorageBin = [...newPlayerState.storageBin];
             let canCook = true;
-            
-            // Create a temporary copy of storage counts to check against
-            const tempStorageCounts = tempStorageBin.reduce((acc, item) => {
+            const tempStorageCounts = [...newPlayerState.storageBin].reduce((acc, item) => {
                 const itemData = GAME_DATA[item.id];
                 acc[item.id] = (acc[item.id] || 0) + 1;
-                if (itemData.category) {
-                     acc[`category_${itemData.category}`] = (acc[`category_${itemData.category}`] || 0) + 1;
-                }
+                if (itemData.category) { acc[`category_${itemData.category}`] = (acc[`category_${itemData.category}`] || 0) + 1; }
                 return acc;
             }, {});
-
-            // Check if there are enough ingredients for the whole batch
             for (const ingredient of recipe.ingredients) {
                  const requiredCount = (ingredient.count || 1) * quantity;
                  const key = ingredient.id ? ingredient.id : `category_${ingredient.category}`;
@@ -1803,18 +1817,13 @@
                     break;
                  }
             }
-
             if (canCook) {
-                // Remove ingredients from the actual storage bin
                 for (let i = 0; i < quantity; i++) {
                     for (const ingredient of recipe.ingredients) {
                         const foundIndex = newPlayerState.storageBin.findIndex(item => item.id === ingredient.id || GAME_DATA[item.id]?.category === ingredient.category);
-                        if (foundIndex > -1) {
-                            newPlayerState.storageBin.splice(foundIndex, 1);
-                        }
+                        if (foundIndex > -1) newPlayerState.storageBin.splice(foundIndex, 1);
                     }
                 }
-
                 const newFarmState = { ...farmState };
                 if (!newFarmState.kitchen) newFarmState.kitchen = { queue: [] };
                 newFarmState.kitchen.queue.push({
@@ -1823,7 +1832,6 @@
                     startTime: Date.now(),
                     cookedBy: { uid: userId, nickname: playerState.nickname }
                 });
-
                 updatePlayerState(newPlayerState);
                 updateFarmState(newFarmState);
                 hideCookingModal();
@@ -1834,19 +1842,15 @@
         }
 
         function collectCookedFood(queueIndex) {
-            const newFarmState = { ...farmState };
+            const newFarmState = JSON.parse(JSON.stringify(farmState));
+            const newPlayerState = JSON.parse(JSON.stringify(playerState));
+            if (!newFarmState.kitchen.queue[queueIndex]) return; 
             const job = newFarmState.kitchen.queue[queueIndex];
-            if (!job) return;
-
             const recipe = GAME_DATA.recipes[job.recipeId];
-            const newPlayerState = { ...playerState };
-
             for (let i = 0; i < job.quantity; i++) {
                 newPlayerState.storageBin.push({ id: recipe.resultId, quality: 0 });
             }
-            
             newFarmState.kitchen.queue.splice(queueIndex, 1);
-            
             updateFarmState(newFarmState);
             updatePlayerState(newPlayerState);
         }
@@ -1858,18 +1862,14 @@
                 animals: { name: 'คอกสัตว์', array: farmState.animals, newItem: { animalId: null } },
                 factory: { name: 'ที่ดินโรงงาน', array: farmState.factories, newItem: { factoryId: null } }
             };
-
             const info = typeMap[type];
             if (!info) return;
-
             if (playerState.money >= cost) {
                 showConfirmationModal(`คุณต้องการซื้อ${info.name}เพิ่มในราคา ${cost}💰 หรือไม่?`, () => {
                     const newPlayerState = { ...playerState };
                     newPlayerState.money -= cost;
-                    
                     const newFarmState = { ...farmState };
                     info.array.push(info.newItem);
-
                     updatePlayerState(newPlayerState);
                     updateFarmState(newFarmState);
                 });
@@ -1877,7 +1877,6 @@
                 alert("เงินไม่พอ!");
             }
         }
-
 
         async function updateQuestProgress(action, amount = 1) {
             if (!farmState || !farmState.quests) return;
@@ -1924,18 +1923,14 @@
         let gameLoopInterval = null;
         async function startGame(uid) {
             userId = uid;
-            
             initPlayerListeners(uid);
             initFarmListeners();
-            
             document.getElementById('loading-screen').classList.add('loading-hidden');
             document.getElementById('game-container').style.opacity = 1;
             document.getElementById('footer-nav').style.opacity = 1;
-            
             if (gameLoopInterval) clearInterval(gameLoopInterval);
-            gameLoopInterval = setInterval(() => {
-                renderAll();
-            }, 2000); 
+            gameLoopInterval = setInterval(() => { renderAll(); }, 2000); 
+            setInterval(() => { checkForTimeResets(); }, 60000); // Check for day reset every minute
         }
 
         function initPlayerListeners(uid) {
@@ -1948,7 +1943,6 @@
                     if (typeof playerState.houseLevel === 'undefined') playerState.houseLevel = 0;
                     if (typeof playerState.fishingRodLevel === 'undefined') playerState.fishingRodLevel = 0;
                     if (typeof playerState.energy === 'undefined') playerState.energy = 100;
-                    checkForTimeResets();
                 }
             }, handleFirestoreError);
         }
@@ -1962,6 +1956,8 @@
                     if (!farmState.ownedKitchenTools) farmState.ownedKitchenTools = [];
                     if (!farmState.factories) farmState.factories = Array(FACTORY_GRID_SIZE).fill(null).map(() => ({ factoryId: null }));
                     if (!farmState.kitchen) farmState.kitchen = { queue: [] };
+                    if (!farmState.marketPrices) farmState.marketPrices = {};
+                    if (!farmState.salesVolume) farmState.salesVolume = {};
                 }
             }, handleFirestoreError);
         }
@@ -1976,9 +1972,11 @@
                         plots: Array(FARM_GRID_SIZE).fill(null).map(() => ({ plantId: null })),
                         animals: Array(ANIMAL_PEN_SIZE).fill(null).map(() => ({ animalId: null })),
                         factories: Array(FACTORY_GRID_SIZE).fill(null).map(() => ({ factoryId: null })),
-                        quests: { daily: [], weekly: [], lastDailyReset: 0, lastWeeklyReset: 0 },
+                        quests: { daily: generateRandomQuests('daily', 5), weekly: generateRandomQuests('weekly', 5), lastDailyReset: Date.now(), lastWeeklyReset: Date.now() },
                         ownedKitchenTools: [],
-                        kitchen: { queue: [] }
+                        kitchen: { queue: [] },
+                        marketPrices: {},
+                        salesVolume: {}
                     };
                     await setDoc(farmDocRef, initialFarmState);
                 }
@@ -1988,9 +1986,7 @@
             }
         }
         
-        function handleFirestoreError(error) {
-            console.error("Firestore connection error:", error);
-        }
+        function handleFirestoreError(error) { console.error("Firestore connection error:", error); }
         
         let isInitialNameSetup = false;
         const nameModal = document.getElementById('name-modal');
@@ -2000,7 +1996,6 @@
             const moreModal = document.getElementById('more-modal');
             const moreBtn = document.getElementById('more-btn');
             const moreModalItems = document.getElementById('more-modal-items');
-
             const primaryViews = ['farm', 'animals', 'shop'];
             const secondaryViews = [
                 { view: 'bedroom', name: 'ห้องนอน 🛌' },
@@ -2008,6 +2003,7 @@
                 { view: 'kitchen', name: 'ห้องครัว 🍳' },
                 { view: 'factory', name: 'โรงงาน 🏭' },
                 { view: 'quests', name: 'เควส 📜' },
+                { view: 'market', name: 'ราคาตลาด 📈' }
             ];
 
             moreModalItems.innerHTML = '';
@@ -2046,7 +2042,6 @@
             });
             document.querySelector('.nav-btn[data-view="farm"]').classList.add('active');
             
-            // --- Safely add event listeners ---
             document.getElementById('context-modal-close').onclick = hideContextMenu;
             document.getElementById('submenu-modal-close').onclick = hideSubMenu;
 
@@ -2075,14 +2070,7 @@
                      cook(recipeId, quantity);
                 }
             });
-
-            const kitchenQueueListEl = document.getElementById('kitchen-queue-list');
-            if(kitchenQueueListEl) kitchenQueueListEl.addEventListener('click', e => {
-                if (e.target.classList.contains('collect-food-btn')) {
-                    collectCookedFood(parseInt(e.target.dataset.queueIndex, 10));
-                }
-            });
-
+            
             document.getElementById('upgrade-house-btn').onclick = upgradeHouse;
             document.getElementById('admin-reset-btn').onclick = forceResetFarm;
             document.getElementById('reset-player-btn').onclick = resetPlayerProgress;
@@ -2091,13 +2079,11 @@
             document.getElementById('fish-catch-ok').onclick = () => document.getElementById('fish-catch-modal').classList.add('hidden');
             document.getElementById('cook-btn').onclick = showCookingModal;
             document.getElementById('cooking-modal-close').onclick = hideCookingModal;
-
             playerNameEl.onclick = () => showNameModal(false);
             document.getElementById('save-name-btn').onclick = saveNameChange;
             document.getElementById('cancel-name-btn').onclick = hideNameModal;
             nameInput.onkeypress = (e) => { if (e.key === 'Enter') saveNameChange(); };
             document.getElementById('confirm-modal-cancel').onclick = hideConfirmationModal;
-
             document.body.addEventListener('click', e => {
                 if (e.target.classList.contains('claim-quest-btn')) {
                     claimQuestReward(e.target.dataset.questType, e.target.dataset.questId);
