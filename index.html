@@ -347,7 +347,7 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        const CLIENT_VERSION = "1.0.2"; // Updated version
+        const CLIENT_VERSION = "1.0.3"; // Updated version
 
         const FARM_GRID_SIZE = 24;
         const ANIMAL_PEN_SIZE = 8;
@@ -490,15 +490,15 @@
             'preserves_jar': {
                 name: 'โรงทำแยม', type: 'factory_instance', imageUrl: 'preserves_jar.png',
                 recipes: [
-                    { id: 'strawberry_jam_recipe', name: 'ทำแยมสตรอว์เบอร์รี', inputs: [{ id: 'strawberry_produce', count: 15 }], output: { id: 'strawberry_jam', count: 1 }, processTime: 4800 },
-                    { id: 'apple_jam_recipe', name: 'ทำแยมแอปเปิ้ล', inputs: [{ id: 'apple_produce', count: 15 }], output: { id: 'apple_jam', count: 1 }, processTime: 4800 },
-                    { id: 'grape_jam_recipe', name: 'ทำแยมองุ่น', inputs: [{ id: 'grape_produce', count: 15 }], output: { id: 'grape_jam', count: 1 }, processTime: 4800 },
-                    { id: 'peach_jam_recipe', name: 'ทำแยมพีช', inputs: [{ id: 'peach_produce', count: 15 }], output: { id: 'peach_jam', count: 1 }, processTime: 4800 },
-                    { id: 'orange_jam_recipe', name: 'ทำแยมส้ม', inputs: [{ id: 'orange_produce', count: 15 }], output: { id: 'orange_jam', count: 1 }, processTime: 4800 },
-                    { id: 'mango_jam_recipe', name: 'ทำแยมมะม่วง', inputs: [{ id: 'mango_produce', count: 15 }], output: { id: 'mango_jam', count: 1 }, processTime: 4800 },
-                    { id: 'pineapple_jam_recipe', name: 'ทำแยมสับปะรด', inputs: [{ id: 'pineapple_produce', count: 15 }], output: { id: 'pineapple_jam', count: 1 }, processTime: 4800 },
-                    { id: 'guava_jam_recipe', name: 'ทำแยมฝรั่ง', inputs: [{ id: 'guava_produce', count: 15 }], output: { id: 'guava_jam', count: 1 }, processTime: 4800 },
-                    { id: 'roseapple_jam_recipe', name: 'ทำแยมชมพู่', inputs: [{ id: 'roseapple_produce', count: 15 }], output: { id: 'roseapple_jam', count: 1 }, processTime: 4800 },
+                    { id: 'strawberry_jam_recipe', name: 'ทำแยมสตรอว์เบอร์รี', inputs: [{ id: 'strawberry_produce', count: 5 }], output: { id: 'strawberry_jam', count: 1 }, processTime: 4800 },
+                    { id: 'apple_jam_recipe', name: 'ทำแยมแอปเปิ้ล', inputs: [{ id: 'apple_produce', count: 5 }], output: { id: 'apple_jam', count: 1 }, processTime: 4800 },
+                    { id: 'grape_jam_recipe', name: 'ทำแยมองุ่น', inputs: [{ id: 'grape_produce', count: 5 }], output: { id: 'grape_jam', count: 1 }, processTime: 4800 },
+                    { id: 'peach_jam_recipe', name: 'ทำแยมพีช', inputs: [{ id: 'peach_produce', count: 5 }], output: { id: 'peach_jam', count: 1 }, processTime: 4800 },
+                    { id: 'orange_jam_recipe', name: 'ทำแยมส้ม', inputs: [{ id: 'orange_produce', count: 5 }], output: { id: 'orange_jam', count: 1 }, processTime: 4800 },
+                    { id: 'mango_jam_recipe', name: 'ทำแยมมะม่วง', inputs: [{ id: 'mango_produce', count: 5 }], output: { id: 'mango_jam', count: 1 }, processTime: 4800 },
+                    { id: 'pineapple_jam_recipe', name: 'ทำแยมสับปะรด', inputs: [{ id: 'pineapple_produce', count: 5 }], output: { id: 'pineapple_jam', count: 1 }, processTime: 4800 },
+                    { id: 'guava_jam_recipe', name: 'ทำแยมฝรั่ง', inputs: [{ id: 'guava_produce', count: 5 }], output: { id: 'guava_jam', count: 1 }, processTime: 4800 },
+                    { id: 'roseapple_jam_recipe', name: 'ทำแยมชมพู่', inputs: [{ id: 'roseapple_produce', count: 5 }], output: { id: 'roseapple_jam', count: 1 }, processTime: 4800 },
                 ]
             },
             'mayonnaise_machine': {
@@ -891,14 +891,6 @@
                             progressFill.style.width = `${Math.min(progress, 1) * 100}%`;
                             progressContainer.appendChild(progressFill);
                             slotEl.appendChild(progressContainer);
-
-                            if (progress >= 1) {
-                                const produceData = GAME_DATA[recipe.output.id];
-                                const produceIcon = document.createElement('div');
-                                produceIcon.className = 'absolute top-1 right-1 text-2xl z-10 w-8 h-8 bg-contain bg-no-repeat bg-center animate-pulse';
-                                produceIcon.style.backgroundImage = `url(${produceData.imageUrl})`;
-                                slotEl.appendChild(produceIcon);
-                            }
                         }
 
                         if(factory.queue.length > 1) {
@@ -914,6 +906,17 @@
                             slotEl.appendChild(queueDisplay);
                         }
                     }
+
+                    if (factory.outputBin && factory.outputBin.length > 0) {
+                        const myItemsInBin = factory.outputBin.filter(item => item.owner === userId).length;
+                        if (myItemsInBin > 0) {
+                            const binIcon = document.createElement('div');
+                            binIcon.className = 'absolute top-1 right-1 text-xs font-bold bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center animate-pulse';
+                            binIcon.textContent = myItemsInBin;
+                            slotEl.appendChild(binIcon);
+                        }
+                    }
+
                 } else {
                     slotEl.textContent = '➕';
                     slotEl.className += ' text-4xl text-gray-500 hover:bg-gray-400/50';
@@ -1383,6 +1386,7 @@
                     if(isReady){
                         actionsEl.appendChild(createButton(`เก็บ${GAME_DATA[animalData.produceId].name}`, () => collectAnimalProduct(index)));
                     }
+                    actionsEl.appendChild(createButton('ปล่อยสัตว์', () => releaseAnimal(index), false, 'bg-red-500 hover:bg-red-600 text-white'));
                 }
             } else if (type === 'factory') {
                 const index = id;
@@ -1666,12 +1670,41 @@
             updateFarmState(newFarmState);
             updateQuestProgress('collect_product');
         }
+
+        function releaseAnimal(index) {
+            const animal = farmState.animals[index];
+            if (!animal || !animal.animalId) return;
+
+            const animalData = GAME_DATA[animal.animalId];
+            const deedId = Object.keys(GAME_DATA).find(id => GAME_DATA[id].type === 'animal_deed' && GAME_DATA[id].animalId === animal.animalId);
+            
+            if (!deedId) {
+                console.error("Could not find deed for animal:", animal.animalId);
+                return;
+            }
+
+            const deedData = GAME_DATA[deedId];
+            const refundAmount = Math.floor(deedData.cost * 0.5);
+
+            const confirmationText = `คุณแน่ใจหรือไม่ว่าจะปล่อย ${animalData.name}? คุณจะได้รับเงินคืน ${refundAmount}💰`;
+            
+            showConfirmationModal(confirmationText, () => {
+                const newFarmState = { ...farmState };
+                const newPlayerState = { ...playerState };
+
+                newPlayerState.money += refundAmount;
+                newFarmState.animals[index] = { animalId: null }; // Reset the slot
+
+                updatePlayerState(newPlayerState);
+                updateFarmState(newFarmState);
+            });
+        }
         
         function placeFactory(slotIndex, deedId) {
             const newFarmState = { ...farmState };
             const newPlayerState = { ...playerState };
             const deedData = GAME_DATA[deedId];
-            newFarmState.factories[slotIndex] = { factoryId: deedData.factoryId, queue: [] };
+            newFarmState.factories[slotIndex] = { factoryId: deedData.factoryId, queue: [], outputBin: [] };
             newPlayerState.inventory[deedId]--;
             updateFarmState(newFarmState);
             updatePlayerState(newPlayerState);
@@ -1735,58 +1768,80 @@
                 alert("วัตถุดิบไม่เพียงพอ!");
             }
         }
-        
-        async function checkAndProcessFactoryQueue() {
-            if (!farmState || !farmState.factories || userId !== ADMIN_UID) return; // Only admin process queue to prevent conflicts
+
+        async function processFinishedFactoryJobs() {
+            if (!farmState || !farmState.factories) return;
 
             const newFarmState = JSON.parse(JSON.stringify(farmState));
             let farmStateChanged = false;
 
             for (const factory of newFarmState.factories) {
+                if (!factory.outputBin) factory.outputBin = [];
+                
                 if (factory.factoryId && factory.queue && factory.queue.length > 0) {
                     const currentJob = factory.queue[0];
-                    if (!currentJob.startTime) continue; 
+                    if (!currentJob.startTime) continue;
 
                     const recipe = GAME_DATA[factory.factoryId].recipes.find(r => r.id === currentJob.recipeId);
                     const isReady = (Date.now() - currentJob.startTime) >= (recipe.processTime * 1000);
 
                     if (isReady) {
-                        const ownerUid = currentJob.processedBy.uid;
-                        const playerDocRef = doc(db, "players", ownerUid);
-                        try {
-                            const playerDocSnap = await getDoc(playerDocRef);
-                            if (playerDocSnap.exists()) {
-                                const ownerPlayerState = playerDocSnap.data();
-                                
-                                for (let i = 0; i < recipe.output.count; i++) {
-                                    ownerPlayerState.storageBin.push({ id: recipe.output.id, quality: 0 });
-                                }
-                                
-                                await setDoc(playerDocRef, ownerPlayerState);
-
-                                factory.queue.shift(); 
-                                if (factory.queue.length > 0) {
-                                    factory.queue[0].startTime = Date.now(); 
-                                }
-                                farmStateChanged = true;
-
-                            } else {
-                                console.error(`Player ${ownerUid} not found, cannot deliver factory item.`);
-                                factory.queue.shift();
-                                farmStateChanged = true;
-                            }
-                        } catch (error) {
-                            console.error("Error processing factory for player:", ownerUid, error);
+                        const finishedJob = factory.queue.shift();
+                        let ownerUid = (finishedJob.processedBy && finishedJob.processedBy.uid) ? finishedJob.processedBy.uid : ADMIN_UID;
+                        
+                        for (let i = 0; i < recipe.output.count; i++) {
+                            factory.outputBin.push({
+                                item: { id: recipe.output.id, quality: 0 },
+                                owner: ownerUid
+                            });
                         }
+
+                        if (factory.queue.length > 0) {
+                            factory.queue[0].startTime = Date.now();
+                        }
+                        farmStateChanged = true;
                     }
                 }
             }
-
             if (farmStateChanged) {
                 await updateFarmState(newFarmState);
             }
         }
 
+        async function collectMyFactoryProducts() {
+            if (!farmState || !farmState.factories || !playerState) return;
+
+            const newFarmState = JSON.parse(JSON.stringify(farmState));
+            const newPlayerState = JSON.parse(JSON.stringify(playerState));
+            let farmChanged = false;
+            let playerChanged = false;
+
+            for (const factory of newFarmState.factories) {
+                if (factory.outputBin && factory.outputBin.length > 0) {
+                    const myItems = [];
+                    const otherItems = [];
+                    factory.outputBin.forEach(output => {
+                        if (output.owner === userId) {
+                            myItems.push(output.item);
+                        } else {
+                            otherItems.push(output);
+                        }
+                    });
+
+                    if (myItems.length > 0) {
+                        if (!newPlayerState.storageBin) newPlayerState.storageBin = [];
+                        myItems.forEach(item => newPlayerState.storageBin.push(item));
+                        factory.outputBin = otherItems;
+                        farmChanged = true;
+                        playerChanged = true;
+                    }
+                }
+            }
+
+            if (playerChanged) await updatePlayerState(newPlayerState);
+            if (farmChanged) await updateFarmState(newFarmState);
+        }
+        
         function upgradeHouse() {
             const newFarmState = { ...farmState };
             const newPlayerState = { ...playerState }; 
@@ -2173,6 +2228,7 @@
         }
         
         let gameLoopInterval = null;
+        let logicInterval = null;
         let resetSchedulerStarted = false;
         async function startGame(uid) {
             userId = uid;
@@ -2181,11 +2237,17 @@
             document.getElementById('loading-screen').classList.add('loading-hidden');
             document.getElementById('game-container').style.opacity = 1;
             document.getElementById('footer-nav').style.opacity = 1;
+
             if (gameLoopInterval) clearInterval(gameLoopInterval);
-            gameLoopInterval = setInterval(() => {
-                renderAll();
-                checkAndProcessFactoryQueue();
-            }, 2000);
+            if (logicInterval) clearInterval(logicInterval);
+
+            gameLoopInterval = setInterval(renderAll, 2000);
+            logicInterval = setInterval(() => {
+                collectMyFactoryProducts();
+                if (userId === ADMIN_UID) {
+                    processFinishedFactoryJobs();
+                }
+            }, 5000); 
         }
 
         function initPlayerListeners(uid) {
@@ -2226,7 +2288,7 @@
                     const initialFarmState = {
                         plots: Array(FARM_GRID_SIZE).fill(null).map(() => ({ plantId: null })),
                         animals: Array(ANIMAL_PEN_SIZE).fill(null).map(() => ({ animalId: null })),
-                        factories: Array(FACTORY_GRID_SIZE).fill(null).map(() => ({ factoryId: null })),
+                        factories: Array(FACTORY_GRID_SIZE).fill(null).map(() => ({ factoryId: null, queue: [], outputBin: [] })),
                         quests: { daily: generateRandomQuests('daily', 5), weekly: generateRandomQuests('weekly', 5), lastDailyReset: Date.now(), lastWeeklyReset: Date.now() },
                         ownedKitchenTools: [],
                         kitchen: { queue: [] },
