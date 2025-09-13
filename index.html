@@ -499,7 +499,7 @@
             'corn_produce': { name: 'ข้าวโพด', type: 'produce', sellPrice: [40, 55, 70], icon: '🌽', imageUrl: 'corn.png', energyRestore: 8, category: 'vegetable' },
 
             'chili_seed': { name: 'เมล็ดพริก', type: 'seed', cost: 15, plantId: 'chili', icon: '🌶️', imageUrl: 'chili.png' },
-            'chili': { name: 'พริก', type: 'crop', growTime: 14400, produceId: 'chili_produce', icon: '🌶️', imageUrl: 'chilip.png' }, 
+            'chili': { name: 'พริก', type: 'crop', growTime: 14400, produceId: 'chili_produce', icon: '🌶️', imageUrl: 'chili.png' }, 
             'chili_produce': { name: 'พริก', type: 'produce', sellPrice: [25, 35, 45], icon: '🌶️', imageUrl: 'chili.png', energyRestore: 3, category: 'vegetable' },
 
             'lime_sapling': { name: 'ต้นมะนาว', type: 'seed', cost: 1000, plantId: 'lime', icon: '🍋', imageUrl: 'lime.png' },
@@ -834,6 +834,7 @@
             if (!farmState || !Array.isArray(farmState.factories)) return;
             const factoryGrid = document.getElementById('factory-grid');
             factoryGrid.innerHTML = '';
+
             farmState.factories.forEach((factory, index) => {
                 const slotEl = document.createElement('div');
                 slotEl.className = 'factory-slot aspect-square rounded-2xl shadow-inner cursor-pointer flex flex-col items-center justify-center p-1 bg-gray-300/50 relative';
@@ -842,26 +843,42 @@
                     const factoryData = GAME_DATA[factory.factoryId];
                     slotEl.style.backgroundImage = `url(${factoryData.imageUrl})`;
 
-                    if(factory.isProcessing) {
-                        const recipe = factoryData.recipes.find(r => r.id === factory.recipeId);
-                        const progress = (Date.now() - factory.startTime) / (recipe.processTime * 1000);
+                    if (factory.queue && factory.queue.length > 0) {
+                        const currentJob = factory.queue[0];
+                        const recipe = factoryData.recipes.find(r => r.id === currentJob.recipeId);
                         
-                        const progressContainer = document.createElement('div');
-                        progressContainer.className = 'absolute bottom-1 left-1 right-1 h-2 bg-gray-800/70 rounded-full overflow-hidden';
-                        const progressFill = document.createElement('div');
-                        progressFill.className = 'h-full bg-green-400 rounded-full';
-                        progressFill.style.width = `${Math.min(progress, 1) * 100}%`;
-                        progressContainer.appendChild(progressFill);
-                        slotEl.appendChild(progressContainer);
+                        if (currentJob.startTime) { 
+                            const progress = (Date.now() - currentJob.startTime) / (recipe.processTime * 1000);
+                            
+                            const progressContainer = document.createElement('div');
+                            progressContainer.className = 'absolute bottom-1 left-1 right-1 h-2 bg-gray-800/70 rounded-full overflow-hidden';
+                            const progressFill = document.createElement('div');
+                            progressFill.className = 'h-full bg-green-400 rounded-full';
+                            progressFill.style.width = `${Math.min(progress, 1) * 100}%`;
+                            progressContainer.appendChild(progressFill);
+                            slotEl.appendChild(progressContainer);
 
-                        if (progress >= 1) {
-                            slotEl.classList.add('animate-bounce');
-                            const produceData = GAME_DATA[recipe.output.id];
-                            const produceIcon = document.createElement('div');
-                            produceIcon.className = 'absolute top-1 right-1 text-2xl z-10';
-                            produceIcon.style.backgroundImage = `url(${produceData.imageUrl})`;
-                            produceIcon.className += ' w-8 h-8 bg-contain bg-no-repeat bg-center';
-                            slotEl.appendChild(produceIcon);
+                            if (progress >= 1) {
+                                slotEl.classList.add('animate-bounce');
+                                const produceData = GAME_DATA[recipe.output.id];
+                                const produceIcon = document.createElement('div');
+                                produceIcon.className = 'absolute top-1 right-1 text-2xl z-10 w-8 h-8 bg-contain bg-no-repeat bg-center';
+                                produceIcon.style.backgroundImage = `url(${produceData.imageUrl})`;
+                                slotEl.appendChild(produceIcon);
+                            }
+                        }
+
+                        if(factory.queue.length > 1) {
+                            const queueDisplay = document.createElement('div');
+                            queueDisplay.className = 'absolute top-1 left-1 flex gap-1 bg-black/50 p-1 rounded-lg';
+                            for(let i = 1; i < factory.queue.length; i++) {
+                                const queuedRecipe = factoryData.recipes.find(r => r.id === factory.queue[i].recipeId);
+                                const queuedIcon = document.createElement('div');
+                                queuedIcon.className = 'w-4 h-4 bg-contain bg-no-repeat bg-center';
+                                queuedIcon.style.backgroundImage = `url(${GAME_DATA[queuedRecipe.output.id].imageUrl})`;
+                                queueDisplay.appendChild(queuedIcon);
+                            }
+                            slotEl.appendChild(queueDisplay);
                         }
                     }
                 } else {
@@ -1029,6 +1046,7 @@
         }
         
         function renderBedroom() {
+            console.log('Checking farmState in renderBedroom:', farmState);
             if (!playerState || !farmState) return;
             const container = document.getElementById('bedroom-display');
             const infoP = document.getElementById('bedroom-info').querySelector('p');
@@ -1342,21 +1360,27 @@
                     actionsEl.appendChild(createButton('➕ ตั้งโรงงาน', () => showSubMenu('placeFactory', index, placeableItems), placeableItems.length === 0));
                 } else {
                     const factoryData = GAME_DATA[factory.factoryId];
-                    if (!factory.isProcessing) {
-                        detailsEl.innerHTML = `<p><b>${factoryData.name}</b> (ว่าง)</p>`;
-                        actionsEl.before(detailsEl);
-                        actionsEl.appendChild(createButton('⚙️ เริ่มผลิต', () => showSubMenu('useFactory', index, factoryData.recipes.map(r => r.id))));
-                    } else {
-                        const recipe = factoryData.recipes.find(r => r.id === factory.recipeId);
-                        const isReady = (Date.now() - factory.startTime) >= (recipe.processTime * 1000);
-                        const remainingMillis = Math.max(0, (factory.startTime + recipe.processTime * 1000) - Date.now());
-                        detailsEl.innerHTML = `<p><b>${factoryData.name}</b></p><p>กำลังผลิต: ${recipe.name}</p><p>เสร็จใน: ${formatTime(remainingMillis / 1000)}</p>`;
-                        actionsEl.before(detailsEl);
+                    if (!factory.queue) factory.queue = [];
 
-                        if(isReady) {
+                    const isQueueFull = factory.queue.length >= 5;
+                    actionsEl.appendChild(createButton('⚙️ เพิ่มของเข้าคิว', () => showSubMenu('useFactory', index, factoryData.recipes.map(r => r.id)), isQueueFull));
+                    
+                    let detailsText = `<p><b>${factoryData.name}</b></p><p>ในคิว: ${factory.queue.length} / 5</p>`;
+
+                    if (factory.queue.length > 0) {
+                        const currentJob = factory.queue[0];
+                        const recipe = factoryData.recipes.find(r => r.id === currentJob.recipeId);
+                        const isReady = (Date.now() - currentJob.startTime) >= (recipe.processTime * 1000);
+                        const remainingMillis = Math.max(0, (currentJob.startTime + recipe.processTime * 1000) - Date.now());
+
+                        detailsText += `<p>กำลังผลิต: ${recipe.name}</p><p>เสร็จใน: ${isReady ? 'พร้อมเก็บ!' : formatTime(remainingMillis / 1000)}</p>`;
+                        
+                        if (isReady) {
                             actionsEl.appendChild(createButton(`📦 เก็บของ`, () => collectFactoryProduct(index)));
                         }
                     }
+                    detailsEl.innerHTML = detailsText;
+                    actionsEl.before(detailsEl);
                 }
             }
             
@@ -1619,7 +1643,6 @@
             const newPlayerState = { ...playerState };
             const deedData = GAME_DATA[deedId];
             newFarmState.factories[slotIndex] = { factoryId: deedData.factoryId, isProcessing: false };
-            newPlayerState.inventory[deedId]--;
             updateFarmState(newFarmState);
             updatePlayerState(newPlayerState);
             updateQuestProgress('place_factory');
@@ -1629,12 +1652,22 @@
             const newFarmState = { ...farmState };
             const newPlayerState = { ...playerState };
             const factory = newFarmState.factories[slotIndex];
+
+            if (!factory.queue) factory.queue = [];
+
+            if (factory.queue.length >= 5) {
+                alert("คิวการผลิตเต็มแล้ว!");
+                return;
+            }
+
             const factoryData = GAME_DATA[factory.factoryId];
             const recipe = factoryData.recipes.find(r => r.id === recipeId);
+            
             const storageCounts = newPlayerState.storageBin.reduce((acc, item) => {
                 acc[item.id] = (acc[item.id] || 0) + 1;
                 return acc;
             }, {});
+
             let canProcess = true;
             for (const input of recipe.inputs) {
                 if ((storageCounts[input.id] || 0) < input.count) {
@@ -1642,6 +1675,7 @@
                     break;
                 }
             }
+
             if (canProcess) {
                 for (const input of recipe.inputs) {
                     let countToRemove = input.count;
@@ -1653,9 +1687,15 @@
                         return true;
                     });
                 }
-                factory.isProcessing = true;
-                factory.recipeId = recipeId;
-                factory.startTime = Date.now();
+
+                const newJob = { recipeId: recipeId };
+
+                if (factory.queue.length === 0) {
+                    newJob.startTime = Date.now();
+                }
+
+                factory.queue.push(newJob);
+                
                 updateFarmState(newFarmState);
                 updatePlayerState(newPlayerState);
             } else {
@@ -1667,15 +1707,27 @@
             const newPlayerState = { ...playerState };
             const newFarmState = { ...farmState };
             const factory = newFarmState.factories[slotIndex];
-            const recipe = GAME_DATA[factory.factoryId].recipes.find(r => r.id === factory.recipeId);
-            for (let i = 0; i < recipe.output.count; i++) {
-                newPlayerState.storageBin.push({ id: recipe.output.id, quality: 0 });
+
+            if (!factory.queue || factory.queue.length === 0) return;
+
+            const currentJob = factory.queue[0];
+            const recipe = GAME_DATA[factory.factoryId].recipes.find(r => r.id === currentJob.recipeId);
+            const isReady = (Date.now() - currentJob.startTime) >= (recipe.processTime * 1000);
+
+            if (isReady) {
+                for (let i = 0; i < recipe.output.count; i++) {
+                    newPlayerState.storageBin.push({ id: recipe.output.id, quality: 0 });
+                }
+
+                factory.queue.shift();
+
+                if (factory.queue.length > 0) {
+                    factory.queue[0].startTime = Date.now();
+                }
+
+                updateFarmState(newFarmState);
+                updatePlayerState(newPlayerState);
             }
-            factory.isProcessing = false;
-            delete factory.recipeId;
-            delete factory.startTime;
-            updateFarmState(newFarmState);
-            updatePlayerState(newPlayerState);
         }
 
         function upgradeHouse() {
