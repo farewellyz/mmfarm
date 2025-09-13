@@ -120,17 +120,6 @@
             /* คุณจะใส่รูปพื้นหลังตรงนี้ */
             background-image: url('park_background.png');
         }
-        #park-floor {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 90px; /* ความสูงของพื้น */
-            background-size: contain;
-            background-repeat: repeat-x;
-             /* คุณจะใส่รูปพื้นตรงนี้ */
-            background-image: url('park_floor.png');
-        }
         #park-canvas {
             position: relative;
             z-index: 10;
@@ -376,8 +365,7 @@
             <div id="park-view" class="hidden">
                <h2 class="text-3xl font-bold text-green-800 mb-4 text-center">🌳 สวนสาธารณะ</h2>
                <div id="park-container" class="rounded-lg shadow-inner">
-                  <div id="park-bg"></div>
-                  <div id="park-floor"></div>
+                  <div id="park-bg"></div>                 
                   <canvas id="park-canvas" width="800" height="450"></canvas>
                </div>
           </div>
@@ -556,15 +544,15 @@
             'preserves_jar': {
                 name: 'โรงทำแยม', type: 'factory_instance', imageUrl: 'preserves_jar.png',
                 recipes: [
-                    { id: 'strawberry_jam_recipe', name: 'ทำแยมสตรอว์เบอร์รี', inputs: [{ id: 'strawberry_produce', count: 15 }], output: { id: 'strawberry_jam', count: 1 }, processTime: 4800 },
-                    { id: 'apple_jam_recipe', name: 'ทำแยมแอปเปิ้ล', inputs: [{ id: 'apple_produce', count: 15 }], output: { id: 'apple_jam', count: 1 }, processTime: 4800 },
-                    { id: 'grape_jam_recipe', name: 'ทำแยมองุ่น', inputs: [{ id: 'grape_produce', count: 15 }], output: { id: 'grape_jam', count: 1 }, processTime: 4800 },
-                    { id: 'peach_jam_recipe', name: 'ทำแยมพีช', inputs: [{ id: 'peach_produce', count: 15 }], output: { id: 'peach_jam', count: 1 }, processTime: 4800 },
-                    { id: 'orange_jam_recipe', name: 'ทำแยมส้ม', inputs: [{ id: 'orange_produce', count: 15 }], output: { id: 'orange_jam', count: 1 }, processTime: 4800 },
-                    { id: 'mango_jam_recipe', name: 'ทำแยมมะม่วง', inputs: [{ id: 'mango_produce', count: 15 }], output: { id: 'mango_jam', count: 1 }, processTime: 4800 },
-                    { id: 'pineapple_jam_recipe', name: 'ทำแยมสับปะรด', inputs: [{ id: 'pineapple_produce', count: 15 }], output: { id: 'pineapple_jam', count: 1 }, processTime: 4800 },
-                    { id: 'guava_jam_recipe', name: 'ทำแยมฝรั่ง', inputs: [{ id: 'guava_produce', count: 15 }], output: { id: 'guava_jam', count: 1 }, processTime: 4800 },
-                    { id: 'roseapple_jam_recipe', name: 'ทำแยมชมพู่', inputs: [{ id: 'roseapple_produce', count: 15 }], output: { id: 'roseapple_jam', count: 1 }, processTime: 4800 },
+                    { id: 'strawberry_jam_recipe', name: 'ทำแยมสตรอว์เบอร์รี', inputs: [{ id: 'strawberry_produce', count: 5 }], output: { id: 'strawberry_jam', count: 1 }, processTime: 4800 },
+                    { id: 'apple_jam_recipe', name: 'ทำแยมแอปเปิ้ล', inputs: [{ id: 'apple_produce', count: 5 }], output: { id: 'apple_jam', count: 1 }, processTime: 4800 },
+                    { id: 'grape_jam_recipe', name: 'ทำแยมองุ่น', inputs: [{ id: 'grape_produce', count: 5 }], output: { id: 'grape_jam', count: 1 }, processTime: 4800 },
+                    { id: 'peach_jam_recipe', name: 'ทำแยมพีช', inputs: [{ id: 'peach_produce', count: 5 }], output: { id: 'peach_jam', count: 1 }, processTime: 4800 },
+                    { id: 'orange_jam_recipe', name: 'ทำแยมส้ม', inputs: [{ id: 'orange_produce', count: 5 }], output: { id: 'orange_jam', count: 1 }, processTime: 4800 },
+                    { id: 'mango_jam_recipe', name: 'ทำแยมมะม่วง', inputs: [{ id: 'mango_produce', count: 5 }], output: { id: 'mango_jam', count: 1 }, processTime: 4800 },
+                    { id: 'pineapple_jam_recipe', name: 'ทำแยมสับปะรด', inputs: [{ id: 'pineapple_produce', count: 5 }], output: { id: 'pineapple_jam', count: 1 }, processTime: 4800 },
+                    { id: 'guava_jam_recipe', name: 'ทำแยมฝรั่ง', inputs: [{ id: 'guava_produce', count: 5 }], output: { id: 'guava_jam', count: 1 }, processTime: 4800 },
+                    { id: 'roseapple_jam_recipe', name: 'ทำแยมชมพู่', inputs: [{ id: 'roseapple_produce', count: 5 }], output: { id: 'roseapple_jam', count: 1 }, processTime: 4800 },
                 ]
             },
             'mayonnaise_machine': {
