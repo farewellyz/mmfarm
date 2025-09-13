@@ -487,6 +487,7 @@
             'mayonnaise': { name: 'มายองเนส', type: 'produce', sellPrice: [150, 200, 250], icon: '🥚', energyRestore: 10, imageUrl: 'mayonnaise.png' },
             'duck_mayonnaise': { name: 'มายองเนสไข่เป็ด', type: 'produce', sellPrice: [180, 240, 300], icon: '🥚', energyRestore: 12, imageUrl: 'mayonnaise_duck.png' },
             
+            // ----- NEW CONTENT -----
             'rice_seed': { name: 'เมล็ดข้าว', type: 'seed', cost: 20, plantId: 'rice', icon: '🌾', imageUrl: 'rice.png' },
             'rice': { name: 'ต้นข้าว', type: 'crop', growTime: 21600, produceId: 'unhusked_rice', icon: '🌾', imageUrl: 'rice.png' }, 
             'unhusked_rice': { name: 'ข้าวเปลือก', type: 'produce', sellPrice: [15, 20, 25], icon: '🌾', imageUrl: 'rice.png', energyRestore: 1, category: 'grain' },
@@ -498,7 +499,7 @@
             'corn_produce': { name: 'ข้าวโพด', type: 'produce', sellPrice: [40, 55, 70], icon: '🌽', imageUrl: 'corn.png', energyRestore: 8, category: 'vegetable' },
 
             'chili_seed': { name: 'เมล็ดพริก', type: 'seed', cost: 15, plantId: 'chili', icon: '🌶️', imageUrl: 'chili.png' },
-            'chili': { name: 'พริก', type: 'crop', growTime: 14400, produceId: 'chili_produce', icon: '🌶️', imageUrl: 'chili.png' }, 
+            'chili': { name: 'พริก', type: 'crop', growTime: 14400, produceId: 'chili_produce', icon: '🌶️', imageUrl: 'chilip.png' }, 
             'chili_produce': { name: 'พริก', type: 'produce', sellPrice: [25, 35, 45], icon: '🌶️', imageUrl: 'chili.png', energyRestore: 3, category: 'vegetable' },
 
             'lime_sapling': { name: 'ต้นมะนาว', type: 'seed', cost: 1000, plantId: 'lime', icon: '🍋', imageUrl: 'lime.png' },
@@ -507,7 +508,6 @@
 
             'shrimp': { name: 'กุ้ง', icon: '🦐', rarity: 'Legendary', sellPrice: [500, 600, 750], type: 'produce', energyRestore: 25, imageUrl: 'shrimp.png', category: 'fish' },
 
-            
             'crocodile_deed': { name: 'กรรมสิทธิ์จระเข้', type: 'animal_deed', cost: 25000, animalId: 'crocodile', icon: '🐊', imageUrl: 'crocodile.png' },
             'crocodile': { name: 'จระเข้', type: 'animal_instance', produceTime: 172800, produceId: 'crocodile_skin', icon: '🐊', imageUrl: 'crocodile.png' }, 
             'crocodile_skin': { name: 'หนังจระเข้', type: 'produce', sellPrice: [1200, 1500, 1800], icon: '👜', imageUrl: 'crocodile_skin.png', energyRestore: 0 },
@@ -524,11 +524,9 @@
             'beehive': { name: 'รังผึ้ง', type: 'animal_instance', produceTime: 86400, produceId: 'honey', icon: '🐝', imageUrl: 'beehive.png' }, 
             'honey': { name: 'น้ำผึ้ง', type: 'produce', sellPrice: [200, 250, 320], icon: '🍯', imageUrl: 'honey.png', energyRestore: 20 },
 
-            
             'leather_bag': { name: 'กระเป๋าหนังจระเข้', type: 'produce', sellPrice: [5000, 6500, 8000], icon: '👜', imageUrl: 'leather_bag.png', energyRestore: 0 },
             'clothing': { name: 'เสื้อผ้า', type: 'produce', sellPrice: [1000, 1300, 1600], icon: '👕', imageUrl: 'clothing.png', energyRestore: 0 },
             'pearl_necklace': { name: 'สร้อยมุก', type: 'produce', sellPrice: [7500, 9000, 11000], icon: '💍', imageUrl: 'pearl_necklace.png', energyRestore: 0 },
-            
             
             'artisan_workshop_deed': { name: 'แบบแปลนโรงประดิษฐ์', type: 'factory_deed', cost: 30000, factoryId: 'artisan_workshop', icon: '💎', imageUrl: 'artisan_workshop.png' },
             'artisan_workshop': {
@@ -1114,7 +1112,7 @@
         }
         
         function renderFishing() {
-            if (!playerState) return;
+            if (!playerState || !farmState) return;
             const fishBtn = document.getElementById('fish-btn');
             const rodImage = document.getElementById('rod-image');
             const rodLevelText = document.getElementById('rod-level-text');
@@ -1122,7 +1120,7 @@
 
             fishBtn.disabled = (playerState.energy || 0) < 8;
 
-            const rodLevel = playerState.fishingRodLevel || 0;
+            const rodLevel = farmState.sharedRodLevel || 0;
             const rodData = GAME_DATA.fishing_rods[rodLevel];
             rodImage.style.backgroundImage = `url(${rodData.imageUrl})`;
             rodLevelText.textContent = `${rodData.name} (Lv. ${rodLevel + 1})`;
@@ -1836,21 +1834,27 @@
         }
         
         function upgradeRod() {
+            const newFarmState = { ...farmState };
             const newPlayerState = { ...playerState };
-            const currentLevel = newPlayerState.fishingRodLevel || 0;
+
+            const currentLevel = newFarmState.sharedRodLevel || 0;
             if (currentLevel >= GAME_DATA.fishing_rods.length - 1) return;
+
             const nextLevelData = GAME_DATA.fishing_rods[currentLevel + 1];
             if (newPlayerState.money >= nextLevelData.cost) {
                 newPlayerState.money -= nextLevelData.cost;
-                newPlayerState.fishingRodLevel = currentLevel + 1;
+                newFarmState.sharedRodLevel = currentLevel + 1;
+
                 updatePlayerState(newPlayerState);
+                updateFarmState(newFarmState);
+                updateQuestProgress('upgrade_rod');
             }
         }
         
         function fish() {
             if (!deductEnergy(8)) return;
 
-            const rodLevel = playerState.fishingRodLevel || 0;
+            const rodLevel = farmState.sharedRodLevel || 0;
             const probabilities = [[0.8, 0.15, 0.05], [0.6, 0.3, 0.1], [0.4, 0.4, 0.2], [0.2, 0.5, 0.3], [0.1, 0.4, 0.5]];
             const fishTypes = {
                 'Common': Object.keys(GAME_DATA).filter(id => GAME_DATA[id].rarity === 'Common'),
@@ -2116,7 +2120,8 @@
                         kitchen: { queue: [] },
                         marketPrices: {},
                         salesVolume: {},
-                        sharedHouseLevel: 0
+                        sharedHouseLevel: 0,
+                        sharedRodLevel: 0
                     };
                     await setDoc(farmDocRef, initialFarmState);
                 }
