@@ -382,6 +382,15 @@
                 'milkshake': { resultId: 'milkshake_food', ingredients: [{ id: 'milk' }, { category: 'fruit' }], tool: 'kitchen_blender' },
                 'vegetable_soup': { resultId: 'vegetable_soup_food', ingredients: [{ category: 'vegetable' }, { category: 'vegetable' }], tool: 'kitchen_pot' },
                 'spicy_fish_soup': { resultId: 'spicy_fish_soup_food', ingredients: [{ category: 'fish' }, { id: 'tomato_produce' }], tool: 'kitchen_pot' },
+                
+                // --- NEW RECIPES ---
+                'mango_sticky_rice': { resultId: 'mango_sticky_rice_food', ingredients: [{ id: 'mango_produce' }, { id: 'husked_rice' }], tool: 'kitchen_pot' },
+                'fried_rice': { resultId: 'fried_rice_food', ingredients: [{ id: 'husked_rice' }, { category: 'egg' }], tool: 'kitchen_pan' },
+                'tom_yum_goong': { resultId: 'tom_yum_goong_food', ingredients: [{ id: 'shrimp' }, { id: 'tomato_produce' }, { id: 'chili_produce' }, { id: 'lime_produce' }], tool: 'kitchen_pot' },
+                'sushi': { resultId: 'sushi_food', ingredients: [{ category: 'fish' }, { id: 'husked_rice' }], tool: 'kitchen_knife' },
+                'bread': { resultId: 'bread_food', ingredients: [{ id: 'rice_flour' }], tool: 'kitchen_oven' },
+                'popcorn': { resultId: 'popcorn_food', ingredients: [{ id: 'corn_produce' }], tool: 'kitchen_oven' },
+
             },
             'fried_egg_food': { name: 'ไข่ดาว', icon: '🍳', type: 'produce', sellPrice: [25, 35, 45], energyRestore: 15, imageUrl: 'fried_egg_food.png' },
             'sashimi_food': { name: 'ซาชิมิ', icon: '🍣', type: 'produce', sellPrice: [50, 75, 95], energyRestore: 25, imageUrl: 'sashimi_food.png' },
@@ -394,10 +403,22 @@
             'milkshake_food': { name: 'มิลค์เชค', icon: '🥛', type: 'produce', sellPrice: [100, 125, 150], energyRestore: 40, imageUrl: 'milkshake_food.png' },
             'vegetable_soup_food': { name: 'ซุปผัก', icon: '🥣', type: 'produce', sellPrice: [60, 80, 100], energyRestore: 25, imageUrl: 'vegetable_soup_food.png' },
             'spicy_fish_soup_food': { name: 'ต้มยำปลา', icon: '🌶️', type: 'produce', sellPrice: [180, 220, 260], energyRestore: 50, imageUrl: 'spicy_fish_soup_food.png' },
+            
+            // --- NEW FOOD ITEMS ---
+            'mango_sticky_rice_food': { name: 'ข้าวเหนียวมะม่วง', icon: '🥭', type: 'produce', sellPrice: [250, 320, 400], energyRestore: 60, imageUrl: 'mango_sticky_rice.png' },
+            'fried_rice_food': { name: 'ข้าวผัด', icon: '볶', type: 'produce', sellPrice: [120, 150, 180], energyRestore: 35, imageUrl: 'fried_rice.png' },
+            'tom_yum_goong_food': { name: 'ต้มยำกุ้ง', icon: '🦐', type: 'produce', sellPrice: [800, 1000, 1250], energyRestore: 80, imageUrl: 'tom_yum_goong.png' },
+            'sushi_food': { name: 'ซูชิ', icon: '🍣', type: 'produce', sellPrice: [150, 190, 240], energyRestore: 40, imageUrl: 'sushi.png' },
+            'bread_food': { name: 'ขนมปัง', icon: '🍞', type: 'produce', sellPrice: [80, 100, 125], energyRestore: 25, imageUrl: 'bread.png' },
+            'popcorn_food': { name: 'ป็อปคอร์น', icon: '🍿', type: 'produce', sellPrice: [70, 90, 110], energyRestore: 20, imageUrl: 'popcorn.png' },
+
+            // --- NEW KITCHEN TOOL ---
             'kitchen_knife': { name: 'มีดทำครัว', type: 'kitchen_tool', cost: 1000, icon: '🔪', imageUrl: 'knife.png' },
             'kitchen_pan': { name: 'กระทะ', type: 'kitchen_tool', cost: 1500, icon: '🍳', imageUrl: 'pan.png' },
             'kitchen_blender': { name: 'เครื่องปั่น', type: 'kitchen_tool', cost: 2000, icon: '🌪️', imageUrl: 'mixer.png' },
             'kitchen_pot': { name: 'หม้อ', type: 'kitchen_tool', cost: 2000, icon: '🍲', imageUrl: 'pot.png' },
+            'kitchen_oven': { name: 'เตาอบ', type: 'kitchen_tool', cost: 5000, icon: '🔥', imageUrl: 'oven.png' },
+
             'carp': { name: 'ปลาคาร์ป', icon: '🐟', rarity: 'Common', sellPrice: [15, 20, 25], type: 'produce', energyRestore: 3, imageUrl: 'carp.png', category: 'fish' },
             'sardine': { name: 'ปลาซาร์ดีน', icon: '🐠', rarity: 'Common', sellPrice: [20, 25, 30], type: 'produce', energyRestore: 4, imageUrl: 'sardine.png', category: 'fish' },
             'tuna': { name: 'ปลาทูน่า', icon: '🐟', rarity: 'Uncommon', sellPrice: [35, 50, 65], type: 'produce', energyRestore: 15, imageUrl: 'tuna.png', category: 'fish' },
@@ -470,7 +491,14 @@
                 name: 'โรงทำแยม', type: 'factory_instance', imageUrl: 'preserves_jar.png',
                 recipes: [
                     { id: 'strawberry_jam_recipe', name: 'ทำแยมสตรอว์เบอร์รี', inputs: [{ id: 'strawberry_produce', count: 15 }], output: { id: 'strawberry_jam', count: 1 }, processTime: 4800 },
-                    { id: 'apple_jam_recipe', name: 'ทำแยมแอปเปิ้ล', inputs: [{ id: 'apple_produce', count: 15 }], output: { id: 'apple_jam', count: 1 }, processTime: 4800 }
+                    { id: 'apple_jam_recipe', name: 'ทำแยมแอปเปิ้ล', inputs: [{ id: 'apple_produce', count: 15 }], output: { id: 'apple_jam', count: 1 }, processTime: 4800 },
+                    { id: 'grape_jam_recipe', name: 'ทำแยมองุ่น', inputs: [{ id: 'grape_produce', count: 15 }], output: { id: 'grape_jam', count: 1 }, processTime: 4800 },
+                    { id: 'peach_jam_recipe', name: 'ทำแยมพีช', inputs: [{ id: 'peach_produce', count: 15 }], output: { id: 'peach_jam', count: 1 }, processTime: 4800 },
+                    { id: 'orange_jam_recipe', name: 'ทำแยมส้ม', inputs: [{ id: 'orange_produce', count: 15 }], output: { id: 'orange_jam', count: 1 }, processTime: 4800 },
+                    { id: 'mango_jam_recipe', name: 'ทำแยมมะม่วง', inputs: [{ id: 'mango_produce', count: 15 }], output: { id: 'mango_jam', count: 1 }, processTime: 4800 },
+                    { id: 'pineapple_jam_recipe', name: 'ทำแยมสับปะรด', inputs: [{ id: 'pineapple_produce', count: 15 }], output: { id: 'pineapple_jam', count: 1 }, processTime: 4800 },
+                    { id: 'guava_jam_recipe', name: 'ทำแยมฝรั่ง', inputs: [{ id: 'guava_produce', count: 15 }], output: { id: 'guava_jam', count: 1 }, processTime: 4800 },
+                    { id: 'roseapple_jam_recipe', name: 'ทำแยมชมพู่', inputs: [{ id: 'roseapple_produce', count: 15 }], output: { id: 'roseapple_jam', count: 1 }, processTime: 4800 },
                 ]
             },
             'mayonnaise_machine': {
@@ -482,12 +510,18 @@
             },
             'grape_wine': { name: 'ไวน์องุ่น', type: 'produce', sellPrice: [800, 1200, 1600], icon: '🍷', energyRestore: 20, imageUrl: 'wine.png' },
             'cheese': { name: 'ชีส', type: 'produce', sellPrice: [600, 850, 1100], icon: '🧀', energyRestore: 30, imageUrl: 'cheese.png' },
-            'strawberry_jam': { name: 'แยมสตรอว์เบอร์รี', type: 'produce', sellPrice: [250, 350, 450], icon: '🍓', energyRestore: 15, imageUrl: 'jam.png' },
-            'apple_jam': { name: 'แยมแอปเปิ้ล', type: 'produce', sellPrice: [300, 420, 550], icon: '🍎', energyRestore: 18, imageUrl: 'jam_apple.png' },
+            'strawberry_jam': { name: 'แยมสตรอว์เบอร์รี', type: 'produce', sellPrice: [450, 550, 650], icon: '🍓', energyRestore: 15, imageUrl: 'jam.png' },
+            'apple_jam': { name: 'แยมแอปเปิ้ล', type: 'produce', sellPrice: [500, 620, 750], icon: '🍎', energyRestore: 18, imageUrl: 'jam_apple.png' },
+            'grape_jam': { name: 'แยมองุ่น', type: 'produce', sellPrice: [550, 680, 820], icon: '🍇', energyRestore: 18, imageUrl: 'jam_grape.png' },
+            'peach_jam': { name: 'แยมพีช', type: 'produce', sellPrice: [600, 750, 900], icon: '🍑', energyRestore: 20, imageUrl: 'jam_peach.png' },
+            'orange_jam': { name: 'แยมส้ม', type: 'produce', sellPrice: [650, 800, 980], icon: '🍊', energyRestore: 22, imageUrl: 'jam_orange.png' },
+            'mango_jam': { name: 'แยมมะม่วง', type: 'produce', sellPrice: [700, 880, 1100], icon: '🥭', energyRestore: 25, imageUrl: 'jam_mango.png' },
+            'pineapple_jam': { name: 'แยมสับปะรด', type: 'produce', sellPrice: [750, 950, 1200], icon: '🍍', energyRestore: 28, imageUrl: 'jam_pineapple.png' },
+            'guava_jam': { name: 'แยมฝรั่ง', type: 'produce', sellPrice: [520, 650, 780], icon: '🍈', energyRestore: 17, imageUrl: 'jam_guava.png' },
+            'roseapple_jam': { name: 'แยมชมพู่', type: 'produce', sellPrice: [580, 720, 850], icon: '🍐', energyRestore: 19, imageUrl: 'jam_roseapple.png' },
             'mayonnaise': { name: 'มายองเนส', type: 'produce', sellPrice: [150, 200, 250], icon: '🥚', energyRestore: 10, imageUrl: 'mayonnaise.png' },
             'duck_mayonnaise': { name: 'มายองเนสไข่เป็ด', type: 'produce', sellPrice: [180, 240, 300], icon: '🥚', energyRestore: 12, imageUrl: 'mayonnaise_duck.png' },
             
-            // ----- NEW CONTENT -----
             'rice_seed': { name: 'เมล็ดข้าว', type: 'seed', cost: 20, plantId: 'rice', icon: '🌾', imageUrl: 'rice.png' },
             'rice': { name: 'ต้นข้าว', type: 'crop', growTime: 21600, produceId: 'unhusked_rice', icon: '🌾', imageUrl: 'rice.png' }, 
             'unhusked_rice': { name: 'ข้าวเปลือก', type: 'produce', sellPrice: [15, 20, 25], icon: '🌾', imageUrl: 'rice.png', energyRestore: 1, category: 'grain' },
@@ -1046,7 +1080,6 @@
         }
         
         function renderBedroom() {
-            console.log('Checking farmState in renderBedroom:', farmState);
             if (!playerState || !farmState) return;
             const container = document.getElementById('bedroom-display');
             const infoP = document.getElementById('bedroom-info').querySelector('p');
@@ -1239,6 +1272,7 @@
                 const detailsHTML = `
                     <div class="flex-grow">
                         <p class="font-bold">${resultData.name} x${job.quantity}</p>
+                        <p class="text-xs text-gray-500">โดย: ${job.cookedBy?.nickname || '??'}</p>
                         <div class="w-full bg-gray-200 rounded-full h-2.5 mt-1">
                           <div class="bg-orange-500 h-2.5 rounded-full" style="width: ${progress * 100}%"></div>
                         </div>
@@ -1642,7 +1676,8 @@
             const newFarmState = { ...farmState };
             const newPlayerState = { ...playerState };
             const deedData = GAME_DATA[deedId];
-            newFarmState.factories[slotIndex] = { factoryId: deedData.factoryId, isProcessing: false };
+            newFarmState.factories[slotIndex] = { factoryId: deedData.factoryId, queue: [] };
+            newPlayerState.inventory[deedId]--;
             updateFarmState(newFarmState);
             updatePlayerState(newPlayerState);
             updateQuestProgress('place_factory');
