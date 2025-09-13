@@ -347,7 +347,7 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        const CLIENT_VERSION = "1.0.1";
+        const CLIENT_VERSION = "1.0.2"; // Updated version
 
         const FARM_GRID_SIZE = 24;
         const ANIMAL_PEN_SIZE = 8;
@@ -893,10 +893,9 @@
                             slotEl.appendChild(progressContainer);
 
                             if (progress >= 1) {
-                                slotEl.classList.add('animate-bounce');
                                 const produceData = GAME_DATA[recipe.output.id];
                                 const produceIcon = document.createElement('div');
-                                produceIcon.className = 'absolute top-1 right-1 text-2xl z-10 w-8 h-8 bg-contain bg-no-repeat bg-center';
+                                produceIcon.className = 'absolute top-1 right-1 text-2xl z-10 w-8 h-8 bg-contain bg-no-repeat bg-center animate-pulse';
                                 produceIcon.style.backgroundImage = `url(${produceData.imageUrl})`;
                                 slotEl.appendChild(produceIcon);
                             }
@@ -1407,11 +1406,7 @@
                         const isReady = (Date.now() - currentJob.startTime) >= (recipe.processTime * 1000);
                         const remainingMillis = Math.max(0, (currentJob.startTime + recipe.processTime * 1000) - Date.now());
 
-                        detailsText += `<p>กำลังผลิต: ${recipe.name}</p><p>เสร็จใน: ${isReady ? 'พร้อมเก็บ!' : formatTime(remainingMillis / 1000)}</p>`;
-                        
-                        if (isReady) {
-                            actionsEl.appendChild(createButton(`📦 เก็บของ`, () => collectFactoryProduct(index)));
-                        }
+                        detailsText += `<p>กำลังผลิต: ${recipe.name}</p><p>โดย: ${currentJob.processedBy?.nickname || '??'}</p><p>เสร็จใน: ${isReady ? 'กำลังเก็บ!' : formatTime(remainingMillis / 1000)}</p>`;
                     }
                     detailsEl.innerHTML = detailsText;
                     actionsEl.before(detailsEl);
@@ -1723,7 +1718,10 @@
                     });
                 }
 
-                const newJob = { recipeId: recipeId };
+                const newJob = { 
+                    recipeId: recipeId,
+                    processedBy: { uid: userId, nickname: playerState.nickname }
+                };
 
                 if (factory.queue.length === 0) {
                     newJob.startTime = Date.now();
@@ -1737,31 +1735,55 @@
                 alert("วัตถุดิบไม่เพียงพอ!");
             }
         }
+        
+        async function checkAndProcessFactoryQueue() {
+            if (!farmState || !farmState.factories || userId !== ADMIN_UID) return; // Only admin process queue to prevent conflicts
 
-        function collectFactoryProduct(slotIndex) {
-            const newPlayerState = { ...playerState };
-            const newFarmState = { ...farmState };
-            const factory = newFarmState.factories[slotIndex];
+            const newFarmState = JSON.parse(JSON.stringify(farmState));
+            let farmStateChanged = false;
 
-            if (!factory.queue || factory.queue.length === 0) return;
+            for (const factory of newFarmState.factories) {
+                if (factory.factoryId && factory.queue && factory.queue.length > 0) {
+                    const currentJob = factory.queue[0];
+                    if (!currentJob.startTime) continue; 
 
-            const currentJob = factory.queue[0];
-            const recipe = GAME_DATA[factory.factoryId].recipes.find(r => r.id === currentJob.recipeId);
-            const isReady = (Date.now() - currentJob.startTime) >= (recipe.processTime * 1000);
+                    const recipe = GAME_DATA[factory.factoryId].recipes.find(r => r.id === currentJob.recipeId);
+                    const isReady = (Date.now() - currentJob.startTime) >= (recipe.processTime * 1000);
 
-            if (isReady) {
-                for (let i = 0; i < recipe.output.count; i++) {
-                    newPlayerState.storageBin.push({ id: recipe.output.id, quality: 0 });
+                    if (isReady) {
+                        const ownerUid = currentJob.processedBy.uid;
+                        const playerDocRef = doc(db, "players", ownerUid);
+                        try {
+                            const playerDocSnap = await getDoc(playerDocRef);
+                            if (playerDocSnap.exists()) {
+                                const ownerPlayerState = playerDocSnap.data();
+                                
+                                for (let i = 0; i < recipe.output.count; i++) {
+                                    ownerPlayerState.storageBin.push({ id: recipe.output.id, quality: 0 });
+                                }
+                                
+                                await setDoc(playerDocRef, ownerPlayerState);
+
+                                factory.queue.shift(); 
+                                if (factory.queue.length > 0) {
+                                    factory.queue[0].startTime = Date.now(); 
+                                }
+                                farmStateChanged = true;
+
+                            } else {
+                                console.error(`Player ${ownerUid} not found, cannot deliver factory item.`);
+                                factory.queue.shift();
+                                farmStateChanged = true;
+                            }
+                        } catch (error) {
+                            console.error("Error processing factory for player:", ownerUid, error);
+                        }
+                    }
                 }
+            }
 
-                factory.queue.shift();
-
-                if (factory.queue.length > 0) {
-                    factory.queue[0].startTime = Date.now();
-                }
-
-                updateFarmState(newFarmState);
-                updatePlayerState(newPlayerState);
+            if (farmStateChanged) {
+                await updateFarmState(newFarmState);
             }
         }
 
@@ -2160,7 +2182,10 @@
             document.getElementById('game-container').style.opacity = 1;
             document.getElementById('footer-nav').style.opacity = 1;
             if (gameLoopInterval) clearInterval(gameLoopInterval);
-            gameLoopInterval = setInterval(() => { renderAll(); }, 2000);
+            gameLoopInterval = setInterval(() => {
+                renderAll();
+                checkAndProcessFactoryQueue();
+            }, 2000);
         }
 
         function initPlayerListeners(uid) {
