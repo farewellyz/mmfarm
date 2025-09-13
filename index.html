@@ -104,6 +104,40 @@
             height: 0;
             transition: height 0.1s linear;
         }
+         /* เพิ่ม CSS สำหรับ Park */
+         #park-container {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            overflow: hidden;
+            background-color: #7fdefe; /* สีท้องฟ้าสำรอง */
+        }
+        #park-bg {
+            position: absolute;
+            inset: 0;
+            background-size: cover;
+            background-position: center;
+            /* คุณจะใส่รูปพื้นหลังตรงนี้ */
+            background-image: url('park_background.png');
+        }
+        #park-floor {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 90px; /* ความสูงของพื้น */
+            background-size: contain;
+            /* background-repeat: repeat-x; */
+             /* คุณจะใส่รูปพื้นตรงนี้ */
+            background-image: url('park_floor.png');
+        }
+        #park-canvas {
+            position: relative;
+            z-index: 10;
+        }
+        #character-preview {
+            image-rendering: pixelated;
+        }
     </style>
 </head>
 <body class="min-h-screen">
@@ -192,6 +226,27 @@
                 <div id="recipe-list" class="max-h-[60vh] overflow-y-auto space-y-3">
                     </div>
                  <button id="cooking-modal-close" class="mt-4 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg w-full">ปิด</button>
+            </div>
+        </div>
+        <div id="character-creator-modal" class="hidden fixed inset-0 bg-black/60 z-[52] flex items-center justify-center p-4">
+            <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-xs modal-enter">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4 text-center">เลือกตัวละครของคุณ</h2>
+                
+                <div id="character-preview" class="mb-4 h-48 bg-contain bg-no-repeat bg-center"></div>
+
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="font-semibold">ตัวละคร</span>
+                        <div class="flex items-center gap-2">
+                            <button id="prev-character" class="px-3 py-1 bg-gray-200 rounded-md hover:bg-gray-300">&lt;</button>
+                            <button id="next-character" class="px-3 py-1 bg-gray-200 rounded-md hover:bg-gray-300">&gt;</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-6">
+                    <button id="save-character-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg w-full">บันทึก</button>
+                </div>
             </div>
         </div>
     </div>
@@ -316,6 +371,15 @@
                 </div>
             </div>
 
+            <div id="park-view" class="hidden">
+               <h2 class="text-3xl font-bold text-green-800 mb-4 text-center">🌳 สวนสาธารณะ</h2>
+               <div id="park-container" class="rounded-lg shadow-inner">
+                  <div id="park-bg"></div>
+                  <div id="park-floor"></div>
+                  <canvas id="park-canvas" width="800" height="450"></canvas>
+               </div>
+          </div>
+
         </main>
     </div>
     
@@ -329,7 +393,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signInAnonymously, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, onSnapshot, setDoc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, onSnapshot, setDoc, getDoc, deleteDoc, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- Config ---
         const firebaseConfig = {
@@ -347,7 +411,7 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        const CLIENT_VERSION = "1.0.3"; // Updated version
+        const CLIENT_VERSION = "1.0.4"; // Updated version
 
         const FARM_GRID_SIZE = 24;
         const ANIMAL_PEN_SIZE = 8;
@@ -490,15 +554,15 @@
             'preserves_jar': {
                 name: 'โรงทำแยม', type: 'factory_instance', imageUrl: 'preserves_jar.png',
                 recipes: [
-                    { id: 'strawberry_jam_recipe', name: 'ทำแยมสตรอว์เบอร์รี', inputs: [{ id: 'strawberry_produce', count: 5 }], output: { id: 'strawberry_jam', count: 1 }, processTime: 4800 },
-                    { id: 'apple_jam_recipe', name: 'ทำแยมแอปเปิ้ล', inputs: [{ id: 'apple_produce', count: 5 }], output: { id: 'apple_jam', count: 1 }, processTime: 4800 },
-                    { id: 'grape_jam_recipe', name: 'ทำแยมองุ่น', inputs: [{ id: 'grape_produce', count: 5 }], output: { id: 'grape_jam', count: 1 }, processTime: 4800 },
-                    { id: 'peach_jam_recipe', name: 'ทำแยมพีช', inputs: [{ id: 'peach_produce', count: 5 }], output: { id: 'peach_jam', count: 1 }, processTime: 4800 },
-                    { id: 'orange_jam_recipe', name: 'ทำแยมส้ม', inputs: [{ id: 'orange_produce', count: 5 }], output: { id: 'orange_jam', count: 1 }, processTime: 4800 },
-                    { id: 'mango_jam_recipe', name: 'ทำแยมมะม่วง', inputs: [{ id: 'mango_produce', count: 5 }], output: { id: 'mango_jam', count: 1 }, processTime: 4800 },
-                    { id: 'pineapple_jam_recipe', name: 'ทำแยมสับปะรด', inputs: [{ id: 'pineapple_produce', count: 5 }], output: { id: 'pineapple_jam', count: 1 }, processTime: 4800 },
-                    { id: 'guava_jam_recipe', name: 'ทำแยมฝรั่ง', inputs: [{ id: 'guava_produce', count: 5 }], output: { id: 'guava_jam', count: 1 }, processTime: 4800 },
-                    { id: 'roseapple_jam_recipe', name: 'ทำแยมชมพู่', inputs: [{ id: 'roseapple_produce', count: 5 }], output: { id: 'roseapple_jam', count: 1 }, processTime: 4800 },
+                    { id: 'strawberry_jam_recipe', name: 'ทำแยมสตรอว์เบอร์รี', inputs: [{ id: 'strawberry_produce', count: 15 }], output: { id: 'strawberry_jam', count: 1 }, processTime: 4800 },
+                    { id: 'apple_jam_recipe', name: 'ทำแยมแอปเปิ้ล', inputs: [{ id: 'apple_produce', count: 15 }], output: { id: 'apple_jam', count: 1 }, processTime: 4800 },
+                    { id: 'grape_jam_recipe', name: 'ทำแยมองุ่น', inputs: [{ id: 'grape_produce', count: 15 }], output: { id: 'grape_jam', count: 1 }, processTime: 4800 },
+                    { id: 'peach_jam_recipe', name: 'ทำแยมพีช', inputs: [{ id: 'peach_produce', count: 15 }], output: { id: 'peach_jam', count: 1 }, processTime: 4800 },
+                    { id: 'orange_jam_recipe', name: 'ทำแยมส้ม', inputs: [{ id: 'orange_produce', count: 15 }], output: { id: 'orange_jam', count: 1 }, processTime: 4800 },
+                    { id: 'mango_jam_recipe', name: 'ทำแยมมะม่วง', inputs: [{ id: 'mango_produce', count: 15 }], output: { id: 'mango_jam', count: 1 }, processTime: 4800 },
+                    { id: 'pineapple_jam_recipe', name: 'ทำแยมสับปะรด', inputs: [{ id: 'pineapple_produce', count: 15 }], output: { id: 'pineapple_jam', count: 1 }, processTime: 4800 },
+                    { id: 'guava_jam_recipe', name: 'ทำแยมฝรั่ง', inputs: [{ id: 'guava_produce', count: 15 }], output: { id: 'guava_jam', count: 1 }, processTime: 4800 },
+                    { id: 'roseapple_jam_recipe', name: 'ทำแยมชมพู่', inputs: [{ id: 'roseapple_produce', count: 15 }], output: { id: 'roseapple_jam', count: 1 }, processTime: 4800 },
                 ]
             },
             'mayonnaise_machine': {
@@ -639,6 +703,160 @@
         let playerState = null;
         const playerNameEl = document.getElementById('player-name');
         
+        // --- START PARK LOGIC ---
+        const parkPresenceRef = collection(db, "publicFarmData", "farmState", "parkPresence");
+        const parkCanvas = document.getElementById('park-canvas');
+        const parkCtx = parkCanvas.getContext('2d');
+        let parkPlayers = {};
+        let playerImages = {};
+        let animationFrameId;
+
+        // --- ข้อมูลสำหรับแต่งตัว (คุณสามารถเพิ่ม/แก้ไขชื่อไฟล์รูปภาพได้ตรงนี้) ---
+        const CHARACTER_ASSETS = [
+            'char1.png', 
+            'char2.png', 
+            'char3.png', 
+            'char4.png',
+            'char5.png',
+			'char6.png', 
+            'char7.png', 
+            'char8.png', 
+            'char9.png',
+            'char10.png'
+        ];
+
+        let selectedCharacterIndex = 0;
+
+        function initParkSystem() {
+            setupCharacterCreatorControls();
+            listenForParkPlayers();
+        }
+        async function enterPark(userId, playerState) {
+            if (playerState.avatar === undefined || playerState.avatar === null) {
+                showCharacterCreator();
+                return;
+            }
+            await setDoc(doc(parkPresenceRef, userId), {
+                avatar: playerState.avatar,
+                nickname: playerState.nickname,
+                lastSeen: Date.now()
+            });
+            startParkAnimation();
+        }
+        async function leavePark(userId) {
+            await deleteDoc(doc(parkPresenceRef, userId));
+            stopParkAnimation();
+            parkPlayers = {};
+        }
+        function showCharacterCreator() {
+            document.getElementById('character-creator-modal').classList.remove('hidden');
+            updateCharacterPreview();
+        }
+        function hideCharacterCreator() {
+            document.getElementById('character-creator-modal').classList.add('hidden');
+        }
+        function updateCharacterPreview() {
+            document.getElementById('character-preview').style.backgroundImage = `url(${CHARACTER_ASSETS[selectedCharacterIndex]})`;
+        }
+        function setupCharacterCreatorControls() {
+            document.getElementById('save-character-btn').onclick = async () => {
+                const userId = auth.currentUser.uid;
+                if (!userId) return;
+                
+                const playerDocRef = doc(db, "players", userId);
+                await setDoc(playerDocRef, { avatar: selectedCharacterIndex }, { merge: true });
+                
+                hideCharacterCreator();
+                const playerDoc = await getDoc(playerDocRef);
+                playerState = playerDoc.data(); // Update local player state immediately
+                enterPark(userId, playerState);
+            };
+            document.getElementById(`prev-character`).onclick = () => {
+                selectedCharacterIndex = (selectedCharacterIndex - 1 + CHARACTER_ASSETS.length) % CHARACTER_ASSETS.length;
+                updateCharacterPreview();
+            };
+            document.getElementById(`next-character`).onclick = () => {
+                selectedCharacterIndex = (selectedCharacterIndex + 1) % CHARACTER_ASSETS.length;
+                updateCharacterPreview();
+            };
+        }
+        function preloadPlayerImages(player) {
+            if (player.avatar === undefined) return;
+            const userId = player.uid;
+            const img = new Image();
+            img.src = CHARACTER_ASSETS[player.avatar];
+            playerImages[userId] = img;
+        }
+        function listenForParkPlayers() {
+            onSnapshot(parkPresenceRef, (snapshot) => {
+                const currentActivePlayers = new Set();
+                snapshot.docs.forEach(doc => {
+                    const playerData = doc.data();
+                    const userId = doc.id;
+                    currentActivePlayers.add(userId);
+                    
+                    if (parkPlayers[userId]) {
+                        parkPlayers[userId] = { ...parkPlayers[userId], ...playerData };
+                    } else {
+                        parkPlayers[userId] = {
+                            uid: userId,
+                            x: Math.random() * (parkCanvas.width - 64),
+                            y: parkCanvas.height - 128,
+                            direction: Math.random() < 0.5 ? 1 : -1,
+                            speed: 0.5 + Math.random() * 0.5,
+                            ...playerData
+                        };
+                        preloadPlayerImages(parkPlayers[userId]);
+                    }
+                });
+                Object.keys(parkPlayers).forEach(uid => {
+                    if (!currentActivePlayers.has(uid)) {
+                        delete parkPlayers[uid];
+                        delete playerImages[uid];
+                    }
+                });
+            });
+        }
+        function startParkAnimation() {
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            function gameLoop() {
+                parkCtx.clearRect(0, 0, parkCanvas.width, parkCanvas.height);
+                Object.values(parkPlayers).forEach(player => {
+                    player.x += player.speed * player.direction;
+                    if (player.x <= 0 || player.x >= parkCanvas.width - 64) {
+                        player.direction *= -1;
+                    }
+                    drawPlayer(player);
+                });
+                animationFrameId = requestAnimationFrame(gameLoop);
+            }
+            gameLoop();
+        }
+        function stopParkAnimation() {
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+                parkCtx.clearRect(0, 0, parkCanvas.width, parkCanvas.height);
+            }
+        }
+        function drawPlayer(player) {
+            const image = playerImages[player.uid];
+            if (!image || !image.complete) return;
+            const drawWidth = 64;
+            const drawHeight = 128;
+            parkCtx.drawImage(image, player.x, player.y, drawWidth, drawHeight);
+            
+            parkCtx.fillStyle = 'white';
+            parkCtx.strokeStyle = 'black';
+            parkCtx.lineWidth = 2;
+            parkCtx.font = '14px "IBM Plex Sans Thai"';
+            parkCtx.textAlign = 'center';
+            parkCtx.strokeText(player.nickname, player.x + drawWidth / 2, player.y - 5);
+            parkCtx.fillText(player.nickname, player.x + drawWidth / 2, player.y - 5);
+        }
+        // --- END PARK LOGIC ---
+
+
         function formatTime(seconds) {
             if (seconds < 0) seconds = 0;
             const h = Math.floor(seconds / 3600);
@@ -1008,9 +1226,15 @@
                         buttonText = 'มีแล้ว';
                         isDisabled = true;
                     }
-                    if (data.type === 'factory_deed' && farmState.factories?.some(f => f.factoryId === data.factoryId)) {
-                        buttonText = 'สร้างแล้ว';
-                        isDisabled = true;
+                    
+                    if (data.type === 'factory_deed') {
+                        const isAlreadyBuilt = farmState.factories?.some(f => f.factoryId === data.factoryId);
+                        const isInInventory = playerState.inventory[id] > 0;
+
+                        if (isAlreadyBuilt || isInInventory) {
+                            buttonText = isAlreadyBuilt ? 'สร้างแล้ว' : 'มีในกระเป๋า';
+                            isDisabled = true;
+                        }
                     }
 
                     itemEl.innerHTML = `
@@ -1633,7 +1857,7 @@
             if (!plot.harvestedBy) plot.harvestedBy = [];
             plot.harvestedBy.push({ uid: userId, nickname: playerState.nickname });
             const involvedUids = new Set([plot.plantedBy?.uid, ...(plot.wateredBy?.map(p => p.uid).filter(uid => uid) || [])]);
-            const harvestedUids = new Set(plot.harvestedBy.map(p => p.uid));
+            const harvestedUids = new Set(plot.harvestedBy?.map(p => p.uid) || []);
             let allHarvested = true;
             for (const uid of involvedUids) {
                 if (!harvestedUids.has(uid)) {
@@ -2363,7 +2587,8 @@
                 { view: 'kitchen', name: 'ห้องครัว 🍳' },
                 { view: 'factory', name: 'โรงงาน 🏭' },
                 { view: 'quests', name: 'เควส 📜' },
-                { view: 'market', name: 'ราคาตลาด 📈' }
+                { view: 'market', name: 'ราคาตลาด 📈' },
+                { view: 'park', name: 'สวนสาธารณะ 🌳' }
             ];
 
             moreModalItems.innerHTML = '';
@@ -2375,6 +2600,8 @@
                 moreModalItems.appendChild(button);
             });
             
+            let currentView = 'farm';
+
             document.addEventListener('click', e => {
                 const target = e.target.closest('[data-view]');
                 if (!moreModal.classList.contains('hidden') && !e.target.closest('#more-modal > div') && !e.target.closest('#more-btn')) {
@@ -2382,6 +2609,11 @@
                 }
                 if (!target) return;
                 const view = target.dataset.view;
+                
+                if (currentView === 'park' && view !== 'park') {
+                    if(userId) leavePark(userId);
+                }
+
                 if (view === 'more') {
                     moreModal.classList.toggle('hidden');
                     return;
@@ -2389,6 +2621,11 @@
                 document.querySelectorAll('#tab-content-area > div').forEach(div => div.classList.add('hidden'));
                 const viewEl = document.getElementById(`${view}-view`);
                 if (viewEl) viewEl.classList.remove('hidden');
+
+                if (view === 'park') {
+                    if(userId && playerState) enterPark(userId, playerState);
+                }
+                currentView = view;
 
                 document.querySelectorAll('#footer-nav .nav-btn').forEach(b => b.classList.remove('active'));
                 
@@ -2548,6 +2785,7 @@
         
         window.addEventListener('load', async () => {
             setupControls();
+            initParkSystem();
             try {
                  await setPersistence(auth, browserLocalPersistence);
                  onAuthStateChanged(auth, async (user) => {
