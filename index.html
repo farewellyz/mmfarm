@@ -673,26 +673,32 @@
                 { id: 'buy_animal_1', action: 'buy_animal', description: 'ช่วยกันซื้อสัตว์ 1 ตัว', target: 1, reward: { type: 'seed', id: 'strawberry_seed', count: 5 } },
             ],
             weekly: [
-                { id: 'harvest_100', action: 'harvest', description: 'ช่วยกันเก็บเกี่ยวผลผลิต 100 ชิ้น', target: 100, reward: { type: 'item', id: 'fertilizer_2', count: 5 } },
-                { id: 'fish_50', action: 'fish', description: 'ช่วยกันตกปลา 50 ตัว', target: 50, reward: { type: 'seed', id: 'random', count: 20 } },
-                { id: 'fertilize_30', action: 'fertilize', description: 'ช่วยกันใส่ปุ๋ย 30 แปลง', target: 30, reward: { type: 'seed', id: 'mango_seed', count: 15 } },
-                { id: 'cook_10', action: 'cook', description: 'ช่วยกันทำอาหาร 10 อย่าง', target: 10, reward: { type: 'produce', id: 'milk', count: 8 } },
-                { id: 'collect_30', action: 'collect_product', description: 'ช่วยกันเก็บผลผลิตจากสัตว์ 30 ชิ้น', target: 30, reward: { type: 'produce', id: 'gem', count: 1 } },
-                { id: 'harvest_80_more', action: 'harvest', description: 'ช่วยกันเก็บเกี่ยวผลผลิตเพิ่ม 80 ชิ้น', target: 80, reward: { type: 'seed', id: 'apple_seed', count: 10 } },
-                { id: 'plant_80', action: 'plant', description: 'ช่วยกันปลูกเมล็ดพืช 80 ต้น', target: 80, reward: { type: 'item', id: 'fertilizer_2', count: 8 } },
-                { id: 'sell_item_100', action: 'sell_item', description: 'ช่วยกันใส่ของลงกล่องขาย 100 ชิ้น', target: 100, reward: { type: 'item', id: 'fertilizer_2', count: 15 } },
-                { id: 'fish_40_more', action: 'fish', description: 'ช่วยกันตกปลาเพิ่ม 40 ตัว', target: 40, reward: { type: 'produce', id: 'salmon', count: 10 } },
-                { id: 'collect_25_more', action: 'collect_product', description: 'ช่วยกันเก็บผลผลิตสัตว์เพิ่ม 25 ชิ้น', target: 25, reward: { type: 'produce', id: 'gem', count: 2 } },
-                { id: 'cook_8_more', action: 'cook', description: 'ช่วยกันทำอาหารเพิ่ม 8 อย่าง', target: 8, reward: { type: 'kitchen_tool', id: 'kitchen_pot', count: 1 } },
-                { id: 'spend_3000', action: 'spend_money', description: 'ช่วยกันใช้จ่ายเงิน 3000💰', target: 3000, reward: { type: 'kitchen_tool', id: 'kitchen_knife', count: 1 } },
-                { id: 'upgrade_house_1', action: 'upgrade_house', description: 'ช่วยกันอัปเกรดบ้าน 1 ครั้ง', target: 1, reward: { type: 'produce', id: 'gem', count: 2 } },
-                { id: 'upgrade_rod_1', action: 'upgrade_rod', description: 'ช่วยกันอัปเกรดเบ็ดตกปลา 1 ครั้ง', target: 1, reward: { type: 'seed', id: 'mango_seed', count: 10 } },
-                { id: 'fertilize_20_more', action: 'fertilize', description: 'ช่วยกันใส่ปุ๋ยเพิ่ม 20 แปลง', target: 20, reward: { type: 'seed', id: 'pineapple_seed', count: 10 } },
-                { id: 'eat_15', action: 'eat', description: 'ช่วยกันกินอาหาร 15 ครั้ง', target: 15, reward: { type: 'kitchen_tool', id: 'kitchen_blender', count: 1 } },
-                { id: 'place_animal_3', action: 'place_animal', description: 'ช่วยกันวางสัตว์ในคอก 3 ตัว', target: 3, reward: { type: 'seed', id: 'guava_seed', count: 15 } },
-                { id: 'buy_animal_5', action: 'buy_animal', description: 'ช่วยกันซื้อสัตว์ 5 ตัว', target: 5, reward: { type: 'item', id: 'fertilizer_2', count: 10 } },
-                { id: 'sell_hq_10', action: 'sell_high_quality', description: 'ช่วยกันขายของคุณภาพสูงสุด 10 ชิ้น', target: 10, reward: { type: 'kitchen_tool', id: 'kitchen_pan', count: 1 } },
-                { id: 'buy_tool_1', action: 'buy_tool', description: 'ช่วยกันซื้ออุปกรณ์ครัว 1 ชิ้น', target: 1, reward: { type: 'produce', id: 'gem', count: 2 } },
+                // --- ชุดเควสมาตรฐาน (Standard Tier) ---
+                { id: 'harvest_250_weekly', action: 'harvest', description: 'นักเก็บเกี่ยวระดับตำนาน: ช่วยกันเก็บเกี่ยวผลผลิต 250 ชิ้น', target: 250, reward: { type: 'animal_deed', id: 'beehive_deed', count: 1 } },
+                { id: 'plant_250_weekly', action: 'plant', description: 'มือทองแห่งการเพาะปลูก: ช่วยกันปลูกเมล็ดพันธุ์ 250 ต้น', target: 250, reward: { type: 'seed', id: 'lime_sapling', count: 5 } },
+                { id: 'fertilize_100_weekly', action: 'fertilize', description: 'ปรมาจารย์ดิน: ช่วยกันใช้ปุ๋ยบำรุงดิน 100 ครั้ง', target: 100, reward: { type: 'item', id: 'fertilizer_2', count: 20 } },
+                { id: 'collect_animal_200_weekly', action: 'collect_product', description: 'เจ้าสัวฟาร์มปศุสัตว์: ช่วยกันเก็บผลผลิตจากสัตว์ 200 ชิ้น', target: 200, reward: { type: 'animal_deed', id: 'duck_deed', count: 5 } },
+                { id: 'fish_100_weekly', action: 'fish', description: 'นักตกปลาแห่งสายน้ำ: ช่วยกันตกปลาให้ครบ 100 ตัว', target: 100, reward: { type: 'animal_deed', id: 'turtle_deed', count: 1 } },
+                { id: 'sell_items_150_weekly', action: 'sell_item', description: 'เศรษฐีประจำสัปดาห์: ช่วยกันนำของใส่กล่องส่งขาย 150 ชิ้น', target: 150, reward: { type: 'produce', id: 'gem', count: 3 } },
+                { id: 'cook_dishes_30_weekly', action: 'cook', description: 'เชฟกระทะเหล็ก: ช่วยกันทำอาหารเมนูใดก็ได้รวมกัน 30 จาน', target: 30, reward: { type: 'produce', id: 'shrimp', count: 5 } },
+                { id: 'spend_money_15000_weekly', action: 'spend_money', description: 'นักลงทุนมือฉมัง: ช่วยกันใช้เงินในร้านค้าครบ 15,000💰', target: 15000, reward: { type: 'animal_deed', id: 'sheep_deed', count: 2 } },
+                { id: 'sell_hq_20_weekly', action: 'sell_high_quality', description: 'นักค้าของคุณภาพ: ช่วยกันขายผลผลิตคุณภาพสูงสุด (2 ดาว) 20 ชิ้น', target: 20, reward: { type: 'produce', id: 'pearl', count: 1 } },
+                
+                // --- ชุดเควสท้าทาย (Challenge Tier) ---
+                { id: 'harvest_400_hard_weekly', action: 'harvest', description: 'เจ้าแห่งการเก็บเกี่ยว: ช่วยกันเก็บเกี่ยวผลผลิต 400 ชิ้น', target: 400, reward: { type: 'produce', id: 'wool', count: 3 } },
+                { id: 'fish_200_hard_weekly', action: 'fish', description: 'เซียนเบ็ดในตำนาน: ช่วยกันตกปลาให้ครบ 200 ตัว', target: 200, reward: { type: 'produce', id: 'eel', count: 5 } },
+                { id: 'collect_animal_350_hard_weekly', action: 'collect_product', description: 'จักรพรรดิแห่งปศุสัตว์: ช่วยกันเก็บผลผลิตจากสัตว์ 350 ชิ้น', target: 350, reward: { type: 'animal_deed', id: 'crocodile_deed', count: 1 } },
+                { id: 'sell_items_250_hard_weekly', action: 'sell_item', description: 'พ่อค้าเศรษฐี: ช่วยกันนำของใส่กล่องส่งขาย 250 ชิ้น', target: 250, reward: { type: 'produce', id: 'honey', count: 10 } },
+                { id: 'cook_dishes_50_hard_weekly', action: 'cook', description: 'สุดยอดเชฟใหญ่: ช่วยกันทำอาหารเมนูใดก็ได้รวมกัน 50 จาน', target: 50, reward: { type: 'produce', id: 'mango_sticky_rice_food', count: 2 } },
+                { id: 'plant_400_hard_weekly', action: 'plant', description: 'ผู้พลิกแผ่นดิน: ช่วยกันปลูกเมล็ดพันธุ์ 400 ต้น', target: 400, reward: { type: 'item', id: 'fertilizer_2', count: 25 } },
+
+                // --- ชุดเควสพิเศษ (Special Tier) ---
+                { id: 'eat_30_meals_weekly', action: 'eat', description: 'นักชิมตัวยง: ช่วยกันกินอาหารเพื่อฟื้นฟูพลังงาน 30 ครั้ง', target: 30, reward: { type: 'produce', id: 'tom_yum_goong_food', count: 1 } },
+                { id: 'buy_seeds_100_weekly', action: 'buy_seed', description: 'พ่อค้าพันธุ์พืช: ช่วยกันซื้อเมล็ดพันธุ์จากร้านค้า 100 ถุง', target: 100, reward: { type: 'seed', id: 'pineapple_seed', count: 20 } },
+                { id: 'buy_animals_5_weekly', action: 'buy_animal', description: 'นักลงทุนสายปศุสัตว์: ช่วยกันซื้อสัตว์ใหม่จากร้านค้า 5 ตัว', target: 5, reward: { type: 'animal_deed', id: 'cow_deed', count: 2 } },
+                { id: 'water_500_weekly', action: 'water', description: 'ผู้พิทักษ์ความชุ่มชื้น: ช่วยกันรดน้ำต้นไม้ 500 ครั้ง', target: 500, reward: { type: 'item', id: 'fertilizer_2', count: 15 } },
+                { id: 'upgrade_house_1_rare_weekly', action: 'upgrade_house', description: 'พัฒนาบ้านของเรา: ช่วยกันอัปเกรดบ้าน 1 ครั้ง', target: 1, reward: { type: 'produce', id: 'pearl', count: 2 } },
+                { id: 'upgrade_rod_1_rare_weekly', action: 'upgrade_rod', description: 'พัฒนาเครื่องมือทำกิน: ช่วยกันอัปเกรดเบ็ดตกปลา 1 ครั้ง', target: 1, reward: { type: 'produce', id: 'gem', count: 5 } }
             ]
         };
         let userId = null;
@@ -866,6 +872,14 @@
             return parts.join(' ');
         }
         
+		function getWeekNumber(d) {
+            d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+            d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+            var yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+            var weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+            return [d.getUTCFullYear(), weekNo];
+        }
+		
         async function updateFarmState(newState) {
              if (!userId) return;
              farmState = newState;
@@ -2148,66 +2162,57 @@
             const selected = shuffled.slice(0, count);
             return selected.map(q => ({ id: q.id, action: q.action, progress: 0, claimedBy: [] }));
         }
-        
-        async function updateMarketPrices() {
-            if (!farmState) return;
-            const newFarmState = { ...farmState };
-            const newMarketPrices = { ...newFarmState.marketPrices };
-            const salesVolume = newFarmState.salesVolume || {};
-            const VOLATILITY = 0.1; 
-            const PRICE_RECOVERY_RATE = 0.05;
-
-            for (const itemId in GAME_DATA) {
-                const itemData = GAME_DATA[itemId];
-                if (itemData.type !== 'produce' || !itemData.sellPrice) continue;
-                const basePrice = itemData.sellPrice[0];
-                const currentPrice = newMarketPrices[itemId] || basePrice;
-                const soldAmount = salesVolume[itemId] || 0;
-                let newPrice;
-
-                if (soldAmount > 0) {
-                    const pressure = Math.log10(soldAmount + 1);
-                    const reduction = pressure * VOLATILITY;
-                    newPrice = currentPrice * (1 - reduction);
-                } else {
-                    if (currentPrice < basePrice) {
-                        newPrice = currentPrice * (1 + PRICE_RECOVERY_RATE);
-                        if (newPrice > basePrice) newPrice = basePrice;
-                    } else {
-                        newPrice = currentPrice * (1 - PRICE_RECOVERY_RATE);
-                        if (newPrice < basePrice) newPrice = basePrice;
-                    }
-                }
-                const minPrice = basePrice * 0.2;
-                const maxPrice = basePrice * 2.5;
-                newPrice = Math.max(minPrice, Math.min(newPrice, maxPrice));
-                newMarketPrices[itemId] = Math.round(newPrice);
+        async function runOneTimeWeeklyQuestFix() {
+            // ฟังก์ชันนี้จะทำงานเพียงครั้งเดียวสำหรับแอดมิน เพื่อซ่อมเควสรายสัปดาห์ที่ค้าง
+            if (!farmState || farmState.weeklyQuestFixApplied) {
+                // ไม่ต้องทำงานถ้าเคยซ่อมไปแล้ว หรือข้อมูลยังไม่พร้อม
+                return; 
             }
-            newFarmState.marketPrices = newMarketPrices;
-            newFarmState.salesVolume = {};
-            await updateFarmState(newFarmState);
-        }
 
-		async function checkForTimeResets() {
+            console.log("ADMIN: Running ONE-TIME fix for stuck weekly quests...");
+            alert("แอดมินกำลังรันสคริปต์ซ่อมแซมเควสรายสัปดาห์แบบครั้งเดียว...");
+
+            const newFarmState = { ...farmState };
+            
+            // 1. สร้างเควสรายสัปดาห์ชุดใหม่
+            newFarmState.quests.weekly = generateRandomQuests('weekly', 5);
+            
+            // 2. รีเซ็ตตัวบันทึกเวลาที่ผิดพลาด
+            newFarmState.quests.lastWeeklyReset = 0;
+            
+            // 3. ตั้งค่าสถานะว่าซ่อมแล้ว (เพื่อไม่ให้โค้ดนี้ทำงานอีก)
+            newFarmState.weeklyQuestFixApplied = true;
+
+            await updateFarmState(newFarmState);
+            
+            console.log("ADMIN: One-time fix complete. Please refresh the page.");
+            alert("การซ่อมแซมเสร็จสิ้น! กรุณารีเฟรชหน้าจอ 1 ครั้งเพื่อดูเควสใหม่");
+        }
+		
+async function checkForTimeResets() {
             if (!playerState || !farmState) return;
             const now = new Date();
+            
+            // --- STATE PREPARATION ---
+            // สร้างตัวแปรมารอรับการเปลี่ยนแปลงแค่ครั้งเดียว
+            let newFarmState = null;
+            let newPlayerState = null;
+            let dailyResetOccurred = false;
+
+            // --- DAILY RESET CHECK ---
             const lastPlayerReset = new Date(playerState.lastResetTime || 0);
-
-            // ---- START OF CORRECTION ----
-            // A SINGLE, UNIFIED CHECK FOR THE NEW DAY
             if (lastPlayerReset.getDate() !== now.getDate() || lastPlayerReset.getMonth() !== now.getMonth()) {
-                
-                // Prepare copies of the state for modification
-                const newFarmState = { ...farmState };
-                if (!newFarmState.salesVolume) newFarmState.salesVolume = {};
-                const newPlayerState = { ...playerState };
-                
+                dailyResetOccurred = true;
                 console.log("New day detected! Running daily reset...");
+                
+                // เริ่มต้นการเปลี่ยนแปลงจาก State ปัจจุบัน
+                newFarmState = { ...farmState };
+                newPlayerState = { ...playerState };
+                if (!newFarmState.salesVolume) newFarmState.salesVolume = {};
 
-                // Action 1: Sell items from the shipping bin
+                // Action 1: Sell items
                 if (newPlayerState.produceBin && newPlayerState.produceBin.length > 0) {
                     let totalValue = 0;
-                    console.log(`Selling ${newPlayerState.produceBin.length} items from bin.`);
                     newPlayerState.produceBin.forEach(item => {
                         const itemData = GAME_DATA[item.id];
                         if (itemData && itemData.sellPrice) {
@@ -2222,26 +2227,47 @@
                     newPlayerState.produceBin = [];
                 }
 
-                // Action 2: Reset Daily Quests (now inside the main block)
-                console.log("Resetting daily quests.");
+                // Action 2: Reset Daily Quests
                 newFarmState.quests.daily = generateRandomQuests('daily', 5);
-                newFarmState.quests.lastDailyReset = now.getTime(); // Update quest reset timestamp
+                newFarmState.quests.lastDailyReset = now.getTime();
 
-                // Action 3: Reset Player Stats (Energy, Park Rests)
-                console.log("Refilling energy and resetting daily counts.");
+                // Action 3: Reset Player Stats
                 newPlayerState.energy = getMaxEnergy();
                 newPlayerState.dailyRestCount = 0;
-                newPlayerState.lastResetTime = now.getTime(); // Update player reset timestamp
-
-                // Final Step: Save all changes and update the market
-                console.log("Saving new states and updating market...");
-                await updatePlayerState(newPlayerState);
-                await updateFarmState(newFarmState);
-                await updateMarketPrices(); 
-                console.log("Daily reset complete.");
+                newPlayerState.lastResetTime = now.getTime();
             }
-            // THE SEPARATE QUEST CHECK THAT WAS HERE IS NOW REMOVED
-            // ---- END OF CORRECTION ----
+
+            // --- WEEKLY RESET CHECK ---
+            const lastWeeklyQuestReset = new Date(farmState.quests?.lastWeeklyReset || 0);
+            const currentWeek = getWeekNumber(now);
+            const lastResetWeek = getWeekNumber(lastWeeklyQuestReset);
+
+            if (currentWeek[0] !== lastResetWeek[0] || currentWeek[1] !== lastResetWeek[1]) {
+                console.log("New week detected! Resetting weekly quests.");
+                
+                // หากยังไม่มีการเปลี่ยนแปลงเกิดขึ้น ให้สร้าง newFarmState ขึ้นมาใหม่
+                if (!newFarmState) {
+                    newFarmState = { ...farmState };
+                }
+                
+                newFarmState.quests.weekly = generateRandomQuests('weekly', 5);
+                newFarmState.quests.lastWeeklyReset = now.getTime();
+            }
+
+            // --- FINAL SAVE ---
+            // ตรวจสอบว่ามีการเปลี่ยนแปลงใดๆ เกิดขึ้นหรือไม่ แล้วค่อยบันทึกข้อมูลทั้งหมดในครั้งเดียว
+            if (newPlayerState) {
+                await updatePlayerState(newPlayerState);
+            }
+            if (newFarmState) {
+                await updateFarmState(newFarmState);
+                // ถ้ามีการรีเซ็ตประจำวันเกิดขึ้นเท่านั้น ถึงจะอัปเดตราคาตลาด
+                if (dailyResetOccurred) {
+                    await updateMarketPrices();
+                }
+                // อัปเดต state ในเครื่องให้ตรงกับบน server
+                farmState = await getDoc(doc(db, "publicFarmData", "farmState")).then(d => d.data());
+            }
         }
         
         function forceResetFarm() {
@@ -2575,6 +2601,11 @@
             userId = uid;
             initPlayerListeners(uid);
             initFarmListeners();
+			setTimeout(async () => {
+                if (uid === ADMIN_UID) {
+                    await runOneTimeWeeklyQuestFix();
+                }
+            }, 2000); 
             document.getElementById('loading-screen').classList.add('loading-hidden');
             document.getElementById('game-container').style.opacity = 1;
             document.getElementById('footer-nav').style.opacity = 1;
