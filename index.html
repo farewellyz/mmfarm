@@ -368,6 +368,12 @@
                   <div id="park-bg"></div>                 
                   <canvas id="park-canvas" width="800" height="450"></canvas>
                </div>
+               <div id="park-actions" class="text-center mt-4">
+                    <button id="rest-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-full disabled:bg-gray-400 disabled:cursor-not-allowed transition">
+                        พักผ่อน
+                    </button>
+                    <p id="rest-info" class="text-sm text-gray-600 mt-2"></p>
+               </div>
           </div>
 
         </main>
@@ -921,6 +927,7 @@
             renderQuests();
             renderKitchen();
             renderMarket();
+            renderParkActions();
         }
         
         function renderMarket() {
@@ -1216,16 +1223,6 @@
                         buttonText = 'มีแล้ว';
                         isDisabled = true;
                     }
-                    
-                    if (data.type === 'factory_deed') {
-                        const isAlreadyBuilt = farmState.factories?.some(f => f.factoryId === data.factoryId);
-                        const isInInventory = playerState.inventory[id] > 0;
-
-                        if (isAlreadyBuilt || isInInventory) {
-                            buttonText = isAlreadyBuilt ? 'สร้างแล้ว' : 'มีในกระเป๋า';
-                            isDisabled = true;
-                        }
-                    }
 
                     itemEl.innerHTML = `
                         <div class="font-semibold text-center text-sm">${data.name}</div>
@@ -1514,6 +1511,32 @@
                 jobEl.appendChild(actionContainer);
                 container.appendChild(jobEl);
             });
+        }
+        
+        function renderParkActions() {
+            const button = document.getElementById('rest-btn');
+            const infoEl = document.getElementById('rest-info');
+            if (!button || !infoEl || !playerState) return;
+
+            const numPlayers = Object.keys(parkPlayers).length;
+            const restsToday = playerState.dailyRestCount || 0;
+            const cooldownDuration = 5 * 60 * 1000;
+            const timeSinceRest = Date.now() - (playerState.lastRestTime || 0);
+
+            if (numPlayers < 2) {
+                button.disabled = true;
+                infoEl.textContent = `ต้องมีผู้เล่นอย่างน้อย 2 คน ถึงจะพักผ่อนได้`;
+            } else if (restsToday >= 5) {
+                button.disabled = true;
+                infoEl.textContent = `คุณใช้สิทธิ์พักผ่อนสำหรับวันนี้หมดแล้ว`;
+            } else if (timeSinceRest < cooldownDuration) {
+                button.disabled = true;
+                const remainingCooldown = cooldownDuration - timeSinceRest;
+                infoEl.textContent = `พักผ่อนได้อีกครั้งใน ${formatTime(Math.ceil(remainingCooldown / 1000))}`;
+            } else {
+                button.disabled = false;
+                infoEl.textContent = `พักผ่อนเพื่อฟื้นฟู 20⚡ (เหลือ ${5 - restsToday}/5 ครั้ง)`;
+            }
         }
         
         function showContextMenu(type, id) {
@@ -2180,6 +2203,7 @@
                     newPlayerState.produceBin = [];
                 }
                 newPlayerState.energy = getMaxEnergy();
+                newPlayerState.dailyRestCount = 0;
                 newPlayerState.lastResetTime = now.getTime();
                 await updatePlayerState(newPlayerState);
                 await updateFarmState(tempFarmState);
@@ -2374,6 +2398,25 @@
             newFarmState.kitchen.queue.splice(queueIndex, 1);
             updateFarmState(newFarmState);
             updatePlayerState(newPlayerState);
+        }
+        
+        function restInPark() {
+            if (!playerState) return;
+
+            const numPlayers = Object.keys(parkPlayers).length;
+            const restsToday = playerState.dailyRestCount || 0;
+            const cooldownDuration = 5 * 60 * 1000;
+            const timeSinceRest = Date.now() - (playerState.lastRestTime || 0);
+
+            if (numPlayers >= 2 && restsToday < 5 && timeSinceRest >= cooldownDuration) {
+                const newPlayerState = { ...playerState };
+                newPlayerState.energy = Math.min(getMaxEnergy(), (newPlayerState.energy || 0) + 20);
+                newPlayerState.dailyRestCount = (newPlayerState.dailyRestCount || 0) + 1;
+                newPlayerState.lastRestTime = Date.now();
+                updatePlayerState(newPlayerState);
+            } else {
+                console.log("Cannot rest now.");
+            }
         }
 
         function expandGrid(type) {
@@ -2678,6 +2721,7 @@
             document.getElementById('fish-catch-ok').onclick = () => document.getElementById('fish-catch-modal').classList.add('hidden');
             document.getElementById('cook-btn').onclick = showCookingModal;
             document.getElementById('cooking-modal-close').onclick = hideCookingModal;
+            document.getElementById('rest-btn').onclick = restInPark;
             playerNameEl.onclick = () => showNameModal(false);
             document.getElementById('save-name-btn').onclick = saveNameChange;
             document.getElementById('cancel-name-btn').onclick = hideNameModal;
@@ -2763,6 +2807,7 @@
                         money: 20, inventory: {}, produceBin: [], storageBin: [],
                         nickname: newName, houseLevel: 0, lastResetTime: 0,
                         fishingRodLevel: 0, energy: 100,
+                        dailyRestCount: 0, lastRestTime: 0
                     };
                     await setDoc(doc(db, "players", userId), playerState);
                     await startGame(userId);
