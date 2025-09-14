@@ -597,8 +597,8 @@
             'chili': { name: 'พริก', type: 'crop', growTime: 14400, produceId: 'chili_produce', icon: '🌶️', imageUrl: 'chili.png' }, 
             'chili_produce': { name: 'พริก', type: 'produce', sellPrice: [25, 35, 45], icon: '🌶️', imageUrl: 'chili.png', energyRestore: 3, category: 'vegetable' },
 
-            'lime_sapling': { name: 'ต้นมะนาว', type: 'seed', cost: 1000, plantId: 'lime', icon: '🍋', imageUrl: 'lime.png' },
-            'lime': { name: 'ต้นมะนาว', type: 'crop', growTime: 86400, produceId: 'lime_produce', icon: '🍋', imageUrl: 'lime.png' }, 
+            'lime_sapling': { name: 'เมล็ดมะนาว', type: 'seed', cost: 20, plantId: 'lime', icon: '🍋', imageUrl: 'lime.png' },
+            'lime': { name: 'เมล็ดมะนาว', type: 'crop', growTime: 14500, produceId: 'lime_produce', icon: '🍋', imageUrl: 'lime.png' }, 
             'lime_produce': { name: 'มะนาว', type: 'produce', sellPrice: [30, 40, 55], icon: '🍋', imageUrl: 'lime.png', energyRestore: 5, category: 'fruit' },
 
             'shrimp': { name: 'กุ้ง', icon: '🦐', rarity: 'Legendary', sellPrice: [500, 600, 750], type: 'produce', energyRestore: 25, imageUrl: 'shrimp.png', category: 'fish' },
@@ -673,32 +673,25 @@
                 { id: 'buy_animal_1', action: 'buy_animal', description: 'ช่วยกันซื้อสัตว์ 1 ตัว', target: 1, reward: { type: 'seed', id: 'strawberry_seed', count: 5 } },
             ],
             weekly: [
-                // --- ชุดเควสมาตรฐาน (Standard Tier) ---
-                { id: 'harvest_250_weekly', action: 'harvest', description: 'นักเก็บเกี่ยวระดับตำนาน: ช่วยกันเก็บเกี่ยวผลผลิต 250 ชิ้น', target: 250, reward: { type: 'animal_deed', id: 'beehive_deed', count: 1 } },
-                { id: 'plant_250_weekly', action: 'plant', description: 'มือทองแห่งการเพาะปลูก: ช่วยกันปลูกเมล็ดพันธุ์ 250 ต้น', target: 250, reward: { type: 'seed', id: 'lime_sapling', count: 5 } },
-                { id: 'fertilize_100_weekly', action: 'fertilize', description: 'ปรมาจารย์ดิน: ช่วยกันใช้ปุ๋ยบำรุงดิน 100 ครั้ง', target: 100, reward: { type: 'item', id: 'fertilizer_2', count: 20 } },
-                { id: 'collect_animal_200_weekly', action: 'collect_product', description: 'เจ้าสัวฟาร์มปศุสัตว์: ช่วยกันเก็บผลผลิตจากสัตว์ 200 ชิ้น', target: 200, reward: { type: 'animal_deed', id: 'duck_deed', count: 5 } },
-                { id: 'fish_100_weekly', action: 'fish', description: 'นักตกปลาแห่งสายน้ำ: ช่วยกันตกปลาให้ครบ 100 ตัว', target: 100, reward: { type: 'animal_deed', id: 'turtle_deed', count: 1 } },
-                { id: 'sell_items_150_weekly', action: 'sell_item', description: 'เศรษฐีประจำสัปดาห์: ช่วยกันนำของใส่กล่องส่งขาย 150 ชิ้น', target: 150, reward: { type: 'produce', id: 'gem', count: 3 } },
-                { id: 'cook_dishes_30_weekly', action: 'cook', description: 'เชฟกระทะเหล็ก: ช่วยกันทำอาหารเมนูใดก็ได้รวมกัน 30 จาน', target: 30, reward: { type: 'produce', id: 'shrimp', count: 5 } },
-                { id: 'spend_money_15000_weekly', action: 'spend_money', description: 'นักลงทุนมือฉมัง: ช่วยกันใช้เงินในร้านค้าครบ 15,000💰', target: 15000, reward: { type: 'animal_deed', id: 'sheep_deed', count: 2 } },
-                { id: 'sell_hq_20_weekly', action: 'sell_high_quality', description: 'นักค้าของคุณภาพ: ช่วยกันขายผลผลิตคุณภาพสูงสุด (2 ดาว) 20 ชิ้น', target: 20, reward: { type: 'produce', id: 'pearl', count: 1 } },
-                
-                // --- ชุดเควสท้าทาย (Challenge Tier) ---
-                { id: 'harvest_400_hard_weekly', action: 'harvest', description: 'เจ้าแห่งการเก็บเกี่ยว: ช่วยกันเก็บเกี่ยวผลผลิต 400 ชิ้น', target: 400, reward: { type: 'produce', id: 'wool', count: 3 } },
-                { id: 'fish_200_hard_weekly', action: 'fish', description: 'เซียนเบ็ดในตำนาน: ช่วยกันตกปลาให้ครบ 200 ตัว', target: 200, reward: { type: 'produce', id: 'eel', count: 5 } },
-                { id: 'collect_animal_350_hard_weekly', action: 'collect_product', description: 'จักรพรรดิแห่งปศุสัตว์: ช่วยกันเก็บผลผลิตจากสัตว์ 350 ชิ้น', target: 350, reward: { type: 'animal_deed', id: 'crocodile_deed', count: 1 } },
-                { id: 'sell_items_250_hard_weekly', action: 'sell_item', description: 'พ่อค้าเศรษฐี: ช่วยกันนำของใส่กล่องส่งขาย 250 ชิ้น', target: 250, reward: { type: 'produce', id: 'honey', count: 10 } },
-                { id: 'cook_dishes_50_hard_weekly', action: 'cook', description: 'สุดยอดเชฟใหญ่: ช่วยกันทำอาหารเมนูใดก็ได้รวมกัน 50 จาน', target: 50, reward: { type: 'produce', id: 'mango_sticky_rice_food', count: 2 } },
-                { id: 'plant_400_hard_weekly', action: 'plant', description: 'ผู้พลิกแผ่นดิน: ช่วยกันปลูกเมล็ดพันธุ์ 400 ต้น', target: 400, reward: { type: 'item', id: 'fertilizer_2', count: 25 } },
-
-                // --- ชุดเควสพิเศษ (Special Tier) ---
-                { id: 'eat_30_meals_weekly', action: 'eat', description: 'นักชิมตัวยง: ช่วยกันกินอาหารเพื่อฟื้นฟูพลังงาน 30 ครั้ง', target: 30, reward: { type: 'produce', id: 'tom_yum_goong_food', count: 1 } },
-                { id: 'buy_seeds_100_weekly', action: 'buy_seed', description: 'พ่อค้าพันธุ์พืช: ช่วยกันซื้อเมล็ดพันธุ์จากร้านค้า 100 ถุง', target: 100, reward: { type: 'seed', id: 'pineapple_seed', count: 20 } },
-                { id: 'buy_animals_5_weekly', action: 'buy_animal', description: 'นักลงทุนสายปศุสัตว์: ช่วยกันซื้อสัตว์ใหม่จากร้านค้า 5 ตัว', target: 5, reward: { type: 'animal_deed', id: 'cow_deed', count: 2 } },
-                { id: 'water_500_weekly', action: 'water', description: 'ผู้พิทักษ์ความชุ่มชื้น: ช่วยกันรดน้ำต้นไม้ 500 ครั้ง', target: 500, reward: { type: 'item', id: 'fertilizer_2', count: 15 } },
-                { id: 'upgrade_house_1_rare_weekly', action: 'upgrade_house', description: 'พัฒนาบ้านของเรา: ช่วยกันอัปเกรดบ้าน 1 ครั้ง', target: 1, reward: { type: 'produce', id: 'pearl', count: 2 } },
-                { id: 'upgrade_rod_1_rare_weekly', action: 'upgrade_rod', description: 'พัฒนาเครื่องมือทำกิน: ช่วยกันอัปเกรดเบ็ดตกปลา 1 ครั้ง', target: 1, reward: { type: 'produce', id: 'gem', count: 5 } }
+                { id: 'harvest_100', action: 'harvest', description: 'ช่วยกันเก็บเกี่ยวผลผลิต 100 ชิ้น', target: 100, reward: { type: 'item', id: 'fertilizer_2', count: 5 } },
+                { id: 'fish_50', action: 'fish', description: 'ช่วยกันตกปลา 100 ตัว', target: 100, reward: { type: 'seed', id: 'random', count: 30 } },
+                { id: 'fertilize_30', action: 'fertilize', description: 'ช่วยกันใส่ปุ๋ย 70 แปลง', target: 70, reward: { type: 'seed', id: 'mango_seed', count: 25 } },
+                { id: 'cook_10', action: 'cook', description: 'ช่วยกันทำอาหาร 50 อย่าง', target: 50, reward: { type: 'produce', id: 'milk', count: 15 } },
+                { id: 'collect_30', action: 'collect_product', description: 'ช่วยกันเก็บผลผลิตจากสัตว์ 200 ชิ้น', target: 200, reward: { type: 'produce', id: 'gem', count: 1 } },
+                { id: 'harvest_80_more', action: 'harvest', description: 'ช่วยกันเก็บเกี่ยวผลผลิตเพิ่ม 300 ชิ้น', target: 300, reward: { type: 'seed', id: 'apple_seed', count: 15 } },
+                { id: 'plant_80', action: 'plant', description: 'ช่วยกันปลูกเมล็ดพืช 200 ต้น', target: 200, reward: { type: 'item', id: 'fertilizer_2', count: 8 } },
+                { id: 'sell_item_100', action: 'sell_item', description: 'ช่วยกันใส่ของลงกล่องขาย 100 ชิ้น', target: 100, reward: { type: 'item', id: 'fertilizer_2', count: 15 } },
+                { id: 'fish_40_more', action: 'fish', description: 'ช่วยกันตกปลาเพิ่ม 100 ตัว', target: 100, reward: { type: 'produce', id: 'salmon', count: 20 } },
+                { id: 'collect_25_more', action: 'collect_product', description: 'ช่วยกันเก็บผลผลิตสัตว์เพิ่ม 250 ชิ้น', target: 250, reward: { type: 'produce', id: 'gem', count: 4 } },
+                { id: 'cook_8_more', action: 'cook', description: 'ช่วยกันทำอาหารเพิ่ม 50 อย่าง', target: 50, reward: { type: 'seed', id: 'chili_seed', count: 15 } },
+                { id: 'spend_3000', action: 'spend_money', description: 'ช่วยกันใช้จ่ายเงิน 30000💰', target: 30000, reward: { type: 'seed', id: 'rice_seed', count: 25 } },
+                { id: 'upgrade_house_1', action: 'upgrade_house', description: 'ช่วยกันอัปเกรดบ้าน 1 ครั้ง', target: 1, reward: { type: 'produce', id: 'gem', count: 4 } },
+                { id: 'upgrade_rod_1', action: 'upgrade_rod', description: 'ช่วยกันอัปเกรดเบ็ดตกปลา 1 ครั้ง', target: 1, reward: { type: 'seed', id: 'mango_seed', count: 15 } },
+                { id: 'fertilize_20_more', action: 'fertilize', description: 'ช่วยกันใส่ปุ๋ยเพิ่ม 50 แปลง', target: 50, reward: { type: 'seed', id: 'pineapple_seed', count: 20 } },
+                { id: 'eat_15', action: 'eat', description: 'ช่วยกันกินอาหาร 100 ครั้ง', target: 100, reward: { type: 'seed', id: 'guava_seed', count: 15 } },
+                { id: 'place_animal_3', action: 'place_animal', description: 'ช่วยกันวางสัตว์ในคอก 3 ตัว', target: 3, reward: { type: 'seed', id: 'guava_seed', count: 15 } },
+                { id: 'buy_animal_5', action: 'buy_animal', description: 'ช่วยกันซื้อสัตว์ 5 ตัว', target: 5, reward: { type: 'item', id: 'fertilizer_2', count: 10 } },
+                { id: 'sell_hq_10', action: 'sell_high_quality', description: 'ช่วยกันขายของคุณภาพสูงสุด 10 ชิ้น', target: 10, reward: { type: 'seed', id: 'chili_seed', count: 15 } },
             ]
         };
         let userId = null;
