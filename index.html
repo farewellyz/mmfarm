@@ -407,7 +407,7 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        const CLIENT_VERSION = "1.0.4"; // Updated version
+        const CLIENT_VERSION = "1.0.5"; // Updated version
 
         const FARM_GRID_SIZE = 24;
         const ANIMAL_PEN_SIZE = 8;
@@ -2181,40 +2181,46 @@
             await updateFarmState(newFarmState);
         }
 
-        async function checkForTimeResets() {
+async function checkForTimeResets() {
             if (!playerState || !farmState) return;
             const now = new Date();
             const lastPlayerReset = new Date(playerState.lastResetTime || 0);
+
+            // รวมเงื่อนไขการเช็ควันใหม่ไว้ที่เดียว
             if (lastPlayerReset.getDate() !== now.getDate() || lastPlayerReset.getMonth() !== now.getMonth()) {
-                const tempFarmState = { ...farmState };
-                if (!tempFarmState.salesVolume) tempFarmState.salesVolume = {};
+                const newFarmState = { ...farmState };
+                if (!newFarmState.salesVolume) newFarmState.salesVolume = {};
+                
                 const newPlayerState = { ...playerState };
+                
+                // 1. ขายของในกล่อง
                 if (newPlayerState.produceBin && newPlayerState.produceBin.length > 0) {
                     let totalValue = 0;
                     newPlayerState.produceBin.forEach(item => {
                         const itemData = GAME_DATA[item.id];
-                        const marketBasePrice = tempFarmState.marketPrices[item.id] || itemData.sellPrice[0];
+                        const marketBasePrice = newFarmState.marketPrices[item.id] || itemData.sellPrice[0];
                         const qualityRatio = itemData.sellPrice[item.quality] / itemData.sellPrice[0];
                         const finalSellPrice = Math.round(marketBasePrice * qualityRatio);
                         totalValue += finalSellPrice;
-                        tempFarmState.salesVolume[item.id] = (tempFarmState.salesVolume[item.id] || 0) + 1;
+                        newFarmState.salesVolume[item.id] = (newFarmState.salesVolume[item.id] || 0) + 1;
                     });
                     newPlayerState.money = (newPlayerState.money || 0) + totalValue;
                     newPlayerState.produceBin = [];
                 }
+                
+                // 2. รีเซ็ตเควสประจำวัน (ย้ายมาไว้ข้างใน)
+                newFarmState.quests.daily = generateRandomQuests('daily', 5);
+                newFarmState.quests.lastDailyReset = now.getTime();
+
+                // 3. รีเซ็ตค่าอื่นๆ ของผู้เล่น
                 newPlayerState.energy = getMaxEnergy();
                 newPlayerState.dailyRestCount = 0;
-                newPlayerState.lastResetTime = now.getTime();
+                newPlayerState.lastResetTime = now.getTime(); // อัปเดตเวลาล่าสุดที่รีเซ็ต
+
+                // 4. บันทึกข้อมูลทั้งหมด และอัปเดตราคาตลาด
                 await updatePlayerState(newPlayerState);
-                await updateFarmState(tempFarmState);
+                await updateFarmState(newFarmState);
                 await updateMarketPrices(); 
-            }
-            const lastDailyQuestReset = new Date(farmState.quests?.lastDailyReset || 0);
-            if (lastDailyQuestReset.getDate() !== now.getDate() || lastDailyQuestReset.getMonth() !== now.getMonth()) {
-                 const newFarmState = { ...farmState };
-                 newFarmState.quests.daily = generateRandomQuests('daily', 5);
-                 newFarmState.quests.lastDailyReset = now.getTime();
-                 await updateFarmState(newFarmState);
             }
         }
         
