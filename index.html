@@ -138,6 +138,22 @@
         <p class="mt-4 text-2xl font-bold text-green-800">กำลังเตรียมฟาร์ม...</p>
     </div>
 
+	<div id="modal-container">
+        <div id="info-modal" class="hidden fixed inset-0 bg-black/50 z-[52] flex items-center justify-center p-4">
+            <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm modal-enter text-center">
+                <div id="info-modal-icon" class="text-6xl mb-4"></div>
+                <h2 id="info-modal-title" class="text-2xl font-bold text-gray-800 mb-2"></h2>
+                <p id="info-modal-text" class="text-gray-600 mb-6"></p>
+                <button id="info-modal-close" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg w-full">เข้าใจแล้ว</button>
+            </div>
+        </div>
+
+        <div id="name-modal" class="hidden ...">
+            ...
+        </div>
+        ...
+    </div>
+
     <div id="modal-container">
         <div id="name-modal" class="hidden fixed inset-0 bg-black/50 z-[52] flex items-center justify-center p-4">
             <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm modal-enter">
@@ -249,7 +265,11 @@
 			<button id="reset-player-btn" class="absolute bottom-1 right-2 bg-yellow-500 text-white text-xs font-bold py-1 px-3 rounded-full hover:bg-yellow-600">รีเซ็ตข้อมูลฉัน</button>
             <h1 class="text-3xl md:text-4xl font-bold text-green-800">สวนผักของเรา 💚</h1>
             <div class="mt-3 flex flex-wrap justify-center items-center gap-x-4 gap-y-2 text-sm text-gray-600">
-                <div class="flex items-center justify-center gap-2 bg-green-100 px-3 py-1 rounded-full">
+                <div id="weather-display" class="flex items-center justify-center gap-2 bg-blue-100 px-3 py-1 rounded-full" title="สภาพอากาศวันนี้">
+                    <span class="text-xl">☀️</span>
+                    <span class="font-bold text-blue-900">กำลังโหลด...</span>
+                </div>
+				<div class="flex items-center justify-center gap-2 bg-green-100 px-3 py-1 rounded-full">
                     <span>ชื่อ:</span>
                     <span id="player-name" class="font-bold text-green-900 cursor-pointer hover:underline" title="คลิกเพื่อเปลี่ยนชื่อ">...</span>
                 </div>
@@ -343,7 +363,7 @@
             </div>
             <div id="shop-view" class="hidden">
                 <div class="w-full max-w-lg mx-auto">
-                    <h2 class="text-3xl font-bold text-green-800 mb-4 text-center">🏪 ร้านค้า & คลังของ</h2>
+                    <h2 class="text-3xl font-bold text-green-800 mb-4 text-center">🏪 ร้านค้า</h2>
                     
                     <div id="shop-items" class="space-y-4"></div>
                 </div>
@@ -431,7 +451,38 @@
         const ADMIN_UID = "p7Ujrm9dBZcL6bK5EHYEsrJOCvl2";
 
         // --- MASTER GAME DATA ---
-        const GAME_DATA = {
+        const WEATHER_DATA = {
+            'sunny': { 
+                name: 'แดดจ้า', 
+                icon: '☀️', 
+                description: 'พืชโตไวขึ้น 25%, สัตว์ให้ผลผลิตไวขึ้น 50%',
+                cropMultiplier: 0.75, // เวลาลดลง 25% (1 ชม. -> 45 นาที)
+                animalMultiplier: 0.5 // เวลาลดลง 50% (1 ชม. -> 30 นาที)
+            },
+            'rainy': { 
+                name: 'ฝนตก', 
+                icon: '🌧️', 
+                description: 'พืชโตไวขึ้น 50%, สัตว์ให้ผลผลิตช้าลง 50%',
+                cropMultiplier: 0.5, // เวลาลดลง 50% (1 ชม. -> 30 นาที)
+                animalMultiplier: 1.5 // เวลาเพิ่มขึ้น 50% (1 ชม. -> 1.30 ชม.)
+            },
+            'cloudy': { 
+                name: 'เมฆครึ้ม', 
+                icon: '☁️', 
+                description: 'พืชโตช้าลง 25%, สัตว์ให้ผลผลิตช้าลง 25%',
+                cropMultiplier: 1.25, // เวลาเพิ่มขึ้น 25% (1 ชม. -> 1.15 ชม.)
+                animalMultiplier: 1.25 // เวลาเพิ่มขึ้น 25% (1 ชม. -> 1.15 ชม.)
+            },
+            'stormy': { 
+                name: 'พายุฝน', 
+                icon: '⛈️', 
+                description: 'พืชโตช้าลง 50%, สัตว์ให้ผลผลิตช้าลง 50%',
+                cropMultiplier: 1.5, // เวลาเพิ่มขึ้น 50% (1 ชม. -> 1.30 ชม.)
+                animalMultiplier: 1.5 // เวลาเพิ่มขึ้น 50% (1 ชม. -> 1.30 ชม.)
+            }
+        };
+		
+		const GAME_DATA = {
             'house_upgrades': [
                 { name: 'เต็นท์', cost: 500, imageUrl: 'beadroom1.png' },
                 { name: 'กระท่อมไม้', cost: 2500, imageUrl: 'beadroom2.png' },
@@ -809,7 +860,19 @@
         ];
 
         let selectedCharacterIndex = 0;
+		function renderWeather() {
+            const container = document.getElementById('weather-display');
+            if (!container || !farmState || !farmState.currentWeather) return;
 
+            const weather = WEATHER_DATA[farmState.currentWeather];
+            if (!weather) {
+                container.innerHTML = `<span>-</span><span>-</span>`;
+                return;
+            }
+
+            container.innerHTML = `<span class="text-xl">${weather.icon}</span> <span class="font-bold text-blue-900">${weather.name}</span>`;
+            container.title = weather.description;
+        }
         function initParkSystem() {
             setupCharacterCreatorControls();
             listenForParkPlayers();
@@ -1009,7 +1072,8 @@
 
         function renderAll() {
             if (!farmState || !playerState) return; 
-            renderEnergy();
+            renderWeather();
+			renderEnergy();
             renderFarm();
             renderAnimals();
             renderFactory();
@@ -1080,6 +1144,11 @@
             if (!farmState || !Array.isArray(farmState.plots)) return;
             const farmGrid = document.getElementById('farm-grid');
             farmGrid.innerHTML = '';
+
+            // ดึงค่า Multiplier ของสภาพอากาศมาเก็บไว้ก่อนเริ่มลูป
+            const weatherMultiplier = WEATHER_DATA[farmState.currentWeather]?.cropMultiplier || 1;
+
+            // ทำลูปแค่ชั้นเดียวเพื่อวาดแปลงผักทั้งหมด
             farmState.plots.forEach((plot, index) => {
                 const plotEl = document.createElement('div');
                 plotEl.className = 'plot aspect-square rounded-lg shadow-inner cursor-pointer flex items-center justify-center text-3xl relative';
@@ -1095,7 +1164,9 @@
                             const elapsedSeconds = (Date.now() - plot.plantTime) / 1000;
                             const growthMultiplier = 1 + ((plot.wateredBy?.length || 0) * 0.5);
                             const effectiveGrowth = elapsedSeconds * growthMultiplier;
-                            progress = Math.min(effectiveGrowth / plantData.growTime, 1);
+                            // ใช้ค่า Multiplier ที่ดึงมา
+                            const adjustedGrowTime = plantData.growTime * weatherMultiplier;
+                            progress = Math.min(effectiveGrowth / adjustedGrowTime, 1);
                         }
                         plotEl.style.backgroundImage = `linear-gradient(to top, rgba(96, 165, 250, 0.5) 0%, rgba(96, 165, 250, 0.5) ${progress*100}%, transparent ${progress*100}%)`;
                         const content = document.createElement('div');
@@ -1109,6 +1180,7 @@
                 farmGrid.appendChild(plotEl);
             });
             
+            // โค้ดปุ่มขยาย (ส่วนนี้ถูกต้องอยู่แล้ว)
             const cost = calculateExpansionCost('farm');
             const expandButton = document.createElement('div');
             expandButton.className = 'aspect-square rounded-lg shadow-inner cursor-pointer flex items-center justify-center p-2 bg-green-200/50 hover:bg-green-200/80 transition';
@@ -1122,11 +1194,12 @@
             expandButton.onclick = () => expandGrid('farm');
             farmGrid.appendChild(expandButton);
         }
-
         function renderAnimals() {
              if (!farmState || !Array.isArray(farmState.animals)) return;
              const animalPen = document.getElementById('animal-pen');
              animalPen.innerHTML = '';
+             const weatherMultiplier = WEATHER_DATA[farmState.currentWeather]?.animalMultiplier || 1;
+             
              farmState.animals.forEach((animal, index) => {
                 const slotEl = document.createElement('div');
                 slotEl.className = 'animal-slot aspect-square rounded-2xl shadow-inner cursor-pointer flex flex-col items-center justify-center p-1 bg-green-200/50 relative';
@@ -1138,7 +1211,9 @@
                     const progressContainer = document.createElement('div');
                     progressContainer.className = 'absolute bottom-1 left-1 right-1 h-2 bg-gray-300/70 rounded-full overflow-hidden';
                     const progressFill = document.createElement('div');
-                    const progress = (Date.now() - animal.startTime) / (animalData.produceTime * 1000);
+                    const adjustedProduceTime = (animalData.produceTime * 1000) * weatherMultiplier;
+                    const progress = (Date.now() - animal.startTime) / adjustedProduceTime;
+
                     progressFill.className = 'h-full bg-yellow-400 rounded-full';
                     progressFill.style.width = `${Math.min(progress, 1) * 100}%`;
                     progressContainer.appendChild(progressFill);
@@ -1690,8 +1765,9 @@
                     const elapsedSeconds = (Date.now() - plot.plantTime) / 1000;
                     const growthMultiplier = 1 + ((plot.wateredBy?.length || 0) * 0.5);
                     const effectiveGrowth = elapsedSeconds * growthMultiplier;
-                    const isGrown = effectiveGrowth >= plantData.growTime;
-                    const remainingSeconds = Math.max(0, (plantData.growTime - effectiveGrowth) / (1 + ((plot.wateredBy?.length || 0) * 0.5)));
+                    const adjustedGrowTime = plantData.growTime * weatherMultiplier;
+                    const isGrown = effectiveGrowth >= adjustedGrowTime;
+                    const remainingSeconds = Math.max(0, (adjustedGrowTime - effectiveGrowth) / (1 + ((plot.wateredBy?.length || 0) * 0.5)));
                     
                     detailsEl.innerHTML = `<p>ปลูกโดย: ${plot.plantedBy?.nickname || '??'}</p><p>เหลือเวลา: ${formatTime(remainingSeconds)}</p>`;
                     if (plot.wateredBy && plot.wateredBy.length > 0) {
@@ -1737,8 +1813,10 @@
                      actionsEl.appendChild(createButton('➕ วางสัตว์', () => showSubMenu('placeAnimal', index, buyableItems), buyableItems.length === 0));
                 } else {
                     const animalData = GAME_DATA[animal.animalId];
-                    const isReady = (Date.now() - animal.startTime) >= (animalData.produceTime * 1000);
-                    const remainingMillis = Math.max(0, (animal.startTime + animalData.produceTime * 1000) - Date.now());
+                    const adjustedProduceTime = (animalData.produceTime * 1000) * weatherMultiplier;
+                    const isReady = (Date.now() - animal.startTime) >= adjustedProduceTime;
+                    const remainingMillis = Math.max(0, (animal.startTime + adjustedProduceTime) - Date.now());
+
                     detailsEl.innerHTML = `<p><b>${animalData.name}</b></p><p>พร้อมเก็บใน: <span class="font-semibold">${formatTime(remainingMillis / 1000)}</span></p>`;
                     actionsEl.before(detailsEl);
                     if(isReady){
@@ -1794,6 +1872,22 @@
             
             modal.classList.remove('hidden', 'modal-leave');
             modal.classList.add('modal-enter');
+        }
+
+		function showInfoModal(icon, title, text) {
+            document.getElementById('info-modal-icon').textContent = icon;
+            document.getElementById('info-modal-title').textContent = title;
+            document.getElementById('info-modal-text').textContent = text;
+            const modal = document.getElementById('info-modal');
+
+            modal.classList.remove('hidden', 'modal-leave');
+            modal.classList.add('modal-enter');
+        }
+
+        function hideInfoModal() {
+            const modal = document.getElementById('info-modal');
+            modal.classList.add('modal-leave');
+            setTimeout(() => modal.classList.add('hidden'), 200);
         }
 
         function hideContextMenu() {
@@ -2411,6 +2505,12 @@
                 newPlayerState.dailyRestCount = 0;
 				newPlayerState.dailyNapCount = 0;
                 newPlayerState.lastResetTime = now.getTime();
+				
+				// Action 4: Set new weather <<<<<< เพิ่มส่วนนี้
+                const weatherTypes = Object.keys(WEATHER_DATA);
+                const randomWeather = weatherTypes[Math.floor(Math.random() * weatherTypes.length)];
+                newFarmState.currentWeather = randomWeather;
+                console.log(`Today's weather is: ${randomWeather}`);
             }
 
             // --- WEEKLY RESET CHECK ---
@@ -2837,6 +2937,9 @@
             onSnapshot(farmDocRef, (docSnap) => {
                 if (docSnap.exists()) {
                     farmState = docSnap.data();
+					if (!farmState.currentWeather) {
+                        farmState.currentWeather = 'sunny';
+					}
                     if (!farmState.quests) farmState.quests = { daily: [], weekly: [], lastDailyReset: 0, lastWeeklyReset: 0 };
                     if (!farmState.ownedKitchenTools) farmState.ownedKitchenTools = [];
                     if (!farmState.factories) farmState.factories = Array(FACTORY_GRID_SIZE).fill(null).map(() => ({ factoryId: null }));
@@ -2863,7 +2966,8 @@
                         marketPrices: {},
                         salesVolume: {},
                         sharedHouseLevel: 0,
-                        sharedRodLevel: 0
+                        sharedRodLevel: 0,
+						currentWeather: 'sunny',
                     };
                     await setDoc(farmDocRef, initialFarmState);
                 }
@@ -3046,7 +3150,29 @@
                     claimQuestReward(e.target.dataset.questType, e.target.dataset.questId);
                 }
             });
-            
+            document.getElementById('info-modal-close').onclick = hideInfoModal;
+            document.getElementById('info-modal').onclick = (e) => {
+                // ทำให้กดที่พื้นหลังสีดำแล้ว Modal ปิดได้
+                if (e.target.id === 'info-modal') {
+                    hideInfoModal();
+                }
+            };
+            // --- จบส่วนที่เพิ่ม ---
+
+
+            // --- เพิ่ม Event Listener สำหรับปุ่มแสดงสภาพอากาศ ---
+            const weatherDisplay = document.getElementById('weather-display');
+            if (weatherDisplay) {
+                weatherDisplay.onclick = () => {
+                    if (farmState && farmState.currentWeather) {
+                        const weather = WEATHER_DATA[farmState.currentWeather];
+                        if (weather) {
+                            showInfoModal(weather.icon, weather.name, weather.description);
+                        }
+                    }
+                };
+            }
+			
             document.getElementById('force-refresh-btn').onclick = () => {
                 document.getElementById('force-refresh-btn').disabled = true;
                 document.getElementById('force-refresh-btn').textContent = "กำลังรีเฟรช...";
