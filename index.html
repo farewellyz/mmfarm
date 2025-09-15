@@ -1697,10 +1697,12 @@
                     if (factory.queue.length > 0) {
                         const currentJob = factory.queue[0];
                         const recipe = factoryData.recipes.find(r => r.id === currentJob.recipeId);
-                        const isReady = (Date.now() - currentJob.startTime) >= (recipe.processTime * 1000);
+                        // --- START OF CHANGE ---
                         const remainingMillis = Math.max(0, (currentJob.startTime + recipe.processTime * 1000) - Date.now());
-
-                        detailsText += `<p>กำลังผลิต: ${recipe.name}</p><p>โดย: ${currentJob.processedBy?.nickname || '??'}</p><p>เสร็จใน: ${isReady ? 'กำลังเก็บ!' : formatTime(remainingMillis / 1000)}</p>`;
+                        const remainingTimeText = remainingMillis > 0 ? formatTime(Math.ceil(remainingMillis / 1000)) : 'รอการประมวลผล...';
+                        
+                        detailsText += `<p>กำลังผลิต: ${recipe.name}</p><p>โดย: ${currentJob.processedBy?.nickname || '??'}</p><p>เสร็จใน: ${remainingTimeText}</p>`;
+                        // --- END OF CHANGE ---
                     }
                     detailsEl.innerHTML = detailsText;
                     actionsEl.before(detailsEl);
