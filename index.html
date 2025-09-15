@@ -277,19 +277,27 @@
                 <h2 class="text-3xl font-bold text-green-800 mb-4 text-center">โรงงานแปรรูป 🏭</h2>
                 <div id="factory-grid" class="grid grid-cols-3 sm:grid-cols-4 gap-2 md:gap-4"></div>
             </div>
-            <div id="bedroom-view" class="hidden">
+			<div id="bedroom-view" class="hidden">
                  <div class="w-full max-w-2xl mx-auto text-center">
                     <h2 class="text-3xl font-bold text-green-800 mb-4">ห้องนอนของเรา 🛌</h2>
+                    
                     <div id="bedroom-display" class="relative w-full aspect-[4/3] rounded-lg shadow-inner overflow-hidden"></div>
-                    <div id="bedroom-info" class="mt-4">
+                    
+                    <div id="bedroom-info" class="mt-4 space-y-2">
                         <p class="text-lg">ห้องนอนระดับ <span id="house-level" class="font-bold">0</span></p>
-                        <button id="upgrade-house-btn" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full disabled:bg-gray-400 disabled:cursor-not-allowed transition">
-                            อัปเกรด
-                        </button>
+                        <div>
+                            <button id="upgrade-house-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full disabled:bg-gray-400 disabled:cursor-not-allowed transition">
+                                อัปเกรด
+                            </button>
+                            <button id="nap-btn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-6 rounded-full disabled:bg-gray-400 disabled:cursor-not-allowed transition">
+                                งีบหลับ
+                            </button>
+                        </div>
+                        <p id="nap-info" class="text-sm text-gray-600 h-5"></p>
                     </div>
                  </div>
-            </div>
-             <div id="kitchen-view" class="hidden">
+            </div>          
+			<div id="kitchen-view" class="hidden">
                  <div class="w-full max-w-2xl mx-auto text-center">
                     <h2 class="text-3xl font-bold text-green-800 mb-4">ห้องครัว 🍳</h2>
                     <div id="kitchen-display" class="relative w-full aspect-[4/3] rounded-lg shadow-inner overflow-hidden"></div>
@@ -1306,38 +1314,69 @@
             totalEl.textContent = totalValue;
         }
         
-        function renderBedroom() {
-            if (!playerState || !farmState) return;
-            const container = document.getElementById('bedroom-display');
-            const infoP = document.getElementById('bedroom-info').querySelector('p');
-            const upgradeBtn = document.getElementById('upgrade-house-btn');
-            const houseLevel = farmState.sharedHouseLevel || 0;
+		function renderBedroom() {
+			if (!playerState || !farmState) return;
+			const container = document.getElementById('bedroom-display');
+			const infoP = document.getElementById('bedroom-info').querySelector('p');
+			const upgradeBtn = document.getElementById('upgrade-house-btn');
+			const napBtn = document.getElementById('nap-btn');
+			const napInfo = document.getElementById('nap-info');
 
-            if (houseLevel === 0) {
-                container.style.backgroundImage = 'none';
-                container.style.backgroundColor = '#D2B48C';
-                infoP.innerHTML = `คุณยังไม่มีห้องนอน`;
-                
-                const firstPurchaseData = GAME_DATA.house_upgrades[0];
-                upgradeBtn.textContent = `ซื้อห้องนอน (${firstPurchaseData.cost}💰)`;
-                upgradeBtn.disabled = playerState.money < firstPurchaseData.cost;
-            } else {
-                container.style.backgroundColor = 'transparent';
-                const houseData = GAME_DATA.house_upgrades[houseLevel - 1];
-                container.style.backgroundImage = `url(${houseData.imageUrl})`;
-                infoP.innerHTML = `ห้องนอนระดับ <span id="house-level" class="font-bold">${houseLevel}</span>`;
-                
-                if (houseLevel >= GAME_DATA.house_upgrades.length) {
-                    upgradeBtn.textContent = 'อัปเกรดสูงสุดแล้ว';
-                    upgradeBtn.disabled = true;
-                } else {
-                    const nextUpgradeData = GAME_DATA.house_upgrades[houseLevel];
-                    upgradeBtn.textContent = `อัปเกรด (${nextUpgradeData.cost}💰)`;
-                    upgradeBtn.disabled = playerState.money < nextUpgradeData.cost;
-                }
-            }
-        }
-        
+			const houseLevel = farmState.sharedHouseLevel || 0;
+
+			// Logic สำหรับปุ่มอัปเกรด (เหมือนเดิม)
+			if (houseLevel === 0) {
+				container.style.backgroundImage = 'none';
+				container.style.backgroundColor = '#D2B48C';
+				infoP.innerHTML = `คุณยังไม่มีห้องนอน`;
+				const firstPurchaseData = GAME_DATA.house_upgrades[0];
+				upgradeBtn.textContent = `ซื้อห้องนอน (${firstPurchaseData.cost}💰)`;
+				upgradeBtn.disabled = playerState.money < firstPurchaseData.cost;
+			} else {
+				container.style.backgroundColor = 'transparent';
+				const houseData = GAME_DATA.house_upgrades[houseLevel - 1];
+				container.style.backgroundImage = `url(${houseData.imageUrl})`;
+				infoP.innerHTML = `ห้องนอนระดับ <span id="house-level" class="font-bold">${houseLevel}</span>`;
+				if (houseLevel >= GAME_DATA.house_upgrades.length) {
+					upgradeBtn.textContent = 'อัปเกรดสูงสุดแล้ว';
+					upgradeBtn.disabled = true;
+				} else {
+					const nextUpgradeData = GAME_DATA.house_upgrades[houseLevel];
+					upgradeBtn.textContent = `อัปเกรด (${nextUpgradeData.cost}💰)`;
+					upgradeBtn.disabled = playerState.money < nextUpgradeData.cost;
+				}
+			}
+
+			// --- ส่วนควบคุมปุ่มงีบหลับที่เพิ่มเข้ามา ---
+			if (houseLevel === 0) {
+				napBtn.classList.add('hidden');
+				napInfo.classList.add('hidden');
+			} else {
+				napBtn.classList.remove('hidden');
+				napInfo.classList.remove('hidden');
+
+				const napsToday = playerState.dailyNapCount || 0;
+				const timeSinceNap = Date.now() - (playerState.lastNapTime || 0);
+				const cooldownDuration = 60 * 60 * 1000; // 1 ชั่วโมง
+				const remainingCooldown = cooldownDuration - timeSinceNap;
+				const isEnergyFull = playerState.energy >= getMaxEnergy();
+
+				if (napsToday >= 5) {
+					napBtn.disabled = true;
+					napInfo.textContent = `คุณงีบหลับครบ 5 ครั้งสำหรับวันนี้แล้ว`;
+				} else if (remainingCooldown > 0) {
+					napBtn.disabled = true;
+					napInfo.textContent = `งีบได้อีกครั้งใน ${formatTime(Math.ceil(remainingCooldown / 1000))}`;
+				} else if (isEnergyFull) {
+					napBtn.disabled = true;
+					napInfo.textContent = `พลังงานเต็มแล้ว ไม่จำเป็นต้องงีบ`;
+				} else {
+					const energyToRestore = 20 + ((houseLevel - 1) * 10);
+					napBtn.disabled = false;
+					napInfo.textContent = `ฟื้นฟู ${energyToRestore}⚡ (เหลือ ${5 - napsToday}/5 ครั้ง)`;
+				}
+			}
+		}        
         function renderStorage() {
             const container = document.getElementById('storage-items');
             if (!playerState || !playerState.storageBin || playerState.storageBin.length === 0) {
@@ -2227,6 +2266,7 @@ async function checkForTimeResets() {
                 // Action 3: Reset Player Stats
                 newPlayerState.energy = getMaxEnergy();
                 newPlayerState.dailyRestCount = 0;
+				newPlayerState.dailyNapCount = 0;
                 newPlayerState.lastResetTime = now.getTime();
             }
 
@@ -2521,6 +2561,29 @@ async function checkForTimeResets() {
                 console.log("Cannot rest now.");
             }
         }
+
+		function takeNap() {
+			if (!playerState || !farmState) return;
+
+			const houseLevel = farmState.sharedHouseLevel || 0;
+			if (houseLevel === 0) return; // ยังไม่มีบ้าน งีบไม่ได้
+
+			const napsToday = playerState.dailyNapCount || 0;
+			const timeSinceNap = Date.now() - (playerState.lastNapTime || 0);
+			const cooldownDuration = 60 * 60 * 1000; // 1 ชั่วโมง
+			const isEnergyFull = playerState.energy >= getMaxEnergy();
+
+			if (napsToday < 5 && timeSinceNap >= cooldownDuration && !isEnergyFull) {
+				const energyToRestore = 20 + ((houseLevel - 1) * 10);
+				const newPlayerState = { ...playerState };
+
+				newPlayerState.energy = Math.min(getMaxEnergy(), (newPlayerState.energy || 0) + energyToRestore);
+				newPlayerState.dailyNapCount = napsToday + 1;
+				newPlayerState.lastNapTime = Date.now();
+
+				updatePlayerState(newPlayerState);
+			}
+		}
 
         function expandGrid(type) {
             const cost = calculateExpansionCost(type);
@@ -2831,6 +2894,7 @@ async function checkForTimeResets() {
             document.getElementById('cook-btn').onclick = showCookingModal;
             document.getElementById('cooking-modal-close').onclick = hideCookingModal;
             document.getElementById('rest-btn').onclick = restInPark;
+			document.getElementById('nap-btn').onclick = takeNap;
             playerNameEl.onclick = () => showNameModal(false);
             document.getElementById('save-name-btn').onclick = saveNameChange;
             document.getElementById('cancel-name-btn').onclick = hideNameModal;
@@ -2916,7 +2980,8 @@ async function checkForTimeResets() {
                         money: 20, inventory: {}, produceBin: [], storageBin: [],
                         nickname: newName, houseLevel: 0, lastResetTime: 0,
                         fishingRodLevel: 0, energy: 100,
-                        dailyRestCount: 0, lastRestTime: 0
+                        dailyRestCount: 0, lastRestTime: 0,
+						dailyNapCount: 0, lastNapTime: 0
                     };
                     await setDoc(doc(db, "players", userId), playerState);
                     await startGame(userId);
