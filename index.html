@@ -138,7 +138,7 @@
         <p class="mt-4 text-2xl font-bold text-green-800">กำลังเตรียมฟาร์ม...</p>
     </div>
 
-	<div id="modal-container">
+<div id="modal-container">
         <div id="info-modal" class="hidden fixed inset-0 bg-black/50 z-[52] flex items-center justify-center p-4">
             <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm modal-enter text-center">
                 <div id="info-modal-icon" class="text-6xl mb-4"></div>
@@ -148,13 +148,6 @@
             </div>
         </div>
 
-        <div id="name-modal" class="hidden ...">
-            ...
-        </div>
-        ...
-    </div>
-
-    <div id="modal-container">
         <div id="name-modal" class="hidden fixed inset-0 bg-black/50 z-[52] flex items-center justify-center p-4">
             <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm modal-enter">
                 <h2 id="name-modal-title" class="text-2xl font-bold text-gray-800 mb-4">เปลี่ยนชื่อเล่น</h2>
@@ -167,7 +160,7 @@
             </div>
         </div>
 
-		<div id="update-required-modal" class="hidden fixed inset-0 bg-black/80 z-[999] flex items-center justify-center p-4 text-center">
+        <div id="update-required-modal" class="hidden fixed inset-0 bg-black/80 z-[999] flex items-center justify-center p-4 text-center">
 			<div class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-sm">
 				<h2 class="text-3xl font-bold text-blue-600 mb-4">มีอัปเดตใหม่!</h2>
 				<p class="text-gray-700 mb-6">กรุณารีเฟรชหน้าเว็บเพื่อใช้เกมเวอร์ชันล่าสุด และป้องกันข้อผิดพลาดที่อาจเกิดขึ้น</p>
@@ -195,19 +188,22 @@
                 <button id="context-modal-close" class="mt-4 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg w-full">ปิด</button>
             </div>
         </div>
-         <div id="submenu-modal" class="hidden fixed inset-0 bg-black/60 z-[51] flex items-center justify-center p-4">
+
+        <div id="submenu-modal" class="hidden fixed inset-0 bg-black/60 z-[51] flex items-center justify-center p-4">
             <div class="bg-white rounded-2xl shadow-xl p-5 w-full max-w-md">
                 <h3 id="submenu-modal-title" class="text-xl font-bold text-gray-800 mb-4 text-center"></h3>
                 <div id="submenu-modal-items" class="grid grid-cols-3 gap-3 text-center"></div>
                 <button id="submenu-modal-close" class="mt-4 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg w-full">กลับ</button>
             </div>
         </div>
+
         <div id="more-modal" class="hidden fixed inset-0 bg-black/50 z-[51] flex items-end justify-center p-4">
             <div class="bg-white rounded-2xl shadow-xl p-4 w-full max-w-md mb-20 modal-enter">
                 <div id="more-modal-items" class="flex flex-col gap-3">
-                    </div>
+                </div>
             </div>
         </div>
+
         <div id="fish-catch-modal" class="hidden fixed inset-0 bg-black/60 z-[54] flex items-center justify-center p-4">
             <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm text-center modal-enter">
                 <h2 id="fish-catch-title" class="text-2xl font-bold text-gray-800 mb-2"></h2>
@@ -216,6 +212,7 @@
                 <button id="fish-catch-ok" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg">เยี่ยม!</button>
             </div>
         </div>
+
         <div id="fishing-minigame-modal" class="hidden fixed inset-0 bg-black/60 z-[55] flex items-center justify-center p-4">
             <div class="bg-white rounded-2xl shadow-xl p-6 flex items-center justify-center gap-4 cursor-pointer" id="fishing-minigame-area">
                 <div id="fishing-minigame-progress">
@@ -227,20 +224,20 @@
                 </div>
             </div>
         </div>
+
         <div id="cooking-modal" class="hidden fixed inset-0 bg-black/60 z-[52] flex items-center justify-center p-4">
             <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-lg modal-enter">
                 <h2 class="text-2xl font-bold text-gray-800 mb-4 text-center">ตำราอาหาร 📖</h2>
                 <div id="recipe-list" class="max-h-[60vh] overflow-y-auto space-y-3">
-                    </div>
+                </div>
                  <button id="cooking-modal-close" class="mt-4 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg w-full">ปิด</button>
             </div>
         </div>
+
         <div id="character-creator-modal" class="hidden fixed inset-0 bg-black/60 z-[52] flex items-center justify-center p-4">
             <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-xs modal-enter">
                 <h2 class="text-2xl font-bold text-gray-800 mb-4 text-center">เลือกตัวละครของคุณ</h2>
-                
                 <div id="character-preview" class="mb-4 h-48 bg-contain bg-no-repeat bg-center"></div>
-
                 <div class="space-y-3">
                     <div class="flex items-center justify-between">
                         <span class="font-semibold">ตัวละคร</span>
@@ -250,7 +247,6 @@
                         </div>
                     </div>
                 </div>
-
                 <div class="mt-6">
                     <button id="save-character-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg w-full">บันทึก</button>
                 </div>
@@ -559,7 +555,6 @@
             'sushi_food': { name: 'ซูชิ', icon: '🍣', type: 'produce', sellPrice: [150, 190, 240], energyRestore: 40, imageUrl: 'sushi.png' },
             'bread_food': { name: 'ขนมปัง', icon: '🍞', type: 'produce', sellPrice: [80, 100, 125], energyRestore: 25, imageUrl: 'bread.png' },
             'popcorn_food': { name: 'ป็อปคอร์น', icon: '🍿', type: 'produce', sellPrice: [70, 90, 110], energyRestore: 20, imageUrl: 'popcorn.png' },
-			'popcorn_food': { name: 'ป็อปคอร์น', icon: '🍿', type: 'produce', sellPrice: [70, 90, 110], energyRestore: 20, imageUrl: 'popcorn.png' },
 			'fish_burger_food': { name: 'เบอร์เกอร์ปลา', icon: '🍔', type: 'produce', sellPrice: [1500, 1600, 1650], energyRestore: 100, imageUrl: 'fish_burger.png' },
 			'beef_steak_food': { name: 'สเต๊กเนื้อ', icon: '🥩', type: 'produce', sellPrice: [220, 240, 250], energyRestore: 35, imageUrl: 'beef_steak.png' },
             'pork_steak_food': { name: 'สเต๊กหมู', icon: '🍖', type: 'produce', sellPrice: [200, 210, 220], energyRestore: 35, imageUrl: 'pork_steak.png' },
@@ -1161,7 +1156,7 @@
                     } else {
                         let progress = 0;
                         if (plot.plantTime) { 
-                            const elapsedSeconds = (Date.now() - plot.plantTime) / 1000;
+							const elapsedSeconds = (Date.now() - plot.plantTime) / 1000;
                             const growthMultiplier = 1 + ((plot.wateredBy?.length || 0) * 0.5);
                             const effectiveGrowth = elapsedSeconds * growthMultiplier;
                             // ใช้ค่า Multiplier ที่ดึงมา
@@ -1761,7 +1756,8 @@
                      const plantableItems = Object.keys(playerState.inventory).filter(id => GAME_DATA[id] && GAME_DATA[id].type === 'seed' && playerState.inventory[id] > 0);
                      actionsEl.appendChild(createButton('🌱 ปลูก', () => showSubMenu('plant', index, plantableItems), plantableItems.length === 0));
                 } else {
-                    const plantData = GAME_DATA[plot.plantId];
+                    const weatherMultiplier = WEATHER_DATA[farmState.currentWeather]?.cropMultiplier || 1;
+					const plantData = GAME_DATA[plot.plantId];
                     const elapsedSeconds = (Date.now() - plot.plantTime) / 1000;
                     const growthMultiplier = 1 + ((plot.wateredBy?.length || 0) * 0.5);
                     const effectiveGrowth = elapsedSeconds * growthMultiplier;
@@ -1812,7 +1808,8 @@
                      const buyableItems = Object.keys(playerState.inventory).filter(id => GAME_DATA[id]?.type === 'animal_deed' && playerState.inventory[id] > 0);
                      actionsEl.appendChild(createButton('➕ วางสัตว์', () => showSubMenu('placeAnimal', index, buyableItems), buyableItems.length === 0));
                 } else {
-                    const animalData = GAME_DATA[animal.animalId];
+                    const weatherMultiplier = WEATHER_DATA[farmState.currentWeather]?.animalMultiplier || 1;
+					const animalData = GAME_DATA[animal.animalId];
                     const adjustedProduceTime = (animalData.produceTime * 1000) * weatherMultiplier;
                     const isReady = (Date.now() - animal.startTime) >= adjustedProduceTime;
                     const remainingMillis = Math.max(0, (animal.startTime + adjustedProduceTime) - Date.now());
