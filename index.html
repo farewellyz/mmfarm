@@ -416,7 +416,7 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        const CLIENT_VERSION = "1.0.5"; // Updated version
+        const CLIENT_VERSION = "1.0.6"; // Updated version
 
         const FARM_GRID_SIZE = 24;
         const ANIMAL_PEN_SIZE = 8;
@@ -1095,80 +1095,67 @@
             animalPen.appendChild(expandButton);
         }
 
-        function renderFactory() {
-            if (!farmState || !Array.isArray(farmState.factories)) return;
-            const factoryGrid = document.getElementById('factory-grid');
-            factoryGrid.innerHTML = '';
+		function renderFactory() {
+			if (!farmState || !Array.isArray(farmState.factories)) return;
+			const factoryGrid = document.getElementById('factory-grid');
+			factoryGrid.innerHTML = '';
 
-            farmState.factories.forEach((factory, index) => {
-                const slotEl = document.createElement('div');
-                slotEl.className = 'factory-slot aspect-square rounded-2xl shadow-inner cursor-pointer flex flex-col items-center justify-center p-1 bg-gray-300/50 relative';
-                
-                if (factory.factoryId) {
-                    const factoryData = GAME_DATA[factory.factoryId];
-                    slotEl.style.backgroundImage = `url(${factoryData.imageUrl})`;
+			farmState.factories.forEach((factory, index) => {
+				const slotEl = document.createElement('div');
+				slotEl.className = 'factory-slot aspect-square rounded-2xl shadow-inner cursor-pointer flex flex-col items-center justify-center p-1 bg-gray-300/50 relative';
 
-                    if (factory.queue && factory.queue.length > 0) {
-                        const currentJob = factory.queue[0];
-                        const recipe = factoryData.recipes.find(r => r.id === currentJob.recipeId);
-                        
-                        if (currentJob.startTime) { 
-                            const progress = (Date.now() - currentJob.startTime) / (recipe.processTime * 1000);
-                            
-                            const progressContainer = document.createElement('div');
-                            progressContainer.className = 'absolute bottom-1 left-1 right-1 h-2 bg-gray-800/70 rounded-full overflow-hidden';
-                            const progressFill = document.createElement('div');
-                            progressFill.className = 'h-full bg-green-400 rounded-full';
-                            progressFill.style.width = `${Math.min(progress, 1) * 100}%`;
-                            progressContainer.appendChild(progressFill);
-                            slotEl.appendChild(progressContainer);
-                        }
+				if (factory.factoryId) {
+					const factoryData = GAME_DATA[factory.factoryId];
+					slotEl.style.backgroundImage = `url(${factoryData.imageUrl})`;
 
-                        if(factory.queue.length > 1) {
-                            const queueDisplay = document.createElement('div');
-                            queueDisplay.className = 'absolute top-1 left-1 flex gap-1 bg-black/50 p-1 rounded-lg';
-                            for(let i = 1; i < factory.queue.length; i++) {
-                                const queuedRecipe = factoryData.recipes.find(r => r.id === factory.queue[i].recipeId);
-                                const queuedIcon = document.createElement('div');
-                                queuedIcon.className = 'w-4 h-4 bg-contain bg-no-repeat bg-center';
-                                queuedIcon.style.backgroundImage = `url(${GAME_DATA[queuedRecipe.output.id].imageUrl})`;
-                                queueDisplay.appendChild(queuedIcon);
-                            }
-                            slotEl.appendChild(queueDisplay);
-                        }
-                    }
+					// --- NEW UI LOGIC ---
+					// แสดง progress bar ของชิ้นที่กำลังผลิต
+					if (factory.queue && factory.queue.length > 0 && factory.queue[0].startTime) {
+						const currentJob = factory.queue[0];
+						const recipe = factoryData.recipes.find(r => r.id === currentJob.recipeId);
+						const progress = (Date.now() - currentJob.startTime) / (recipe.processTime * 1000);
 
-                    if (factory.outputBin && factory.outputBin.length > 0) {
-                        const myItemsInBin = factory.outputBin.filter(item => item.owner === userId).length;
-                        if (myItemsInBin > 0) {
-                            const binIcon = document.createElement('div');
-                            binIcon.className = 'absolute top-1 right-1 text-xs font-bold bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center animate-pulse';
-                            binIcon.textContent = myItemsInBin;
-                            slotEl.appendChild(binIcon);
-                        }
-                    }
+						const progressContainer = document.createElement('div');
+						progressContainer.className = 'absolute bottom-1 left-1 right-1 h-2 bg-gray-800/70 rounded-full overflow-hidden';
+						const progressFill = document.createElement('div');
+						progressFill.className = 'h-full bg-green-400 rounded-full';
+						progressFill.style.width = `${Math.min(progress, 1) * 100}%`;
+						progressContainer.appendChild(progressFill);
+						slotEl.appendChild(progressContainer);
+					}
 
-                } else {
-                    slotEl.textContent = '➕';
-                    slotEl.className += ' text-4xl text-gray-500 hover:bg-gray-400/50';
-                }
-                slotEl.onclick = () => showContextMenu('factory', index);
-                factoryGrid.appendChild(slotEl);
-            });
+					// แสดงไอคอน "รับของ" ถ้ามีของของเราอยู่บนชั้นวาง
+					const myItemsInBin = factory.outputBin?.filter(item => item.owner === userId).length || 0;
+					if (myItemsInBin > 0) {
+						const binIcon = document.createElement('div');
+						binIcon.className = 'absolute top-1 right-1 text-xs font-bold bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center animate-bounce';
+						binIcon.textContent = myItemsInBin;
+						slotEl.appendChild(binIcon);
+					}
+					// --- END OF NEW UI LOGIC ---
 
-            const cost = calculateExpansionCost('factory');
-            const expandButton = document.createElement('div');
-            expandButton.className = 'aspect-square rounded-2xl shadow-inner cursor-pointer flex items-center justify-center p-2 bg-gray-300/50 hover:bg-gray-400/50 transition';
-            expandButton.innerHTML = `
-                <div class="text-center">
-                    <span class="text-3xl font-bold text-gray-700">➕</span>
-                    <p class="text-xs font-semibold mt-1">เพิ่มที่ดิน</p>
-                    <p class="text-xs font-bold text-yellow-900 bg-yellow-300 px-2 py-0.5 rounded-full mt-1">${cost}💰</p>
-                </div>
-            `;
-            expandButton.onclick = () => expandGrid('factory');
-            factoryGrid.appendChild(expandButton);
-        }
+				} else {
+					slotEl.textContent = '➕';
+					slotEl.className += ' text-4xl text-gray-500 hover:bg-gray-400/50';
+				}
+				slotEl.onclick = () => showContextMenu('factory', index);
+				factoryGrid.appendChild(slotEl);
+			});
+
+			// ... โค้ดปุ่มขยายโรงงาน (เหมือนเดิม) ...
+			const cost = calculateExpansionCost('factory');
+			const expandButton = document.createElement('div');
+			expandButton.className = 'aspect-square rounded-2xl shadow-inner cursor-pointer flex items-center justify-center p-2 bg-gray-300/50 hover:bg-gray-400/50 transition';
+			expandButton.innerHTML = `
+				<div class="text-center">
+					<span class="text-3xl font-bold text-gray-700">➕</span>
+					<p class="text-xs font-semibold mt-1">เพิ่มที่ดิน</p>
+					<p class="text-xs font-bold text-yellow-900 bg-yellow-300 px-2 py-0.5 rounded-full mt-1">${cost}💰</p>
+				</div>
+			`;
+			expandButton.onclick = () => expandGrid('factory');
+			factoryGrid.appendChild(expandButton);
+		}
 
         function renderPlayerUI() {
             if (!playerState) return;
@@ -1592,7 +1579,9 @@
             }
         }
         
-        function showContextMenu(type, id) {
+		async function showContextMenu(type, id) {
+            // This function had a misplaced closing brace in the previous version.
+            // This is the fully corrected version.
             const modal = document.getElementById('context-modal');
             const contentEl = document.getElementById('context-modal-content');
             const titleEl = document.getElementById('context-modal-title');
@@ -1682,27 +1671,42 @@
                 const index = id;
                 const factory = farmState.factories[index];
                 titleEl.textContent = `โรงงานช่องที่ ${index + 1}`;
+
                 if (!factory.factoryId) {
                     const placeableItems = Object.keys(playerState.inventory).filter(id => GAME_DATA[id]?.type === 'factory_deed' && playerState.inventory[id] > 0);
                     actionsEl.appendChild(createButton('➕ ตั้งโรงงาน', () => showSubMenu('placeFactory', index, placeableItems), placeableItems.length === 0));
                 } else {
                     const factoryData = GAME_DATA[factory.factoryId];
-                    if (!factory.queue) factory.queue = [];
 
-                    const isQueueFull = factory.queue.length >= 5;
+                    const myItemsInBinCount = factory.outputBin?.filter(item => item.owner === userId).length || 0;
+                    if (myItemsInBinCount > 0) {
+                        actionsEl.appendChild(createButton(`🎁 รับของ (${myItemsInBinCount} ชิ้น)`, () => collectMyFactoryGoods(index)));
+                    }
+
+                    const isQueueFull = (factory.queue?.length || 0) >= 5;
                     actionsEl.appendChild(createButton('⚙️ เพิ่มของเข้าคิว', () => showSubMenu('useFactory', index, factoryData.recipes.map(r => r.id)), isQueueFull));
-                    
-                    let detailsText = `<p><b>${factoryData.name}</b></p><p>ในคิว: ${factory.queue.length} / 5</p>`;
 
-                    if (factory.queue.length > 0) {
+                    let detailsText = `<p class="font-bold">${factoryData.name}</p>`;
+
+                    if (factory.outputBin && factory.outputBin.length > 0) {
+                        detailsText += `<p class="text-xs mt-2 font-semibold">ของที่เสร็จแล้ว:</p><ul class="text-xs text-left list-disc list-inside">`;
+                        factory.outputBin.forEach(output => {
+                            const itemName = GAME_DATA[output.item.id]?.name || 'Unknown';
+                            const ownerText = output.owner === userId ? ' (ของเรา)' : ` (${output.ownerNickname})`;
+                            detailsText += `<li>${itemName}${ownerText}</li>`;
+                        });
+                        detailsText += `</ul>`;
+                    }
+
+                    if (factory.queue && factory.queue.length > 0) {
                         const currentJob = factory.queue[0];
                         const recipe = factoryData.recipes.find(r => r.id === currentJob.recipeId);
-                        // --- START OF CHANGE ---
                         const remainingMillis = Math.max(0, (currentJob.startTime + recipe.processTime * 1000) - Date.now());
-                        const remainingTimeText = remainingMillis > 0 ? formatTime(Math.ceil(remainingMillis / 1000)) : 'รอการประมวลผล...';
-                        
-                        detailsText += `<p>กำลังผลิต: ${recipe.name}</p><p>โดย: ${currentJob.processedBy?.nickname || '??'}</p><p>เสร็จใน: ${remainingTimeText}</p>`;
-                        // --- END OF CHANGE ---
+                        const remainingTimeText = currentJob.startTime ? formatTime(Math.ceil(remainingMillis / 1000)) : 'รอเริ่ม...';
+                        detailsText += `<p class="text-xs mt-2 font-semibold">กำลังผลิต:</p><p class="text-xs">${recipe.name} (เสร็จใน ${remainingTimeText})</p>`;
+                        if (factory.queue.length > 1) {
+                            detailsText += `<p class="text-xs">รอในคิวอีก: ${factory.queue.length - 1} ชิ้น</p>`;
+                        }
                     }
                     detailsEl.innerHTML = detailsText;
                     actionsEl.before(detailsEl);
@@ -2061,85 +2065,93 @@
             }
         }
 
-        async function processFactoryQueuesWithOfflineProgress() {
+        // ฟังก์ชันใหม่สำหรับประมวลผลของไปวางที่ชั้นวาง (OutputBin)
+        async function processFactoryQueuesToOutputBin() {
             if (!farmState || !farmState.factories) return;
-
             const now = Date.now();
-            let hasChanges = false;
-            
+            const MAX_OUTPUT_BIN_SIZE = 6; // จำกัดชั้นวางของไว้ที่ 6 ชิ้น
+
             try {
-                const updatedFactoryData = await runTransaction(db, async (transaction) => {
+                await runTransaction(db, async (transaction) => {
                     const farmDocRef = doc(db, "publicFarmData", "farmState");
                     const farmDoc = await transaction.get(farmDocRef);
                     if (!farmDoc.exists()) throw "Farm document does not exist!";
 
                     const freshFarmState = farmDoc.data();
-                    const playerUpdates = new Map();
+                    let hasChanges = false;
 
-                    for (let i = 0; i < freshFarmState.factories.length; i++) {
-                        const factory = freshFarmState.factories[i];
-                        if (!factory.factoryId || !factory.queue || factory.queue.length === 0) continue;
-
-                        let cumulativeTime = factory.queue[0].startTime;
-                        if (!cumulativeTime) continue;
-
-                        const finishedJobs = [];
-                        let jobsProcessedCount = 0;
-
-                        for (const job of factory.queue) {
-                            const recipe = GAME_DATA[factory.factoryId].recipes.find(r => r.id === job.recipeId);
-                            const completionTime = cumulativeTime + (recipe.processTime * 1000);
-
-                            if (now >= completionTime) {
-                                finishedJobs.push({ ...job, outputId: recipe.output.id });
-                                cumulativeTime = completionTime;
-                                jobsProcessedCount++;
-                            } else {
-                                break;
-                            }
+                    for (const factory of freshFarmState.factories) {
+                        if (!factory.factoryId || !factory.queue || factory.queue.length === 0 || !factory.queue[0].startTime) continue;
+                        if (!factory.outputBin) factory.outputBin = [];
+                        
+                        // ตรวจสอบว่าชั้นวางของเต็มหรือยัง
+                        if (factory.outputBin.length >= MAX_OUTPUT_BIN_SIZE) {
+                            continue; // ถ้าเต็มแล้ว ให้ข้ามไป ไม่ต้องผลิตเพิ่ม
                         }
 
-                        if (jobsProcessedCount > 0) {
+                        const currentJob = factory.queue[0];
+                        const recipe = GAME_DATA[factory.factoryId].recipes.find(r => r.id === currentJob.recipeId);
+                        const completionTime = currentJob.startTime + (recipe.processTime * 1000);
+
+                        if (now >= completionTime) {
                             hasChanges = true;
-                            for (const finishedJob of finishedJobs) {
-                                const ownerUid = finishedJob.processedBy.uid;
-                                if (!playerUpdates.has(ownerUid)) {
-                                    const playerDoc = await transaction.get(doc(db, "players", ownerUid));
-                                    playerUpdates.set(ownerUid, {
-                                        ref: doc(db, "players", ownerUid),
-                                        data: playerDoc.data(),
-                                        newItems: []
-                                    });
-                                }
-                                playerUpdates.get(ownerUid).newItems.push({ id: finishedJob.outputId, quality: 0 });
-                            }
+                            const finishedJob = factory.queue.shift(); // นำออกจากคิว
                             
-                            factory.queue.splice(0, jobsProcessedCount);
+                            // นำไปวางที่ชั้นวางของ (outputBin)
+                            factory.outputBin.push({
+                                item: { id: recipe.output.id, quality: 0 },
+                                owner: finishedJob.processedBy.uid,
+                                ownerNickname: finishedJob.processedBy.nickname
+                            });
+
+                            // เริ่มงานต่อไปถ้ามี
                             if (factory.queue.length > 0) {
-                                factory.queue[0].startTime = cumulativeTime;
+                                factory.queue[0].startTime = completionTime;
                             }
                         }
                     }
 
                     if (hasChanges) {
-                        for (const [uid, pData] of playerUpdates.entries()) {
-                            const newStorage = pData.data.storageBin || [];
-                            newStorage.push(...pData.newItems);
-                            transaction.update(pData.ref, { storageBin: newStorage });
-                        }
                         transaction.update(farmDocRef, { factories: freshFarmState.factories });
                     }
-                    return freshFarmState.factories;
                 });
-                
-                if (hasChanges) {
-                    farmState.factories = updatedFactoryData;
-                }
-
             } catch (e) {
-                console.error("Offline factory processing transaction failed: ", e);
+                console.error("Factory processing to output bin failed: ", e);
             }
-        }  
+        }
+
+        // ฟังก์ชันใหม่สำหรับให้ผู้เล่นกดเก็บของของตัวเอง
+        async function collectMyFactoryGoods(factoryIndex) {
+            if (!farmState || !playerState) return;
+
+            const newFarmState = JSON.parse(JSON.stringify(farmState));
+            const newPlayerState = JSON.parse(JSON.stringify(playerState));
+            const factory = newFarmState.factories[factoryIndex];
+            
+            if (!factory.outputBin || factory.outputBin.length === 0) return;
+
+            const myItems = [];
+            const remainingItems = [];
+            
+            // แยกของที่เป็นของเราออกจากของคนอื่น
+            factory.outputBin.forEach(output => {
+                if (output.owner === userId) {
+                    myItems.push(output.item);
+                } else {
+                    remainingItems.push(output);
+                }
+            });
+
+            if (myItems.length > 0) {
+                if (!newPlayerState.storageBin) newPlayerState.storageBin = [];
+                newPlayerState.storageBin.push(...myItems); // เพิ่มของทั้งหมดเข้าคลัง
+                
+                factory.outputBin = remainingItems; // อัปเดตชั้นวางของ
+
+                await updatePlayerState(newPlayerState);
+                await updateFarmState(newFarmState);
+            }
+        }
         
         function upgradeHouse() {
             const newFarmState = { ...farmState };
@@ -2723,8 +2735,8 @@
 
             gameLoopInterval = setInterval(renderAll, 2000);
             logicInterval = setInterval(() => {
-				processFactoryQueuesWithOfflineProgress();
-			}, 15000); // ทุก 15 วินาที ผู้เล่นทุกคนจะช่วยกันเช็คโรงงาน
+                processFactoryQueuesToOutputBin(); // เรียกใช้ฟังก์ชันประมวลผลตัวใหม่
+            }, 10000); // เช็คทุก 10 วินาที
         }
 
         function initPlayerListeners(uid) {
