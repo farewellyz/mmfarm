@@ -344,8 +344,16 @@
             <div id="shop-view" class="hidden">
                 <div class="w-full max-w-lg mx-auto">
                     <h2 class="text-3xl font-bold text-green-800 mb-4 text-center">🏪 ร้านค้า & คลังของ</h2>
+                    
+                    <div id="shop-items" class="space-y-4"></div>
+                </div>
+            </div>
+            
+			<div id="storage-view" class="hidden">
+                <div class="w-full max-w-lg mx-auto">
+                    <h2 class="text-3xl font-bold text-green-800 mb-4 text-center">📦 คลัง & กล่องส่งของ</h2>
                     <div id="storage-container" class="mb-6">
-                        <h3 class="text-xl font-bold text-green-700 mb-2 text-center">คลังเก็บของ 📦</h3>
+                        <h3 class="text-xl font-bold text-green-700 mb-2 text-center">คลังเก็บของ</h3>
                         <div id="storage-items" class="min-h-[100px] max-h-[200px] overflow-y-auto space-y-2 p-2 bg-yellow-50 rounded-lg">
                             <p class="text-center text-gray-500">ไม่มีของในคลัง</p>
                         </div>
@@ -359,10 +367,9 @@
                             <p id="sell-countdown" class="text-sm text-gray-600 mt-2">กำลังคำนวณเวลา...</p>
                         </div>
                     </div>
-                    <div id="shop-items" class="space-y-4"></div>
                 </div>
             </div>
-            
+			
             <div id="market-view" class="hidden">
                 <div class="w-full max-w-lg mx-auto">
                     <h2 class="text-3xl font-bold text-green-800 mb-4 text-center">ราคาตลาดวันนี้ 📈</h2>
@@ -392,7 +399,7 @@
         <button data-view="farm" class="nav-btn flex-1 py-3 text-green-800 font-bold text-lg hover:bg-green-100 transition">ฟาร์ม</button>
         <button data-view="animals" class="nav-btn flex-1 py-3 text-green-800 font-bold text-lg hover:bg-green-100 transition">คอกสัตว์</button>
         <button data-view="shop" class="nav-btn flex-1 py-3 text-green-800 font-bold text-lg hover:bg-green-100 transition">ร้านค้า</button>
-        <button id="more-btn" data-view="more" class="nav-btn flex-1 py-3 text-green-800 font-bold text-lg hover:bg-green-100 transition">... เพิ่มเติม</button>
+		<button id="more-btn" data-view="more" class="nav-btn flex-1 py-3 text-green-800 font-bold text-lg hover:bg-green-100 transition">... เพิ่มเติม</button>
     </footer>
 
     <script type="module">
@@ -467,7 +474,7 @@
                 'beef_burger_recipe': { resultId: 'beef_burger_food', ingredients: [{ id: 'bread_food' }, { id: 'beef' }, { id: 'tomato_produce' },{ id: 'lime_produce' }, { id: 'egg' }, { id: 'mayonnaise' },{ id: 'chili_produce' }, { id: 'cheese' }], tool: 'kitchen_pan' },
                 'pork_burger_recipe': { resultId: 'pork_burger_food', ingredients: [{ id: 'bread_food' }, { id: 'pig_meat' }, { id: 'tomato_produce' },{ id: 'lime_produce' }, { id: 'egg' }, { id: 'mayonnaise' },{ id: 'chili_produce' }, { id: 'cheese' }], tool: 'kitchen_pan' },
 				'truffle_spaghetti_recipe': { resultId: 'truffle_spaghetti_food', ingredients: [{ id: 'pasta_dough' }, { id: 'truffle' }], tool: 'kitchen_pan' },
-                'bolognese_spaghetti_recipe': { resultId: 'bolognese_spaghetti_food', ingredients: [{ id: 'pasta_dough' }, { id: 'pork' }, { id: 'tomato_produce' }], tool: 'kitchen_pan' },
+                'bolognese_spaghetti_recipe': { resultId: 'bolognese_spaghetti_food', ingredients: [{ id: 'pasta_dough' }, { id: 'pig_meat' }, { id: 'tomato_produce' }], tool: 'kitchen_pan' },
                 'carbonara_spaghetti_recipe': { resultId: 'carbonara_spaghetti_food', ingredients: [{ id: 'pasta_dough' }, { id: 'bacon' }, { id: 'cheese' }, { id: 'milk' }], tool: 'kitchen_pan' },
                 'beef_spaghetti_recipe': { resultId: 'beef_spaghetti_food', ingredients: [{ id: 'pasta_dough' }, { id: 'beef' }], tool: 'kitchen_pan' },
                 'spicy_chicken_spaghetti_recipe': { resultId: 'spicy_chicken_spaghetti_food', ingredients: [{ id: 'pasta_dough' }, { id: 'chicken_meat' }, { id: 'chili_produce' }], tool: 'kitchen_pan' },
@@ -640,8 +647,8 @@
 			'smokehouse': {
             name: 'โรงรมควัน', type: 'factory_instance', imageUrl: 'smokehouse.png',
             recipes: [
-                { id: 'process_bacon', name: 'รมควันเบคอน', inputs: [{ id: 'pork', count: 1 }], output: { id: 'bacon', count: 2 }, processTime: 7200 },
-                { id: 'process_ham', name: 'รมควันแฮม', inputs: [{ id: 'pork', count: 1 }], output: { id: 'ham', count: 2 }, processTime: 7200 }
+                { id: 'process_bacon', name: 'รมควันเบคอน', inputs: [{ id: 'pig_meat', count: 1 }], output: { id: 'bacon', count: 2 }, processTime: 7200 },
+                { id: 'process_ham', name: 'รมควันแฮม', inputs: [{ id: 'pig_meat', count: 1 }], output: { id: 'ham', count: 2 }, processTime: 7200 }
             ]
         },
             'grape_wine': { name: 'ไวน์องุ่น', type: 'produce', sellPrice: [800, 1200, 1600], icon: '🍷', energyRestore: 20, imageUrl: 'wine.png' },
@@ -2917,7 +2924,7 @@
             const moreModal = document.getElementById('more-modal');
             const moreBtn = document.getElementById('more-btn');
             const moreModalItems = document.getElementById('more-modal-items');
-            const primaryViews = ['farm', 'animals', 'shop'];
+            const primaryViews = ['farm', 'animals', 'shop',];
             const secondaryViews = [
                 { view: 'bedroom', name: 'ห้องนอน 🛌' },
                 { view: 'fishing', name: 'บ่อปลา 🎣' },
@@ -2925,7 +2932,8 @@
                 { view: 'factory', name: 'โรงงาน 🏭' },
                 { view: 'quests', name: 'เควส 📜' },
                 { view: 'market', name: 'ราคาตลาด 📈' },
-                { view: 'park', name: 'สวนสาธารณะ 🌳' }
+                { view: 'park', name: 'สวนสาธารณะ 🌳' },
+				{ view: 'storage', name: 'คลังเก็บของ 📦' }
             ];
 
             moreModalItems.innerHTML = '';
