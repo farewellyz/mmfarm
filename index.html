@@ -398,7 +398,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signInAnonymously, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, onSnapshot, setDoc, getDoc, deleteDoc, collection, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, onSnapshot, setDoc, getDoc, deleteDoc, collection, getDocs, writeBatch, runTransaction } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- Config ---
         const firebaseConfig = {
@@ -2059,78 +2059,85 @@
             }
         }
 
-        async function processFinishedFactoryJobs() {
+        async function processFactoryQueuesWithOfflineProgress() {
             if (!farmState || !farmState.factories) return;
 
-            const newFarmState = JSON.parse(JSON.stringify(farmState));
-            let farmStateChanged = false;
+            const now = Date.now();
+            let hasChanges = false;
+            
+            try {
+                const updatedFactoryData = await runTransaction(db, async (transaction) => {
+                    const farmDocRef = doc(db, "publicFarmData", "farmState");
+                    const farmDoc = await transaction.get(farmDocRef);
+                    if (!farmDoc.exists()) throw "Farm document does not exist!";
 
-            for (const factory of newFarmState.factories) {
-                if (!factory.outputBin) factory.outputBin = [];
+                    const freshFarmState = farmDoc.data();
+                    const playerUpdates = new Map();
+
+                    for (let i = 0; i < freshFarmState.factories.length; i++) {
+                        const factory = freshFarmState.factories[i];
+                        if (!factory.factoryId || !factory.queue || factory.queue.length === 0) continue;
+
+                        let cumulativeTime = factory.queue[0].startTime;
+                        if (!cumulativeTime) continue;
+
+                        const finishedJobs = [];
+                        let jobsProcessedCount = 0;
+
+                        for (const job of factory.queue) {
+                            const recipe = GAME_DATA[factory.factoryId].recipes.find(r => r.id === job.recipeId);
+                            const completionTime = cumulativeTime + (recipe.processTime * 1000);
+
+                            if (now >= completionTime) {
+                                finishedJobs.push({ ...job, outputId: recipe.output.id });
+                                cumulativeTime = completionTime;
+                                jobsProcessedCount++;
+                            } else {
+                                break;
+                            }
+                        }
+
+                        if (jobsProcessedCount > 0) {
+                            hasChanges = true;
+                            for (const finishedJob of finishedJobs) {
+                                const ownerUid = finishedJob.processedBy.uid;
+                                if (!playerUpdates.has(ownerUid)) {
+                                    const playerDoc = await transaction.get(doc(db, "players", ownerUid));
+                                    playerUpdates.set(ownerUid, {
+                                        ref: doc(db, "players", ownerUid),
+                                        data: playerDoc.data(),
+                                        newItems: []
+                                    });
+                                }
+                                playerUpdates.get(ownerUid).newItems.push({ id: finishedJob.outputId, quality: 0 });
+                            }
+                            
+                            factory.queue.splice(0, jobsProcessedCount);
+                            if (factory.queue.length > 0) {
+                                factory.queue[0].startTime = cumulativeTime;
+                            }
+                        }
+                    }
+
+                    if (hasChanges) {
+                        for (const [uid, pData] of playerUpdates.entries()) {
+                            const newStorage = pData.data.storageBin || [];
+                            newStorage.push(...pData.newItems);
+                            transaction.update(pData.ref, { storageBin: newStorage });
+                        }
+                        transaction.update(farmDocRef, { factories: freshFarmState.factories });
+                    }
+                    return freshFarmState.factories;
+                });
                 
-                if (factory.factoryId && factory.queue && factory.queue.length > 0) {
-                    const currentJob = factory.queue[0];
-                    if (!currentJob.startTime) continue;
-
-                    const recipe = GAME_DATA[factory.factoryId].recipes.find(r => r.id === currentJob.recipeId);
-                    const isReady = (Date.now() - currentJob.startTime) >= (recipe.processTime * 1000);
-
-                    if (isReady) {
-                        const finishedJob = factory.queue.shift();
-                        let ownerUid = (finishedJob.processedBy && finishedJob.processedBy.uid) ? finishedJob.processedBy.uid : ADMIN_UID;
-                        
-                        for (let i = 0; i < recipe.output.count; i++) {
-                            factory.outputBin.push({
-                                item: { id: recipe.output.id, quality: 0 },
-                                owner: ownerUid
-                            });
-                        }
-
-                        if (factory.queue.length > 0) {
-                            factory.queue[0].startTime = Date.now();
-                        }
-                        farmStateChanged = true;
-                    }
+                if (hasChanges) {
+                    farmState.factories = updatedFactoryData;
                 }
+
+            } catch (e) {
+                console.error("Offline factory processing transaction failed: ", e);
             }
-            if (farmStateChanged) {
-                await updateFarmState(newFarmState);
-            }
-        }
-
-        async function collectMyFactoryProducts() {
-            if (!farmState || !farmState.factories || !playerState) return;
-
-            const newFarmState = JSON.parse(JSON.stringify(farmState));
-            const newPlayerState = JSON.parse(JSON.stringify(playerState));
-            let farmChanged = false;
-            let playerChanged = false;
-
-            for (const factory of newFarmState.factories) {
-                if (factory.outputBin && factory.outputBin.length > 0) {
-                    const myItems = [];
-                    const otherItems = [];
-                    factory.outputBin.forEach(output => {
-                        if (output.owner === userId) {
-                            myItems.push(output.item);
-                        } else {
-                            otherItems.push(output);
-                        }
-                    });
-
-                    if (myItems.length > 0) {
-                        if (!newPlayerState.storageBin) newPlayerState.storageBin = [];
-                        myItems.forEach(item => newPlayerState.storageBin.push(item));
-                        factory.outputBin = otherItems;
-                        farmChanged = true;
-                        playerChanged = true;
-                    }
-                }
-            }
-
-            if (playerChanged) await updatePlayerState(newPlayerState);
-            if (farmChanged) await updateFarmState(newFarmState);
-        }
+        }  
         
         function upgradeHouse() {
             const newFarmState = { ...farmState };
@@ -2221,7 +2228,50 @@
             alert("การซ่อมแซมเสร็จสิ้น! กรุณารีเฟรชหน้าจอ 1 ครั้งเพื่อดูเควสใหม่");
         }
 		
-async function checkForTimeResets() {
+		async function updateMarketPrices() {
+            if (!farmState) return;
+            const newFarmState = { ...farmState };
+            const newMarketPrices = { ...newFarmState.marketPrices };
+            const salesVolume = newFarmState.salesVolume || {};
+            
+            // --- NEW ECONOMIC PARAMETERS ---
+            const INFLATION_RATE = 0.08; // ราคาจะเพิ่มขึ้น 8% ต่อวันที่ไม่มีคนขาย
+            const VOLATILITY = 0.15;      // แรงกดดันต่อราคาเมื่อมีการขาย (ยิ่งขายเยอะ ยิ่งตกเยอะ)
+
+            for (const itemId in GAME_DATA) {
+                const itemData = GAME_DATA[itemId];
+                if (itemData.type !== 'produce' || !itemData.sellPrice) continue;
+
+                const basePrice = itemData.sellPrice[0];
+                const currentPrice = newMarketPrices[itemId] || basePrice;
+                const soldAmount = salesVolume[itemId] || 0;
+                let newPrice;
+
+                // Scenario 1: มีคนขายของชนิดนี้ ราคาจะลดลง
+                if (soldAmount > 0) {
+                    const pressure = Math.log10(soldAmount + 1);
+                    const reduction = pressure * VOLATILITY;
+                    newPrice = currentPrice * (1 - reduction);
+                } 
+                // Scenario 2: ไม่มีคนขายของชนิดนี้เลย ราคาจะเพิ่มขึ้น
+                else {
+                    newPrice = currentPrice * (1 + INFLATION_RATE);
+                }
+
+                // กำหนดเพดานราคาต่ำสุดและสูงสุด เพื่อไม่ให้ราคาหลุดโลกเกินไป
+                const minPrice = basePrice * 0.2; // ราคาต่ำสุดที่เป็นไปได้ (20% ของราคาปกติ)
+                const maxPrice = basePrice * 3.0; // ราคาสูงสุดที่เป็นไปได้ (300% ของราคาปกติ)
+                
+                newPrice = Math.max(minPrice, Math.min(newPrice, maxPrice));
+                newMarketPrices[itemId] = Math.round(newPrice);
+            }
+            
+            newFarmState.marketPrices = newMarketPrices;
+            newFarmState.salesVolume = {}; // รีเซ็ตยอดขายสำหรับวันถัดไป
+            await updateFarmState(newFarmState);
+        }
+		
+		async function checkForTimeResets() {
             if (!playerState || !farmState) return;
             const now = new Date();
             
@@ -2671,11 +2721,8 @@ async function checkForTimeResets() {
 
             gameLoopInterval = setInterval(renderAll, 2000);
             logicInterval = setInterval(() => {
-                collectMyFactoryProducts();
-                if (userId === ADMIN_UID) {
-                    processFinishedFactoryJobs();
-                }
-            }, 5000); 
+				processFactoryQueuesWithOfflineProgress();
+			}, 15000); // ทุก 15 วินาที ผู้เล่นทุกคนจะช่วยกันเช็คโรงงาน
         }
 
         function initPlayerListeners(uid) {
