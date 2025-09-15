@@ -416,7 +416,7 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        const CLIENT_VERSION = "1.0.6"; // Updated version
+        const CLIENT_VERSION = "1.0.7"; // Updated version
 
         const FARM_GRID_SIZE = 24;
         const ANIMAL_PEN_SIZE = 8;
@@ -451,14 +451,21 @@
                 'milkshake': { resultId: 'milkshake_food', ingredients: [{ id: 'milk' }, { category: 'fruit' }], tool: 'kitchen_blender' },
                 'vegetable_soup': { resultId: 'vegetable_soup_food', ingredients: [{ category: 'vegetable' }, { category: 'vegetable' }], tool: 'kitchen_pot' },
                 'spicy_fish_soup': { resultId: 'spicy_fish_soup_food', ingredients: [{ category: 'fish' }, { id: 'tomato_produce' }], tool: 'kitchen_pot' },
-                
-                // --- NEW RECIPES ---
                 'mango_sticky_rice': { resultId: 'mango_sticky_rice_food', ingredients: [{ id: 'mango_produce' }, { id: 'husked_rice' }], tool: 'kitchen_pot' },
                 'fried_rice': { resultId: 'fried_rice_food', ingredients: [{ id: 'husked_rice' }, { category: 'egg' }], tool: 'kitchen_pan' },
                 'tom_yum_goong': { resultId: 'tom_yum_goong_food', ingredients: [{ id: 'shrimp' }, { id: 'tomato_produce' }, { id: 'chili_produce' }, { id: 'lime_produce' }], tool: 'kitchen_pot' },
                 'sushi': { resultId: 'sushi_food', ingredients: [{ category: 'fish' }, { id: 'husked_rice' }], tool: 'kitchen_knife' },
                 'bread': { resultId: 'bread_food', ingredients: [{ id: 'rice_flour' }], tool: 'kitchen_oven' },
                 'popcorn': { resultId: 'popcorn_food', ingredients: [{ id: 'corn_produce' }], tool: 'kitchen_oven' },
+				'fish_burger_recipe': { resultId: 'fish_burger_food', ingredients: [{ id: 'bread_food' }, { category: 'fish' },{ id: 'tomato_produce' },{ id: 'lime_produce' },{ id: 'egg' },{ id: 'mayonnaise' },{ id: 'chili_produce' },{ id: 'cheese' }], tool: 'kitchen_pan' },
+				'beef_steak_recipe': { resultId: 'beef_steak_food', ingredients: [{ id: 'beef' }], tool: 'kitchen_pan' },
+                'pork_steak_recipe': { resultId: 'pork_steak_food', ingredients: [{ id: 'pig_meat' }], tool: 'kitchen_pan' },
+                'chicken_steak_recipe': { resultId: 'chicken_steak_food', ingredients: [{ id: 'chicken_meat' }], tool: 'kitchen_pan' },
+                'duck_steak_recipe': { resultId: 'duck_steak_food', ingredients: [{ id: 'duck_meat' }], tool: 'kitchen_pan' },
+                'pork_rice_bowl_recipe': { resultId: 'pork_rice_bowl_food', ingredients: [{ id: 'husked_rice' }, { id: 'pig_meat' }], tool: 'kitchen_pan' },
+                'beef_rice_bowl_recipe': { resultId: 'beef_rice_bowl_food', ingredients: [{ id: 'husked_rice' }, { id: 'beef' }], tool: 'kitchen_pan' },
+                'beef_burger_recipe': { resultId: 'beef_burger_food', ingredients: [{ id: 'bread_food' }, { id: 'beef' }, { id: 'tomato_produce' },{ id: 'lime_produce' }, { id: 'egg' }, { id: 'mayonnaise' },{ id: 'chili_produce' }, { id: 'cheese' }], tool: 'kitchen_pan' },
+                'pork_burger_recipe': { resultId: 'pork_burger_food', ingredients: [{ id: 'bread_food' }, { id: 'pig_meat' }, { id: 'tomato_produce' },{ id: 'lime_produce' }, { id: 'egg' }, { id: 'mayonnaise' },{ id: 'chili_produce' }, { id: 'cheese' }], tool: 'kitchen_pan' },
 
             },
             'fried_egg_food': { name: 'ไข่ดาว', icon: '🍳', type: 'produce', sellPrice: [25, 35, 45], energyRestore: 15, imageUrl: 'fried_egg_food.png' },
@@ -472,14 +479,22 @@
             'milkshake_food': { name: 'มิลค์เชค', icon: '🥛', type: 'produce', sellPrice: [100, 125, 150], energyRestore: 40, imageUrl: 'milkshake_food.png' },
             'vegetable_soup_food': { name: 'ซุปผัก', icon: '🥣', type: 'produce', sellPrice: [60, 80, 100], energyRestore: 25, imageUrl: 'vegetable_soup_food.png' },
             'spicy_fish_soup_food': { name: 'ต้มยำปลา', icon: '🌶️', type: 'produce', sellPrice: [180, 220, 260], energyRestore: 50, imageUrl: 'spicy_fish_soup_food.png' },
-            
-            // --- NEW FOOD ITEMS ---
             'mango_sticky_rice_food': { name: 'ข้าวเหนียวมะม่วง', icon: '🥭', type: 'produce', sellPrice: [250, 320, 400], energyRestore: 60, imageUrl: 'mango_sticky_rice.png' },
             'fried_rice_food': { name: 'ข้าวผัด', icon: '볶', type: 'produce', sellPrice: [120, 150, 180], energyRestore: 35, imageUrl: 'fried_rice.png' },
             'tom_yum_goong_food': { name: 'ต้มยำกุ้ง', icon: '🦐', type: 'produce', sellPrice: [800, 1000, 1250], energyRestore: 80, imageUrl: 'tom_yum_goong.png' },
             'sushi_food': { name: 'ซูชิ', icon: '🍣', type: 'produce', sellPrice: [150, 190, 240], energyRestore: 40, imageUrl: 'sushi.png' },
             'bread_food': { name: 'ขนมปัง', icon: '🍞', type: 'produce', sellPrice: [80, 100, 125], energyRestore: 25, imageUrl: 'bread.png' },
             'popcorn_food': { name: 'ป็อปคอร์น', icon: '🍿', type: 'produce', sellPrice: [70, 90, 110], energyRestore: 20, imageUrl: 'popcorn.png' },
+			'popcorn_food': { name: 'ป็อปคอร์น', icon: '🍿', type: 'produce', sellPrice: [70, 90, 110], energyRestore: 20, imageUrl: 'popcorn.png' },
+			'fish_burger_food': { name: 'เบอร์เกอร์ปลา', icon: '🍔', type: 'produce', sellPrice: [1500, 1600, 1650], energyRestore: 100, imageUrl: 'fish_burger.png' },
+			'beef_steak_food': { name: 'สเต๊กเนื้อ', icon: '🥩', type: 'produce', sellPrice: [150, 180, 220], energyRestore: 35, imageUrl: 'beef_steak.png' },
+            'pork_steak_food': { name: 'สเต๊กหมู', icon: '🍖', type: 'produce', sellPrice: [150, 180, 220], energyRestore: 35, imageUrl: 'pork_steak.png' },
+            'chicken_steak_food': { name: 'สเต๊กไก่', icon: '🍗', type: 'produce', sellPrice: [60, 75, 90], energyRestore: 25, imageUrl: 'chicken_steak.png' },
+            'duck_steak_food': { name: 'สเต๊กเป็ด', icon: '🍗', type: 'produce', sellPrice: [65, 80, 100], energyRestore: 25, imageUrl: 'duck_steak.png' },
+            'pork_rice_bowl_food': { name: 'ข้าวหน้าหมู', icon: '🍚', type: 'produce', sellPrice: [180, 220, 260], energyRestore: 40, imageUrl: 'pork_rice_bowl.png' },
+            'beef_rice_bowl_food': { name: 'ข้าวหน้าเนื้อ', icon: '🍚', type: 'produce', sellPrice: [180, 220, 260], energyRestore: 40, imageUrl: 'beef_rice_bowl.png' },
+            'beef_burger_food': { name: 'เบอร์เกอร์เนื้อ', icon: '🍔', type: 'produce', sellPrice: [1700, 2000, 2400], energyRestore: 100, imageUrl: 'beef_burger.png' },
+            'pork_burger_food': { name: 'เบอร์เกอร์หมู', icon: '🍔', type: 'produce', sellPrice: [1700, 2000, 2400], energyRestore: 100, imageUrl: 'pork_burger.png' },
 
             // --- NEW KITCHEN TOOL ---
             'kitchen_knife': { name: 'มีดทำครัว', type: 'kitchen_tool', cost: 1000, icon: '🔪', imageUrl: 'knife.png' },
@@ -544,18 +559,19 @@
             'turtle_deed':  { name: 'กรรมสิทธิ์เต่า', type: 'animal_deed', cost: 1000, animalId: 'turtle', icon: '🐢', imageUrl: 'turtle.png' },
             'turtle':       { name: 'เต่า', type: 'animal_instance', produceTime: 86400, produceId: 'gem', icon: '🐢', imageUrl: 'turtle.png' },
             'gem':          { name: 'อัญมณี', type: 'produce', sellPrice: [200, 300, 500], icon: '💎', imageUrl: 'gem.png', energyRestore: 0 },
-            'winery_deed': { name: 'แบบแปลนโรงหมักไวน์', type: 'factory_deed', cost: 15000, factoryId: 'winery', icon: '🍇', imageUrl: 'winery.png' },
+            'pig_deed': { name: 'กรรมสิทธิ์หมู', type: 'animal_deed', cost: 550, animalId: 'pig', icon: '🐷', imageUrl: 'pig.png' },
+            'pig':      { name: 'หมู', type: 'animal_instance', produceTime: 3600, produceId: 'truffle', icon: '🐷', imageUrl: 'pig.png' },
+            'truffle':      { name: 'ทรัฟเฟิ้ล', type: 'produce', sellPrice: [50, 70, 90], icon: '🍄', imageUrl: 'truffle.png', energyRestore: 10, category: 'truffle' },
+			'chicken_meat': { name: 'เนื้อไก่', icon: '🍗', type: 'produce', sellPrice: [30, 40, 55], energyRestore: 15, imageUrl: 'chicken_meat.png' },
+			'beef': 		{ name: 'เนื้อวัว', icon: '🥩', type: 'produce', sellPrice: [120, 150, 180], energyRestore: 25, imageUrl: 'beef.png' },
+			'pig_meat': 	{ name: 'เนื้อหมู', icon: '🥩', type: 'produce', sellPrice: [120, 75, 85], energyRestore: 25, imageUrl: 'pig_meat.png' },
+			'duck_meat': 	{ name: 'เนื้อเป็ด', icon: '🍗', type: 'produce', sellPrice: [35, 45, 60], energyRestore: 15, imageUrl: 'duck_meat.png' },
+			'winery_deed': { name: 'แบบแปลนโรงหมักไวน์', type: 'factory_deed', cost: 15000, factoryId: 'winery', icon: '🍇', imageUrl: 'winery.png' },
             'cheese_press_deed': { name: 'แบบแปลนโรงทำชีส', type: 'factory_deed', cost: 10000, factoryId: 'cheese_press', icon: '🧀', imageUrl: 'cheese_press.png' },
             'preserves_jar_deed': { name: 'แบบแปลนโรงทำแยม', type: 'factory_deed', cost: 7500, factoryId: 'preserves_jar', icon: '🍓', imageUrl: 'preserves_jar.png' },
             'mayonnaise_machine_deed': { name: 'แบบแปลนเครื่องทำมายองเนส', type: 'factory_deed', cost: 5000, factoryId: 'mayonnaise_machine', icon: '🥚', imageUrl: 'mayonnaise_machine.png' },
-            'winery': {
-                name: 'โรงหมักไวน์', type: 'factory_instance', imageUrl: 'winery.png',
-                recipes: [ { id: 'grape_wine_recipe', name: 'ทำไวน์องุ่น', inputs: [{ id: 'grape_produce', count: 20 }], output: { id: 'grape_wine', count: 1 }, processTime: 7200 } ]
-            },
-            'cheese_press': {
-                name: 'โรงทำชีส', type: 'factory_instance', imageUrl: 'cheese_press.png',
-                recipes: [ { id: 'cheese_recipe', name: 'ทำชีส', inputs: [{ id: 'milk', count: 10 }], output: { id: 'cheese', count: 1 }, processTime: 6000 } ]
-            },
+            'winery': {name: 'โรงหมักไวน์', type: 'factory_instance', imageUrl: 'winery.png',recipes: [ { id: 'grape_wine_recipe', name: 'ทำไวน์องุ่น', inputs: [{ id: 'grape_produce', count: 20 }], output: { id: 'grape_wine', count: 1 }, processTime: 7200 } ]},
+            'cheese_press': {name: 'โรงทำชีส', type: 'factory_instance', imageUrl: 'cheese_press.png',recipes: [ { id: 'cheese_recipe', name: 'ทำชีส', inputs: [{ id: 'milk', count: 10 }], output: { id: 'cheese', count: 1 }, processTime: 6000 } ]},
             'preserves_jar': {
                 name: 'โรงทำแยม', type: 'factory_instance', imageUrl: 'preserves_jar.png',
                 recipes: [
@@ -577,6 +593,17 @@
                     { id: 'duck_mayonnaise_recipe', name: 'ทำมายองเนสไข่เป็ด', inputs: [{ id: 'duck_egg', count: 5 }], output: { id: 'duck_mayonnaise', count: 1 }, processTime: 1200 }
                 ]
             },
+			'meat_processor_deed': { name: 'แบบแปลนโรงแปรรูปเนื้อสัตว์', type: 'factory_deed', cost: 20000, factoryId: 'meat_processor', icon: '🥩', imageUrl: 'meat_processor.png' },
+			'meat_processor': {
+				name: 'โรงแปรรูปเนื้อสัตว์', type: 'factory_instance', imageUrl: 'meat_processor.png',
+				recipes: [
+					// สังเกตว่า inputs คือ 'chicken_deed' ไม่ใช่ไก่ที่มีชีวิต
+					{ id: 'process_chicken', name: 'แปรรูปกรรมสิทธิ์ไก่', inputs: [{ id: 'chicken_deed', count: 1 }], output: { id: 'chicken_meat', count: 5 }, processTime: 3600 },
+					{ id: 'process_cow', name: 'แปรรูปกรรมสิทธิ์วัว', inputs: [{ id: 'cow_deed', count: 1 }], output: { id: 'beef', count: 5 }, processTime: 28800 },
+					{ id: 'process_duck', name: 'แปรรูปกรรมสิทธิ์เป็ด', inputs: [{ id: 'duck_deed', count: 1 }], output: { id: 'duck_meat', count: 5 }, processTime: 3600 },
+					{ id: 'process_pig', name: 'แปรรูปกรรมสิทธิ์หมู', inputs: [{ id: 'pig_deed', count: 1 }], output: { id: 'pig_meat', count: 5 }, processTime: 28800 }
+				]
+			},
             'grape_wine': { name: 'ไวน์องุ่น', type: 'produce', sellPrice: [800, 1200, 1600], icon: '🍷', energyRestore: 20, imageUrl: 'wine.png' },
             'cheese': { name: 'ชีส', type: 'produce', sellPrice: [600, 850, 1100], icon: '🧀', energyRestore: 30, imageUrl: 'cheese.png' },
             'strawberry_jam': { name: 'แยมสตรอว์เบอร์รี', type: 'produce', sellPrice: [450, 550, 650], icon: '🍓', energyRestore: 15, imageUrl: 'jam.png' },
