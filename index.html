@@ -494,7 +494,7 @@
         <button data-view="farm" class="nav-btn flex-1 py-3 text-green-800 font-bold text-lg hover:bg-green-100 transition">ฟาร์ม</button>
         <button data-view="animals" class="nav-btn flex-1 py-3 text-green-800 font-bold text-lg hover:bg-green-100 transition">คอกสัตว์</button>
         <button data-view="shop" class="nav-btn flex-1 py-3 text-green-800 font-bold text-lg hover:bg-green-100 transition">ร้านค้า</button>
-		<button id="map-btn" data-view="map" class="nav-btn flex-1 py-3 text-green-800 font-bold text-lg hover:bg-green-100 transition">🗺️ แผนที่</button>
+		<button id="map-btn" data-view="map" class="nav-btn flex-1 py-3 text-green-800 font-bold text-lg hover:bg-green-100 transition">แผนที่</button>
     </footer>
 
     <script type="module">
@@ -3575,47 +3575,42 @@
         }
 
         function setupControls() {
-            // --- ส่วนที่ 1: ดึง Element ของระบบแผนที่ใหม่ ---
+            // --- ระบบแผนที่ ---
             const mapModal = document.getElementById('map-modal');
             const mapBtn = document.getElementById('map-btn');
             const mapCloseBtn = document.getElementById('map-modal-close');
             const mapLocations = document.querySelectorAll('.map-location-btn');
 
-            // --- ส่วนที่ 2: กำหนด View หลักใหม่ ---
-            const primaryViews = ['farm', 'animals', 'shop', 'map']; // เพิ่ม 'map' เข้าไป
+            // --- กำหนด View หลัก ---
+            const primaryViews = ['farm', 'animals', 'shop', 'map', 'factory'];
             let currentView = 'farm';
 
-            // --- ส่วนที่ 3: อัปเดต Event Listener หลัก ---
+            // --- Event Listener หลักสำหรับการสลับ View ---
             document.addEventListener('click', e => {
                 const target = e.target.closest('[data-view]');
                 if (!target) return;
                 
                 const view = target.dataset.view;
 
-                // ตรรกะพิเศษสำหรับปุ่มแผนที่
                 if (view === 'map') {
                     mapModal.classList.remove('hidden');
-                    return; // หยุดทำงานที่นี่ ไม่ต้องสลับ View หลัก
+                    return;
                 }
 
-                // ถ้ากำลังอยู่ใน Park แล้วกดเปลี่ยน View อื่น
                 if (currentView === 'park' && view !== 'park') {
                     if(userId) leavePark(userId);
                 }
 
-                // สลับ View หลัก (เหมือนเดิม)
                 document.querySelectorAll('#tab-content-area > div').forEach(div => div.classList.add('hidden'));
                 const viewEl = document.getElementById(`${view}-view`);
                 if (viewEl) viewEl.classList.remove('hidden');
                 
-                // ถ้า View ใหม่คือ Park ให้เข้า Park
                 if (view === 'park') {
                     if(userId && playerState) enterPark(userId, playerState);
                 }
                 
                 currentView = view;
 
-                // อัปเดตสไตล์ของปุ่ม Active (ลบ Logic ของ more-btn ออก)
                 document.querySelectorAll('#footer-nav .nav-btn').forEach(b => b.classList.remove('active'));
                 const primaryBtn = document.querySelector(`.nav-btn[data-view="${view}"]`);
                 if (primaryBtn) {
@@ -3623,21 +3618,12 @@
                 }
             });
 
-            // --- ส่วนที่ 4: เพิ่ม Event Listener สำหรับปุ่มบนแผนที่ ---
-            
-            // ปุ่มปิดแผนที่
+            // --- Event Listener ของระบบแผนที่ ---
             mapCloseBtn.onclick = () => mapModal.classList.add('hidden');
-
-            // ปุ่มสถานที่ต่างๆ บนแผนที่ (Fast Travel)
             mapLocations.forEach(button => {
                 button.onclick = () => {
                     const viewToGo = button.dataset.view;
-                    
-                    // ปิดหน้าต่างแผนที่
                     mapModal.classList.add('hidden');
-                    
-                    // สร้าง Event 'click' ปลอมๆ ไปที่ปุ่มของ View นั้นๆ บนแถบเมนูหลัก
-                    // นี่เป็นวิธีที่ง่ายที่สุดในการ Reuse โค้ดสลับ View ที่เรามีอยู่แล้ว
                     const targetNavBtn = document.querySelector(`.nav-btn[data-view="${viewToGo}"]`);
                     if (targetNavBtn) {
                         targetNavBtn.click();
@@ -3645,11 +3631,101 @@
                 };
             });
 
+            // --- Event Listener อื่นๆ ทั้งหมดที่เคยหายไป ---
 
-            // --- โค้ด Event Listener อื่นๆ ที่เหลือ (เหมือนเดิม) ---
             document.querySelector('.nav-btn[data-view="farm"]').classList.add('active');
+            
+            // Modals
             document.getElementById('context-modal-close').onclick = hideContextMenu;
-            // ... และโค้ดอื่นๆ ทั้งหมดที่เคยอยู่ใน setupControls ...
+            document.getElementById('submenu-modal-close').onclick = hideSubMenu;
+            document.getElementById('info-modal-close').onclick = hideInfoModal;
+            document.getElementById('info-modal').onclick = (e) => { if (e.target.id === 'info-modal') hideInfoModal(); };
+            document.getElementById('fish-catch-ok').onclick = () => document.getElementById('fish-catch-modal').classList.add('hidden');
+            
+            // Name Change
+            playerNameEl.onclick = () => showNameModal(false);
+            document.getElementById('cancel-name-btn').onclick = hideNameModal;
+            document.getElementById('save-name-btn').onclick = saveNameChange;
+
+            // Confirmation Modal
+            document.getElementById('confirm-modal-cancel').onclick = hideConfirmationModal;
+
+            // Shop
+            const shopItemsEl = document.getElementById('shop-items');
+            if (shopItemsEl) shopItemsEl.addEventListener('click', (e) => {
+                const button = e.target.closest('.buy-btn');
+                if (button && !button.disabled) {
+                    const itemId = button.dataset.itemid;
+                    const itemData = GAME_DATA[itemId];
+                    const maxAffordable = itemData.cost > 0 ? Math.floor(playerState.money / itemData.cost) : 999;
+                    if (maxAffordable === 0) { alert("เงินไม่พอที่จะซื้อไอเท็มชิ้นนี้"); return; }
+                    const buyAction = (quantityToBuy) => buyItem(itemId, quantityToBuy);
+                    showQuantityModal({ title: `ซื้อ ${itemData.name}`, itemId: itemId, maxQuantity: maxAffordable, onConfirm: buyAction });
+                }
+            });
+
+            // Storage
+            const storageItemsEl = document.getElementById('storage-items');
+            if(storageItemsEl) storageItemsEl.addEventListener('click', e => {
+                const button = e.target.closest('button');
+                if (!button || !button.dataset.itemId) return;
+                const itemId = button.dataset.itemId;
+                const quality = parseInt(button.dataset.quality, 10);
+
+                if (button.classList.contains('sell-storage-btn')) {
+                    const maxQuantity = parseInt(button.dataset.max, 10);
+                    const sellAction = (quantityToSell) => sellFromStorage(itemId, quality, quantityToSell);
+                    showQuantityModal({ title: `ขาย ${GAME_DATA[itemId].name}`, itemId: itemId, quality: quality, maxQuantity: maxQuantity, onConfirm: sellAction });
+                } else if (button.classList.contains('eat-storage-btn')) {
+                    eatFromStorage(itemId, quality);
+                } else if (button.classList.contains('move-to-inventory-btn')) {
+                    const maxQuantity = parseInt(button.dataset.max, 10);
+                    const moveAction = (quantityToMove) => moveFromStorageToInventory(itemId, quality, quantityToMove);
+                    showQuantityModal({ title: `ย้าย ${GAME_DATA[itemId].name}`, itemId: itemId, quality: quality, maxQuantity: maxQuantity, onConfirm: moveAction });
+                }
+            });
+            
+            // Quests
+            ['daily-quests-list', 'weekly-quests-list'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.addEventListener('click', e => {
+                    const button = e.target.closest('.claim-quest-btn');
+                    if (button) claimQuestReward(button.dataset.questType, button.dataset.questId);
+                });
+            });
+
+            // Upgrades & Actions
+            document.getElementById('upgrade-house-btn').onclick = upgradeHouse;
+            document.getElementById('upgrade-rod-btn').onclick = upgradeRod;
+            document.getElementById('fish-btn').onclick = fish;
+            document.getElementById('nap-btn').onclick = takeNap;
+            document.getElementById('rest-btn').onclick = restInPark;
+
+            // Cooking
+            document.getElementById('cook-btn').onclick = showCookingModal;
+            document.getElementById('cooking-modal-close').onclick = hideCookingModal;
+            document.getElementById('cookable-filter-toggle').addEventListener('change', renderRecipeList);
+            const recipeListEl = document.getElementById('recipe-list');
+            if (recipeListEl) recipeListEl.addEventListener('click', e => {
+                const button = e.target.closest('.cook-recipe-btn');
+                if (button && !button.disabled) {
+                    const recipeId = button.dataset.recipeId;
+                    const quantityInput = button.previousElementSibling;
+                    const quantity = parseInt(quantityInput.value, 10);
+                    cook(recipeId, quantity);
+                }
+            });
+
+            // Admin & Reset Buttons
+            const adminResetBtn = document.getElementById('admin-reset-btn');
+            const adminSellBtn = document.getElementById('admin-force-sell-btn');
+            const resetPlayerBtn = document.getElementById('reset-player-btn');
+            if (adminResetBtn) adminResetBtn.onclick = forceResetFarm;
+            if (adminSellBtn) adminSellBtn.onclick = forceSellAllPlayersItems;
+            if (resetPlayerBtn) resetPlayerBtn.onclick = resetPlayerProgress;
+            
+            // Character Creator
+            setupCharacterCreatorControls();
         }
         
         function buyItem(itemId, quantity = 1) {
