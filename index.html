@@ -789,10 +789,12 @@
             const newFarmState = { ...farmState };
             const ingredientQualities = consumedItems.map(item => item.quality);
             
+            // --- ส่วนที่แก้ไข: สร้าง newJob โดยใช้ recipeId ไม่ใช่ recipe object ---
             const newJob = {
-                recipeId: recipeId,
+                recipeId: recipeId, // <--- ใช้ recipeId ที่รับเข้ามาโดยตรง
                 ingredientQualities: ingredientQualities
             };
+            // --- จบส่วนที่แก้ไข ---
 
             if (craftType === 'cook') {
                 newJob.quantity = quantity;
@@ -806,8 +808,7 @@
             } else if (craftType === 'process') {
                 const factoryIndex = selectionSession.factoryIndex;
                 const factory = newFarmState.factories[factoryIndex];
-
-                // --- บรรทัดที่เพิ่มเข้ามา ---
+                
                 newJob.processedBy = { uid: userId, nickname: playerState.nickname };
                 
                 if (!factory.queue) factory.queue = [];
