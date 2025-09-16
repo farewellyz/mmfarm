@@ -789,12 +789,11 @@
             const newFarmState = { ...farmState };
             const ingredientQualities = consumedItems.map(item => item.quality);
             
-            // --- ส่วนที่แก้ไข: สร้าง newJob โดยใช้ recipeId ไม่ใช่ recipe object ---
+            // --- ส่วนที่แก้ไข: สร้าง newJob พื้นฐานก่อน ---
             const newJob = {
-                recipeId: recipeId, // <--- ใช้ recipeId ที่รับเข้ามาโดยตรง
+                recipeId: recipeId,
                 ingredientQualities: ingredientQualities
             };
-            // --- จบส่วนที่แก้ไข ---
 
             if (craftType === 'cook') {
                 newJob.quantity = quantity;
@@ -802,10 +801,11 @@
                 newJob.cookedBy = { uid: userId, nickname: playerState.nickname };
 
                 if (!newFarmState.kitchen) newFarmState.kitchen = { queue: [] };
-                newFarmState.kitchen.queue.push(newJob);
+                newFarm-State.kitchen.queue.push(newJob);
                 updateQuestProgress('cook', quantity);
 
             } else if (craftType === 'process') {
+                // --- ส่วนที่แก้ไข: เพิ่มข้อมูลที่ถูกต้องสำหรับโรงงาน ---
                 const factoryIndex = selectionSession.factoryIndex;
                 const factory = newFarmState.factories[factoryIndex];
                 
@@ -2778,8 +2778,8 @@
                         if (!factory.outputBin) factory.outputBin = [];
                         
                         const currentJob = factory.queue[0];
-                        const recipe = findRecipeById(currentJob.recipeId); // ใช้ findRecipeById ที่ดีกว่า
-                        if (!recipe) continue; // ข้ามถ้าหาสูตรไม่เจอ
+                        const recipe = findRecipeById(currentJob.recipeId);
+                        if (!recipe) continue;
                         
                         const completionTime = currentJob.startTime + (recipe.processTime * 1000);
 
@@ -2787,6 +2787,9 @@
                             hasChanges = true;
                             const finishedJob = factory.queue.shift(); 
                             
+                            // <--- วางบรรทัดสำหรับ Debug ไว้ตรงนี้ ---
+                            console.log("Processing Job:", finishedJob);
+
                             let outputQuality = 0;
 
                             if (factory.factoryId === 'meat_processor') {
@@ -2805,13 +2808,11 @@
                             const outputCount = recipe.output.count || 1;
                             for (let i = 0; i < outputCount; i++) {
                                 if (factory.outputBin.length < MAX_OUTPUT_BIN_SIZE) {
-                                    // --- ส่วนที่แก้ไข: เพิ่ม ?. และ || เพื่อป้องกัน Error จากข้อมูลเก่า ---
                                     factory.outputBin.push({
                                         item: { id: recipe.output.id, quality: outputQuality },
-                                        owner: finishedJob.processedBy?.uid || 'unknown', // ถ้าไม่มี uid ให้เป็น 'unknown'
-                                        ownerNickname: finishedJob.processedBy?.nickname || '??' // ถ้าไม่มี nickname ให้เป็น '??'
+                                        owner: finishedJob.processedBy?.uid || 'unknown',
+                                        ownerNickname: finishedJob.processedBy?.nickname || '??'
                                     });
-                                    // --- จบส่วนที่แก้ไข ---
                                 } else {
                                     break;
                                 }
