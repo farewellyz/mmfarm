@@ -2480,9 +2480,7 @@
             const newPlayerState = { ...playerState };
             const factory = newFarmState.factories[slotIndex];
 
-            if (!factory.queue) factory.queue = [];
-
-            if (factory.queue.length >= 5) {
+            if ((factory.queue?.length || 0) >= 5) {
                 alert("คิวการผลิตเต็มแล้ว!");
                 return;
             }
@@ -2490,40 +2488,42 @@
             const factoryData = GAME_DATA[factory.factoryId];
             const recipe = factoryData.recipes.find(r => r.id === recipeId);
             
-            const storageCounts = newPlayerState.storageBin.reduce((acc, item) => {
-                acc[item.id] = (acc[item.id] || 0) + 1;
-                return acc;
-            }, {});
-
+            // --- ส่วนที่แก้ไข: เปลี่ยนวิธีตรวจสอบและลบวัตถุดิบ ---
+            const tempStorageBin = [...newPlayerState.storageBin];
+            const ingredientsUsed = [];
             let canProcess = true;
+
             for (const input of recipe.inputs) {
-                if ((storageCounts[input.id] || 0) < input.count) {
-                    canProcess = false;
-                    break;
+                const itemsNeeded = [];
+                // หาไอเท็มที่ตรงกันจากในคลังชั่วคราว
+                for (let i = 0; i < input.count; i++) {
+                    const foundIndex = tempStorageBin.findIndex(item => item.id === input.id);
+                    if (foundIndex > -1) {
+                        itemsNeeded.push(tempStorageBin.splice(foundIndex, 1)[0]);
+                    } else {
+                        canProcess = false;
+                        break;
+                    }
                 }
+                if (!canProcess) break;
+                ingredientsUsed.push(...itemsNeeded);
             }
 
             if (canProcess) {
-                for (const input of recipe.inputs) {
-                    let countToRemove = input.count;
-                    newPlayerState.storageBin = newPlayerState.storageBin.filter(item => {
-                        if (item.id === input.id && countToRemove > 0) {
-                            countToRemove--;
-                            return false;
-                        }
-                        return true;
-                    });
-                }
+                // อัปเดตคลังจริงด้วยคลังชั่วคราวที่ถูกตัดของออกไปแล้ว
+                newPlayerState.storageBin = tempStorageBin;
 
                 const newJob = { 
                     recipeId: recipeId,
-                    processedBy: { uid: userId, nickname: playerState.nickname }
+                    processedBy: { uid: userId, nickname: playerState.nickname },
+                    // จดจำคุณภาพของวัตถุดิบที่ใช้ไป
+                    ingredientQualities: ingredientsUsed.map(item => item.quality)
                 };
 
+                if (!factory.queue) factory.queue = [];
                 if (factory.queue.length === 0) {
                     newJob.startTime = Date.now();
                 }
-
                 factory.queue.push(newJob);
                 
                 updateFarmState(newFarmState);
@@ -2556,23 +2556,42 @@
                         const recipe = GAME_DATA[factory.factoryId].recipes.find(r => r.id === currentJob.recipeId);
                         const completionTime = currentJob.startTime + (recipe.processTime * 1000);
 
-                        // ตรวจสอบว่าผลิตเสร็จแล้ว และชั้นวางของยังไม่เต็ม
                         if (now >= completionTime && factory.outputBin.length < MAX_OUTPUT_BIN_SIZE) {
                             hasChanges = true;
                             const finishedJob = factory.queue.shift(); 
                             
-                            // --- ส่วนที่แก้ไข: เพิ่มลูปเพื่อสร้างผลผลิตตามจำนวนที่กำหนด ---
-                            const outputCount = recipe.output.count || 1; // ดึงจำนวนผลผลิต, ถ้าไม่มีให้เป็น 1
+                            // --- ส่วนที่แก้ไข: เพิ่ม Logic การสุ่มคุณภาพสำหรับโรงแปรรูปเนื้อสัตว์ ---
+                            let outputQuality = 0; // กำหนดคุณภาพเริ่มต้นเป็น 0
+
+                            if (factory.factoryId === 'meat_processor') {
+                                // ถ้าเป็นโรงแปรรูปเนื้อสัตว์ ให้สุ่มคุณภาพ
+                                const rand = Math.random();
+                                if (rand < 0.1) { // 10%
+                                    outputQuality = 2;
+                                } else if (rand < 0.4) { // 30% (0.1 + 0.3)
+                                    outputQuality = 1;
+                                } else { // 60% ที่เหลือ
+                                    outputQuality = 0;
+                                }
+                            } else {
+                                // --- Logic เดิม: สำหรับโรงงานอื่นๆ ทั้งหมด ---
+                                const qualities = finishedJob.ingredientQualities || [];
+                                if (qualities.length > 0) {
+                                    const sum = qualities.reduce((a, b) => a + b, 0);
+                                    outputQuality = Math.floor(sum / qualities.length);
+                                }
+                            }
+                            
+                            const outputCount = recipe.output.count || 1;
                             for (let i = 0; i < outputCount; i++) {
-                                // เช็คอีกครั้งว่าชั้นวางเต็มหรือยังก่อนจะเพิ่มของชิ้นต่อไป
                                 if (factory.outputBin.length < MAX_OUTPUT_BIN_SIZE) {
                                     factory.outputBin.push({
-                                        item: { id: recipe.output.id, quality: 0 },
+                                        item: { id: recipe.output.id, quality: outputQuality }, // ใช้ outputQuality ที่ได้
                                         owner: finishedJob.processedBy.uid,
                                         ownerNickname: finishedJob.processedBy.nickname
                                     });
                                 } else {
-                                    break; // ถ้าชั้นวางเต็มระหว่างเพิ่มของ ให้หยุดลูป
+                                    break;
                                 }
                             }
                             // --- จบส่วนที่แก้ไข ---
@@ -3047,37 +3066,50 @@
         function cook(recipeId, quantity) {
             const recipe = GAME_DATA.recipes[recipeId];
             if (!recipe || !farmState.ownedKitchenTools.includes(recipe.tool) || quantity <= 0) return;
+
             const newPlayerState = { ...playerState };
+            
+            // --- ส่วนที่แก้ไข: เปลี่ยนวิธีตรวจสอบและลบวัตถุดิบ ---
+            const tempStorageBin = [...newPlayerState.storageBin];
+            const ingredientsUsed = [];
             let canCook = true;
-            const tempStorageCounts = [...newPlayerState.storageBin].reduce((acc, item) => {
-                const itemData = GAME_DATA[item.id];
-                acc[item.id] = (acc[item.id] || 0) + 1;
-                if (itemData.category) { acc[`category_${itemData.category}`] = (acc[`category_${itemData.category}`] || 0) + 1; }
-                return acc;
-            }, {});
-            for (const ingredient of recipe.ingredients) {
-                 const requiredCount = (ingredient.count || 1) * quantity;
-                 const key = ingredient.id ? ingredient.id : `category_${ingredient.category}`;
-                 if ((tempStorageCounts[key] || 0) < requiredCount) {
-                    canCook = false;
-                    break;
-                 }
-            }
-            if (canCook) {
-                for (let i = 0; i < quantity; i++) {
-                    for (const ingredient of recipe.ingredients) {
-                        const foundIndex = newPlayerState.storageBin.findIndex(item => item.id === ingredient.id || GAME_DATA[item.id]?.category === ingredient.category);
-                        if (foundIndex > -1) newPlayerState.storageBin.splice(foundIndex, 1);
+
+            for (let i = 0; i < quantity; i++) {
+                for (const ingredient of recipe.ingredients) {
+                    const requiredKey = ingredient.id ? 'id' : 'category';
+                    const requiredValue = ingredient.id || ingredient.category;
+                    
+                    const foundIndex = tempStorageBin.findIndex(item => {
+                        const itemData = GAME_DATA[item.id];
+                        return requiredKey === 'id' ? item.id === requiredValue : itemData?.category === requiredValue;
+                    });
+
+                    if (foundIndex > -1) {
+                        ingredientsUsed.push(tempStorageBin.splice(foundIndex, 1)[0]);
+                    } else {
+                        canCook = false;
+                        break;
                     }
                 }
+                if (!canCook) break;
+            }
+            // --- จบส่วนที่แก้ไข ---
+
+            if (canCook) {
+                newPlayerState.storageBin = tempStorageBin; // อัปเดตคลังด้วยของที่เหลือ
+
                 const newFarmState = { ...farmState };
                 if (!newFarmState.kitchen) newFarmState.kitchen = { queue: [] };
+                
                 newFarmState.kitchen.queue.push({
                     recipeId: recipeId,
                     quantity: quantity,
                     startTime: Date.now(),
-                    cookedBy: { uid: userId, nickname: playerState.nickname }
+                    cookedBy: { uid: userId, nickname: playerState.nickname },
+                    // จดจำคุณภาพของวัตถุดิบที่ใช้ไป
+                    ingredientQualities: ingredientsUsed.map(item => item.quality) 
                 });
+
                 updatePlayerState(newPlayerState);
                 updateFarmState(newFarmState);
                 hideCookingModal();
@@ -3091,11 +3123,26 @@
             const newFarmState = JSON.parse(JSON.stringify(farmState));
             const newPlayerState = JSON.parse(JSON.stringify(playerState));
             if (!newFarmState.kitchen.queue[queueIndex]) return; 
+            
             const job = newFarmState.kitchen.queue[queueIndex];
             const recipe = GAME_DATA.recipes[job.recipeId];
-            for (let i = 0; i < job.quantity; i++) {
-                newPlayerState.storageBin.push({ id: recipe.resultId, quality: 0 });
+
+            // --- ส่วนที่แก้ไข: คำนวณคุณภาพจากวัตถุดิบ ---
+            const qualities = job.ingredientQualities || [];
+            let averageQuality = 0;
+            if (qualities.length > 0) {
+                const totalIngredientsPerDish = recipe.ingredients.length;
+                const totalQualitySum = qualities.reduce((a, b) => a + b, 0);
+                // ค่าเฉลี่ย = ผลรวมคุณภาพทั้งหมด / (จำนวนจาน * จำนวนวัตถุดิบต่อจาน)
+                averageQuality = Math.floor(totalQualitySum / (job.quantity * totalIngredientsPerDish));
             }
+            // --- จบส่วนที่แก้ไข ---
+            
+            for (let i = 0; i < job.quantity; i++) {
+                // ใช้ averageQuality ที่คำนวณได้
+                newPlayerState.storageBin.push({ id: recipe.resultId, quality: averageQuality });
+            }
+
             newFarmState.kitchen.queue.splice(queueIndex, 1);
             updateFarmState(newFarmState);
             updatePlayerState(newPlayerState);
