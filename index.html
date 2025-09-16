@@ -257,8 +257,14 @@
         <div id="cooking-modal" class="hidden fixed inset-0 bg-black/60 z-[52] flex items-center justify-center p-4">
             <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-lg modal-enter">
                 <h2 class="text-2xl font-bold text-gray-800 mb-4 text-center">ตำราอาหาร 📖</h2>
-                <div id="recipe-list" class="max-h-[60vh] overflow-y-auto space-y-3">
+                <div class="flex items-center justify-center mb-4">
+                    <input type="checkbox" id="cookable-filter-toggle" class="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500">
+                    <label for="cookable-filter-toggle" class="ml-2 block text-sm text-gray-900">
+                        แสดงเฉพาะสูตรที่ทำได้
+                    </label>
                 </div>
+                <div id="recipe-list" class="max-h-[60vh] overflow-y-auto space-y-3">
+                    </div>
                  <button id="cooking-modal-close" class="mt-4 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg w-full">ปิด</button>
             </div>
         </div>
@@ -480,7 +486,7 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        const CLIENT_VERSION = "1.0.9"; // Updated version
+        const CLIENT_VERSION = "1.0.10"; // Updated version
 
         const FARM_GRID_SIZE = 24;
         const ANIMAL_PEN_SIZE = 8;
@@ -815,7 +821,7 @@
 					{ id: 'process_chicken', name: 'แปรรูปเนื้อไก่', inputs: [{ id: 'chicken_deed', count: 1 }], output: { id: 'chicken_meat', count: 5 }, processTime: 3600 },
 					{ id: 'process_cow', name: 'แปรรูปเนื้อวัว', inputs: [{ id: 'cow_deed', count: 1 }], output: { id: 'beef', count: 5 }, processTime: 3600 },
 					{ id: 'process_duck', name: 'แปรรูปเนื้อเป็ด', inputs: [{ id: 'duck_deed', count: 1 }], output: { id: 'duck_meat', count: 5 }, processTime: 3600 },
-					{ id: 'process_pig', name: 'แปรรูปเนื่อหมู', inputs: [{ id: 'pig_deed', count: 1 }], output: { id: 'pig_meat', count: 5 }, processTime: 3600 }
+					{ id: 'process_pig', name: 'แปรรูปเนื้อหมู', inputs: [{ id: 'pig_deed', count: 1 }], output: { id: 'pig_meat', count: 5 }, processTime: 3600 }
 				]
 			},
 			'smokehouse': {
@@ -1691,6 +1697,7 @@
                             <span>${itemData.name}</span>
                             <span class="quality-star">${'★'.repeat(item.quality)}</span>
                             <span class="text-gray-600 text-sm ml-2">x${item.count}</span>
+                            <p class="text-xs text-yellow-700 font-semibold">ราคา: ${itemData.sellPrice ? itemData.sellPrice[item.quality] : 0}💰</p>
                         </div>
                     </div>
                     <div class="flex gap-1">
@@ -2014,13 +2021,23 @@
             modal.classList.add('modal-enter');
         }
         
-        function showQuantityModal(itemId, quality, maxQuantity, onConfirm) {
+        function showQuantityModal({ title, itemId, quality = 0, maxQuantity, onConfirm }) {
             const modal = document.getElementById('quantity-modal');
             const itemData = GAME_DATA[itemId];
 
+            // ตั้งค่า Title ของ Modal
+            document.getElementById('quantity-modal-title').textContent = title;
+
             // แสดงข้อมูลไอเท็ม
             document.getElementById('quantity-modal-name').textContent = itemData.name;
-            document.getElementById('quantity-modal-quality').textContent = `คุณภาพ: ${'★'.repeat(quality)}`;
+            const qualityEl = document.getElementById('quantity-modal-quality');
+            if (quality > 0) {
+                qualityEl.textContent = `คุณภาพ: ${'★'.repeat(quality)}`;
+                qualityEl.classList.remove('hidden');
+            } else {
+                qualityEl.classList.add('hidden');
+            }
+
             const iconEl = document.getElementById('quantity-modal-icon');
             iconEl.style.backgroundImage = itemData.imageUrl ? `url('${itemData.imageUrl}')` : 'none';
             iconEl.textContent = itemData.imageUrl ? '' : itemData.icon;
@@ -2030,32 +2047,52 @@
             const input = document.getElementById('quantity-modal-input');
             const maxBtn = document.getElementById('quantity-modal-max-btn');
             
-            slider.max = maxQuantity;
-            input.max = maxQuantity;
+            const effectiveMax = maxQuantity > 0 ? maxQuantity : 1;
+            slider.max = effectiveMax;
+            input.max = effectiveMax;
             slider.value = 1;
             input.value = 1;
 
+            if (maxQuantity === 0) {
+                slider.disabled = true;
+                input.disabled = true;
+            } else {
+                slider.disabled = false;
+                input.disabled = false;
+            }
+
             // ทำให้ slider กับ input เชื่อมกัน
             slider.oninput = () => input.value = slider.value;
-            input.oninput = () => slider.value = input.value;
+            input.oninput = () => {
+                if (parseInt(input.value) > effectiveMax) input.value = effectiveMax;
+                if (parseInt(input.value) < 1) input.value = 1;
+                slider.value = input.value;
+            };
             maxBtn.onclick = () => {
-                input.value = maxQuantity;
-                slider.value = maxQuantity;
+                input.value = effectiveMax;
+                slider.value = effectiveMax;
             };
 
             // ตั้งค่าปุ่ม
             document.getElementById('quantity-modal-cancel').onclick = hideQuantityModal;
             
             const okButton = document.getElementById('quantity-modal-ok');
-            const newOkButton = okButton.cloneNode(true); // สร้างปุ่มใหม่เพื่อล้าง event เก่า
+            const newOkButton = okButton.cloneNode(true);
             okButton.parentNode.replaceChild(newOkButton, okButton);
-            newOkButton.addEventListener('click', () => {
-                const quantity = parseInt(input.value, 10);
-                if (quantity > 0 && quantity <= maxQuantity) {
-                    onConfirm(quantity);
-                    hideQuantityModal();
-                }
-            });
+
+            if (maxQuantity > 0) {
+                newOkButton.disabled = false;
+                newOkButton.addEventListener('click', () => {
+                    const quantity = parseInt(input.value, 10);
+                    if (quantity > 0 && quantity <= maxQuantity) {
+                        onConfirm(quantity);
+                        hideQuantityModal();
+                    }
+                });
+            } else {
+                newOkButton.disabled = true;
+            }
+
 
             // แสดง Modal
             modal.classList.remove('hidden', 'modal-leave');
@@ -2169,16 +2206,40 @@
             container.innerHTML = '';
             if(!farmState.ownedKitchenTools) farmState.ownedKitchenTools = [];
             
+            const isFilterActive = document.getElementById('cookable-filter-toggle').checked;
+            
+            // --- ส่วนที่แก้ไข: เพิ่มการตรวจสอบว่ามี itemData จริงๆ ---
             const storageCounts = playerState.storageBin.reduce((acc, item) => {
                 const itemData = GAME_DATA[item.id];
-                acc[item.id] = (acc[item.id] || 0) + 1;
-                if (itemData.category) {
-                     acc[`category_${itemData.category}`] = (acc[`category_${itemData.category}`] || 0) + 1;
+                if (itemData) { // เพิ่มเงื่อนไขนี้เข้ามา
+                    acc[item.id] = (acc[item.id] || 0) + 1;
+                    if (itemData.category) {
+                         acc[`category_${itemData.category}`] = (acc[`category_${itemData.category}`] || 0) + 1;
+                    }
                 }
                 return acc;
             }, {});
+            // --- จบส่วนที่แก้ไข ---
 
-            Object.entries(GAME_DATA.recipes).forEach(([recipeId, recipeData]) => {
+            let recipesToRender = Object.entries(GAME_DATA.recipes);
+
+            if (isFilterActive) {
+                recipesToRender = recipesToRender.filter(([recipeId, recipeData]) => {
+                    if (!farmState.ownedKitchenTools.includes(recipeData.tool)) {
+                        return false;
+                    }
+                    for (const ingredient of recipeData.ingredients) {
+                        const requiredCount = ingredient.count || 1;
+                        const key = ingredient.id ? ingredient.id : `category_${ingredient.category}`;
+                        if ((storageCounts[key] || 0) < requiredCount) {
+                            return false;
+                        }
+                    }
+                    return true;
+                });
+            }
+
+            recipesToRender.forEach(([recipeId, recipeData]) => {
                 const resultData = GAME_DATA[recipeData.resultId];
                 const recipeEl = document.createElement('div');
                 recipeEl.className = 'bg-gray-50 p-3 rounded-lg flex items-center gap-4';
@@ -2199,8 +2260,8 @@
                     ingredientChecks.push(Math.floor(hasCount / requiredCount));
                     
                     const name = ingredient.id ? GAME_DATA[ingredient.id].name : `ประเภท: ${ingredient.category}`;
-                    const icon = ingredient.id ? GAME_DATA[ingredient.id].icon : {egg:'🥚',fish:'🐟',fruit:'🍓',vegetable:'🥕',milk:'🥛'}[ingredient.category];
-                    ingredientsHTML += `<span class="text-sm ${hasCount > 0 ? 'text-green-600' : 'text-red-500'}">${icon} ${name}</span>`;
+                    const icon = ingredient.id ? GAME_DATA[ingredient.id].icon : {egg:'🥚',fish:'🐟',fruit:'🍓',vegetable:'🥕',milk:'🥛',jam:'🧁'}[ingredient.category];
+                    ingredientsHTML += `<span class="text-sm ${hasCount >= requiredCount ? 'text-green-600' : 'text-red-500'}">${icon} ${name}</span>`;
                 }
                 
                 maxCookable = ingredientChecks.length > 0 ? Math.min(...ingredientChecks, maxCookable) : 0;
@@ -2213,12 +2274,16 @@
                         <p class="text-xs text-gray-500">อุปกรณ์: ${toolHTML}</p>
                     </div>
                     <div class="flex flex-col items-center gap-1">
-                        <input type="number" value="1" min="1" max="${maxCookable}" class="w-20 text-center border rounded-md p-1 recipe-quantity-input" ${maxCookable === 0 ? 'disabled' : ''}>
+                        <input type="number" value="1" min="1" max="${maxCookable > 0 ? maxCookable : 1}" class="w-20 text-center border rounded-md p-1 recipe-quantity-input" ${maxCookable === 0 ? 'disabled' : ''}>
                         <button class="cook-recipe-btn bg-orange-500 text-white font-bold py-1 px-4 rounded-lg hover:bg-orange-600 disabled:bg-gray-400 text-sm" data-recipe-id="${recipeId}" ${maxCookable === 0 ? 'disabled' : ''}>ทำ</button>
                     </div>
                 `;
                 container.appendChild(recipeEl);
             });
+
+            if (recipesToRender.length === 0 && isFilterActive) {
+                container.innerHTML = `<p class="text-center text-gray-500">ไม่มีสูตรอาหารที่สามารถทำได้ในขณะนี้</p>`;
+            }
         }
         
         function plant(plotIndex, seedId) {
@@ -3325,13 +3390,38 @@
 
             const shopItemsEl = document.getElementById('shop-items');
             if (shopItemsEl) shopItemsEl.addEventListener('click', (e) => {
-                if (e.target.classList.contains('buy-btn')) buyItem(e.target.dataset.itemid);
+                const button = e.target.closest('.buy-btn');
+                if (button && !button.disabled) {
+                    const itemId = button.dataset.itemid;
+                    const itemData = GAME_DATA[itemId];
+                    
+                    // คำนวณจำนวนสูงสุดที่สามารถซื้อได้จากเงินที่มี
+                    const maxAffordable = itemData.cost > 0 ? Math.floor(playerState.money / itemData.cost) : 999;
+
+                    if (maxAffordable === 0) {
+                        alert("เงินไม่พอที่จะซื้อไอเท็มชิ้นนี้");
+                        return;
+                    }
+
+                    // สร้าง Action ที่จะทำงานเมื่อกดยืนยัน
+                    const buyAction = (quantityToBuy) => {
+                        buyItem(itemId, quantityToBuy);
+                    };
+                    
+                    // เรียกใช้งาน Modal
+                    showQuantityModal({
+                        title: `ซื้อ ${itemData.name}`,
+                        itemId: itemId,
+                        maxQuantity: maxAffordable,
+                        onConfirm: buyAction
+                    });
+                }
             });
 
             const storageItemsEl = document.getElementById('storage-items');
             if(storageItemsEl) storageItemsEl.addEventListener('click', e => {
-                const button = e.target;
-                if (!button.dataset.itemId) return; // ถ้าไม่ใช่ปุ่มที่มีข้อมูลไอเท็ม ให้หยุด
+                const button = e.target.closest('button'); // <--- แก้ไขจุดนี้
+                if (!button || !button.dataset.itemId) return; // <--- เพิ่มการตรวจสอบให้รัดกุมขึ้น
 
                 const itemId = button.dataset.itemId;
                 const quality = parseInt(button.dataset.quality, 10);
@@ -3341,7 +3431,13 @@
                     const sellAction = (quantityToSell) => {
                         sellFromStorage(itemId, quality, quantityToSell);
                     };
-                    showQuantityModal(itemId, quality, maxQuantity, sellAction);
+                    showQuantityModal({
+                        title: `ขาย ${GAME_DATA[itemId].name}`,
+                        itemId: itemId,
+                        quality: quality,
+                        maxQuantity: maxQuantity,
+                        onConfirm: sellAction
+                    });
                 } 
                 else if (button.classList.contains('eat-storage-btn')) {
                     eatFromStorage(itemId, quality);
@@ -3383,6 +3479,8 @@
             document.getElementById('fish-catch-ok').onclick = () => document.getElementById('fish-catch-modal').classList.add('hidden');
             document.getElementById('cook-btn').onclick = showCookingModal;
             document.getElementById('cooking-modal-close').onclick = hideCookingModal;
+            document.getElementById('cookable-filter-toggle').addEventListener('change', renderRecipeList);
+            document.getElementById('rest-btn').onclick = restInPark;
             document.getElementById('rest-btn').onclick = restInPark;
 			document.getElementById('nap-btn').onclick = takeNap;
             playerNameEl.onclick = () => showNameModal(false);
@@ -3425,11 +3523,13 @@
             };
         }
         
-        function buyItem(itemId) {
+        function buyItem(itemId, quantity = 1) {
             const itemData = GAME_DATA[itemId];
-            if (playerState.money >= itemData.cost) {
+            const totalCost = itemData.cost * quantity;
+
+            if (playerState.money >= totalCost) {
                 const newPlayerState = { ...playerState };
-                newPlayerState.money -= itemData.cost;
+                newPlayerState.money -= totalCost;
                 
                 if (itemData.type === 'kitchen_tool') {
                     const newFarmState = { ...farmState };
@@ -3439,21 +3539,24 @@
                         updateFarmState(newFarmState);
                     }
                 } else if (itemData.type === 'animal_deed' || itemData.type === 'factory_deed') {
-                    // ถ้าเป็น Deed ให้ส่งไปที่คลังเก็บของ
                     if (!newPlayerState.storageBin) newPlayerState.storageBin = [];
-                    newPlayerState.storageBin.push({ id: itemId, quality: 0 });
+                    for (let i = 0; i < quantity; i++) {
+                        newPlayerState.storageBin.push({ id: itemId, quality: 0 });
+                    }
                 } else {
-                   newPlayerState.inventory[itemId] = (newPlayerState.inventory[itemId] || 0) + 1;
+                   newPlayerState.inventory[itemId] = (newPlayerState.inventory[itemId] || 0) + quantity;
                 }
                 
-                updateQuestProgress('buy_item');
-                updateQuestProgress('spend_money', itemData.cost);
-                if (itemData.type === 'seed') updateQuestProgress('buy_seed');
-                if (itemData.type === 'item' && itemId.includes('fertilizer')) updateQuestProgress('buy_fertilizer');
-                if (itemData.type === 'animal_deed') updateQuestProgress('buy_animal');
-                if (itemData.type === 'kitchen_tool' || itemData.type === 'factory_deed') updateQuestProgress('buy_tool');
+                updateQuestProgress('buy_item', quantity);
+                updateQuestProgress('spend_money', totalCost);
+                if (itemData.type === 'seed') updateQuestProgress('buy_seed', quantity);
+                if (itemData.type === 'item' && itemId.includes('fertilizer')) updateQuestProgress('buy_fertilizer', quantity);
+                if (itemData.type === 'animal_deed') updateQuestProgress('buy_animal', quantity);
+                if (itemData.type === 'kitchen_tool' || itemData.type === 'factory_deed') updateQuestProgress('buy_tool', quantity);
 
                 updatePlayerState(newPlayerState);
+            } else {
+                alert("เงินไม่พอ!");
             }
         }
 
