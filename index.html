@@ -154,7 +154,20 @@
                 <button id="info-modal-close" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg w-full">เข้าใจแล้ว</button>
             </div>
         </div>
-                <div id="quantity-modal" class="hidden fixed inset-0 bg-black/50 z-[53] flex items-center justify-center p-4">
+        <div id="ingredient-selector-modal" class="hidden fixed inset-0 bg-black/60 z-[54] flex items-center justify-center p-4">
+            <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md modal-enter">
+                <h2 id="ingredient-selector-title" class="text-2xl font-bold text-gray-800 mb-4 text-center">เลือกวัตถุดิบ</h2>
+                
+                <div id="ingredient-requirements-list" class="space-y-3 mb-4">
+                    </div>
+                
+                <div class="mt-6 flex justify-end gap-3">
+                    <button id="ingredient-selector-cancel" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg">ยกเลิก</button>
+                    <button id="ingredient-selector-confirm" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg" disabled>ยืนยัน</button>
+                </div>
+            </div>
+        </div>       
+        <div id="quantity-modal" class="hidden fixed inset-0 bg-black/50 z-[53] flex items-center justify-center p-4">
             <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm modal-enter">
                 <h2 id="quantity-modal-title" class="text-2xl font-bold text-gray-800 mb-4">ระบุจำนวน</h2>
                 <div class="flex items-center gap-4 mb-4">
@@ -486,7 +499,7 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        const CLIENT_VERSION = "1.0.10"; // Updated version
+        const CLIENT_VERSION = "1.0.11"; // Updated version
 
         const FARM_GRID_SIZE = 24;
         const ANIMAL_PEN_SIZE = 8;
@@ -581,6 +594,210 @@
                 }
             };
         }
+        // --- START NEW INGREDIENT SELECTION SYSTEM ---
+        let selectionSession = null;
+
+        // --- START NEW HELPER FUNCTION ---
+        function findRecipeById(recipeId) {
+            // 1. ค้นหาในสูตรทำอาหารก่อน
+            if (GAME_DATA.recipes[recipeId]) {
+                return GAME_DATA.recipes[recipeId];
+            }
+
+            // 2. ถ้าไม่เจอ ให้ค้นหาในโรงงานทั้งหมด
+            for (const key in GAME_DATA) {
+                const itemData = GAME_DATA[key];
+                if (itemData.type === 'factory_instance' && Array.isArray(itemData.recipes)) {
+                    const foundRecipe = itemData.recipes.find(r => r.id === recipeId);
+                    if (foundRecipe) {
+                        return foundRecipe;
+                    }
+                }
+            }
+            
+            // 3. ถ้าไม่เจอเลย ให้ trả về null
+            return null;
+        }
+        // --- END NEW HELPER FUNCTION ---
+
+        function showIngredientSelector(recipeId, quantity, onConfirmCallback) {
+            // --- ส่วนที่แก้ไข: ใช้ findRecipeById ในการค้นหาสูตร ---
+            const recipe = findRecipeById(recipeId);
+            if (!recipe) {
+                console.error(`[Admin Debug] ไม่สามารถหาสูตรสำหรับ ID: ${recipeId}`);
+                return; // หยุดทำงานถ้าหาสูตรไม่เจอ
+            }
+            // --- จบส่วนที่แก้ไข ---
+            
+            selectionSession = {
+                recipe: recipe,
+                quantity: quantity,
+                onConfirm: onConfirmCallback,
+                selectedItems: {},
+            };
+
+            const modal = document.getElementById('ingredient-selector-modal');
+            const titleEl = document.getElementById('ingredient-selector-title');
+            
+            const resultItem = GAME_DATA[recipe.resultId];
+            titleEl.textContent = `ทำ ${resultItem.name} x${quantity}`;
+            
+            renderIngredientSelectorUI();
+            
+            document.getElementById('ingredient-selector-cancel').onclick = hideIngredientSelector;
+            
+            const confirmBtn = document.getElementById('ingredient-selector-confirm');
+            const newConfirmBtn = confirmBtn.cloneNode(true);
+            confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+            newConfirmBtn.addEventListener('click', () => {
+                const consumedItems = [];
+                for (const [key, count] of Object.entries(selectionSession.selectedItems)) {
+                    const [id, qualityStr] = key.split('_q');
+                    const quality = parseInt(qualityStr, 10);
+                    for (let i = 0; i < count; i++) {
+                        consumedItems.push({ id, quality });
+                    }
+                }
+                selectionSession.onConfirm(recipeId, quantity, consumedItems);
+                hideIngredientSelector();
+            });
+
+            modal.classList.remove('hidden');
+        }
+
+        function hideIngredientSelector() {
+            document.getElementById('ingredient-selector-modal').classList.add('hidden');
+            selectionSession = null;
+        }
+
+        function renderIngredientSelectorUI() {
+            if (!selectionSession) return;
+            
+            const { recipe, quantity, selectedItems } = selectionSession;
+            const requirementsEl = document.getElementById('ingredient-requirements-list');
+            requirementsEl.innerHTML = '';
+
+            const groupedStorage = playerState.storageBin.reduce((acc, item) => {
+                const key = `${item.id}_q${item.quality}`;
+                acc[key] = (acc[key] || 0) + 1;
+                return acc;
+            }, {});
+
+            let allRequirementsMet = true;
+
+            // --- ส่วนที่แก้ไข: ทำให้รองรับทั้ง ingredients และ inputs ---
+            const ingredients = recipe.ingredients || recipe.inputs;
+            
+            ingredients.forEach((ing, index) => {
+                const ingData = ing.id ? GAME_DATA[ing.id] : null;
+                if (ing.id && !ingData) {
+                    console.error(`[Admin Debug] Error in recipe '${recipe.id || recipe.name}': Cannot find ingredient with id '${ing.id}'`);
+                    allRequirementsMet = false;
+                    return;
+                }
+
+                const totalRequired = (ing.count || 1) * quantity;
+                let totalSelected = 0;
+                
+                const requirementEl = document.createElement('div');
+                requirementEl.className = 'p-2 border rounded-md';
+
+                const ingName = ing.id ? ingData.name : `ประเภท: ${ing.category}`;
+                const ingIcon = ing.id ? ingData.icon : {egg:'🥚',fish:'🐟',fruit:'🍓',vegetable:'🥕',milk:'🥛',jam:'🫙'}[ing.category];
+
+                const availableItemsEl = document.createElement('div');
+                availableItemsEl.className = 'flex flex-wrap gap-2 mt-2';
+
+                Object.entries(groupedStorage).forEach(([key, count]) => {
+                    const [itemId, qualityStr] = key.split('_q');
+                    const quality = parseInt(qualityStr, 10);
+                    const itemData = GAME_DATA[itemId];
+
+                    if (!itemData) return;
+
+                    const isMatch = ing.id ? (itemId === ing.id) : (itemData.category === ing.category);
+
+                    if (isMatch) {
+                        const selectedCount = selectedItems[key] || 0;
+                        totalSelected += selectedCount;
+                        
+                        const itemBtn = document.createElement('button');
+                        itemBtn.className = `p-2 rounded-md text-xs border ${selectedCount > 0 ? 'bg-green-200 border-green-400' : 'bg-gray-100'}`;
+                        itemBtn.innerHTML = `
+                            ${itemData.name} ${'★'.repeat(quality)} 
+                            <span class="font-bold">(${selectedCount}/${count})</span>
+                        `;
+                        
+                        itemBtn.onclick = () => {
+                            const currentSelected = selectedItems[key] || 0;
+                            if (currentSelected < count) {
+                                selectedItems[key] = currentSelected + 1;
+                                renderIngredientSelectorUI();
+                            }
+                        };
+                        itemBtn.oncontextmenu = (e) => {
+                            e.preventDefault();
+                            const currentSelected = selectedItems[key] || 0;
+                            if (currentSelected > 0) {
+                                selectedItems[key] = currentSelected - 1;
+                                renderIngredientSelectorUI();
+                            }
+                        };
+                        availableItemsEl.appendChild(itemBtn);
+                    }
+                });
+                
+                const requirementMet = totalSelected >= totalRequired;
+                if (!requirementMet) allRequirementsMet = false;
+                
+                requirementEl.innerHTML = `<p class="font-semibold">${ingIcon} ${ingName} <span class="${requirementMet ? 'text-green-600' : 'text-red-600'}">(${totalSelected}/${totalRequired})</span></p>`;
+                requirementEl.appendChild(availableItemsEl);
+                requirementsEl.appendChild(requirementEl);
+            });
+            
+            document.getElementById('ingredient-selector-confirm').disabled = !allRequirementsMet;
+        }
+
+        function executeCraft(recipeId, quantity, consumedItems, craftType) {
+            const newPlayerState = { ...playerState };
+            
+            // Consume exact items
+            consumedItems.forEach(consumedItem => {
+                const indexToRemove = newPlayerState.storageBin.findIndex(storageItem => 
+                    storageItem.id === consumedItem.id && storageItem.quality === consumedItem.quality
+                );
+                if (indexToRemove > -1) {
+                    newPlayerState.storageBin.splice(indexToRemove, 1);
+                }
+            });
+
+            const newFarmState = { ...farmState };
+            const ingredientQualities = consumedItems.map(item => item.quality);
+            
+            const newJob = {
+                recipeId: recipeId,
+                quantity: quantity,
+                startTime: Date.now(),
+                cookedBy: { uid: userId, nickname: playerState.nickname },
+                ingredientQualities: ingredientQualities
+            };
+
+            if (craftType === 'cook') {
+                if (!newFarmState.kitchen) newFarmState.kitchen = { queue: [] };
+                newFarmState.kitchen.queue.push(newJob);
+                updateQuestProgress('cook', quantity);
+            } else if (craftType === 'process') {
+                const factoryIndex = selectionSession.factoryIndex; // We need to store this
+                const factory = newFarmState.factories[factoryIndex];
+                if (!factory.queue) factory.queue = [];
+                if (factory.queue.length === 0) newJob.startTime = Date.now();
+                factory.queue.push(newJob);
+            }
+
+            updatePlayerState(newPlayerState);
+            updateFarmState(newFarmState);
+        }
+        // --- END NEW INGREDIENT SELECTION SYSTEM ---
         const WEATHER_DATA = {
             'sunny': { 
                 name: 'แดดจ้า', 
@@ -909,10 +1126,10 @@
             'rice_mill': {
                 name: 'โรงสี', type: 'factory_instance', imageUrl: 'rice_mill.png',
                 recipes: [
-                    { id: 'husked_rice_recipe', name: 'ทำข้าวสาร', inputs: [{ id: 'unhusked_rice', count: 1 }], output: { id: 'husked_rice', count: 1 }, processTime: 600 }, 
-                    { id: 'rice_flour_recipe', name: 'ทำแป้งข้าว', inputs: [{ id: 'husked_rice', count: 1 }], output: { id: 'rice_flour', count: 1 }, processTime: 900 },
-					{ id: 'pasta_dough_recipe', name: 'ทำเส้นแป้ง', inputs: [{ id: 'rice_flour', count: 2 }], output: { id: 'pasta_dough', count: 1 }, processTime: 1200 },
-					{ id: 'pastry_dough_recipe', name: 'ทำแป้งขนม', inputs: [{ id: 'rice_flour', count: 1 }, { id: 'egg', count: 1 }], output: { id: 'pastry_dough', count: 1 }, processTime: 1200 }	
+                    { id: 'husked_rice_recipe', name: 'ทำข้าวสาร', inputs: [{ id: 'unhusked_rice', count: 1 }], resultId: 'husked_rice', output: { id: 'husked_rice', count: 1 }, processTime: 600 }, 
+                    { id: 'rice_flour_recipe', name: 'ทำแป้งข้าว', inputs: [{ id: 'husked_rice', count: 1 }], resultId: 'rice_flour', output: { id: 'rice_flour', count: 1 }, processTime: 900 },
+					{ id: 'pasta_dough_recipe', name: 'ทำเส้นแป้ง', inputs: [{ id: 'rice_flour', count: 2 }], resultId: 'pasta_dough', output: { id: 'pasta_dough', count: 1 }, processTime: 1200 },
+					{ id: 'pastry_dough_recipe', name: 'ทำแป้งขนม', inputs: [{ id: 'rice_flour', count: 1 }, { id: 'egg', count: 1 }], resultId: 'pastry_dough', output: { id: 'pastry_dough', count: 1 }, processTime: 1200 }	
                 ]
             }
         };
@@ -2476,61 +2693,14 @@
         }
         
         function startProcessing(slotIndex, recipeId) {
-            const newFarmState = { ...farmState };
-            const newPlayerState = { ...playerState };
-            const factory = newFarmState.factories[slotIndex];
-
-            if ((factory.queue?.length || 0) >= 5) {
-                alert("คิวการผลิตเต็มแล้ว!");
-                return;
-            }
-
-            const factoryData = GAME_DATA[factory.factoryId];
-            const recipe = factoryData.recipes.find(r => r.id === recipeId);
+            const onConfirm = (confirmedRecipeId, confirmedQuantity, consumedItems) => {
+                // Attach factoryIndex to the session for executeCraft to use
+                if (selectionSession) selectionSession.factoryIndex = slotIndex; 
+                executeCraft(confirmedRecipeId, 1, consumedItems, 'process'); // Factories process 1 at a time
+            };
             
-            // --- ส่วนที่แก้ไข: เปลี่ยนวิธีตรวจสอบและลบวัตถุดิบ ---
-            const tempStorageBin = [...newPlayerState.storageBin];
-            const ingredientsUsed = [];
-            let canProcess = true;
-
-            for (const input of recipe.inputs) {
-                const itemsNeeded = [];
-                // หาไอเท็มที่ตรงกันจากในคลังชั่วคราว
-                for (let i = 0; i < input.count; i++) {
-                    const foundIndex = tempStorageBin.findIndex(item => item.id === input.id);
-                    if (foundIndex > -1) {
-                        itemsNeeded.push(tempStorageBin.splice(foundIndex, 1)[0]);
-                    } else {
-                        canProcess = false;
-                        break;
-                    }
-                }
-                if (!canProcess) break;
-                ingredientsUsed.push(...itemsNeeded);
-            }
-
-            if (canProcess) {
-                // อัปเดตคลังจริงด้วยคลังชั่วคราวที่ถูกตัดของออกไปแล้ว
-                newPlayerState.storageBin = tempStorageBin;
-
-                const newJob = { 
-                    recipeId: recipeId,
-                    processedBy: { uid: userId, nickname: playerState.nickname },
-                    // จดจำคุณภาพของวัตถุดิบที่ใช้ไป
-                    ingredientQualities: ingredientsUsed.map(item => item.quality)
-                };
-
-                if (!factory.queue) factory.queue = [];
-                if (factory.queue.length === 0) {
-                    newJob.startTime = Date.now();
-                }
-                factory.queue.push(newJob);
-                
-                updateFarmState(newFarmState);
-                updatePlayerState(newPlayerState);
-            } else {
-                alert("วัตถุดิบไม่เพียงพอ!");
-            }
+            // Factories process 1 item at a time
+            showIngredientSelector(recipeId, 1, onConfirm);
         }
 
         // ฟังก์ชันใหม่สำหรับประมวลผลของไปวางที่ชั้นวาง (OutputBin)
@@ -3064,59 +3234,11 @@
         }
         
         function cook(recipeId, quantity) {
-            const recipe = GAME_DATA.recipes[recipeId];
-            if (!recipe || !farmState.ownedKitchenTools.includes(recipe.tool) || quantity <= 0) return;
-
-            const newPlayerState = { ...playerState };
-            
-            // --- ส่วนที่แก้ไข: เปลี่ยนวิธีตรวจสอบและลบวัตถุดิบ ---
-            const tempStorageBin = [...newPlayerState.storageBin];
-            const ingredientsUsed = [];
-            let canCook = true;
-
-            for (let i = 0; i < quantity; i++) {
-                for (const ingredient of recipe.ingredients) {
-                    const requiredKey = ingredient.id ? 'id' : 'category';
-                    const requiredValue = ingredient.id || ingredient.category;
-                    
-                    const foundIndex = tempStorageBin.findIndex(item => {
-                        const itemData = GAME_DATA[item.id];
-                        return requiredKey === 'id' ? item.id === requiredValue : itemData?.category === requiredValue;
-                    });
-
-                    if (foundIndex > -1) {
-                        ingredientsUsed.push(tempStorageBin.splice(foundIndex, 1)[0]);
-                    } else {
-                        canCook = false;
-                        break;
-                    }
-                }
-                if (!canCook) break;
-            }
-            // --- จบส่วนที่แก้ไข ---
-
-            if (canCook) {
-                newPlayerState.storageBin = tempStorageBin; // อัปเดตคลังด้วยของที่เหลือ
-
-                const newFarmState = { ...farmState };
-                if (!newFarmState.kitchen) newFarmState.kitchen = { queue: [] };
-                
-                newFarmState.kitchen.queue.push({
-                    recipeId: recipeId,
-                    quantity: quantity,
-                    startTime: Date.now(),
-                    cookedBy: { uid: userId, nickname: playerState.nickname },
-                    // จดจำคุณภาพของวัตถุดิบที่ใช้ไป
-                    ingredientQualities: ingredientsUsed.map(item => item.quality) 
-                });
-
-                updatePlayerState(newPlayerState);
-                updateFarmState(newFarmState);
+            const onConfirm = (confirmedRecipeId, confirmedQuantity, consumedItems) => {
+                executeCraft(confirmedRecipeId, confirmedQuantity, consumedItems, 'cook');
                 hideCookingModal();
-                updateQuestProgress('cook', quantity);
-            } else {
-                alert("ส่วนผสมไม่เพียงพอ!");
-            }
+            };
+            showIngredientSelector(recipeId, quantity, onConfirm);
         }
 
         function collectCookedFood(queueIndex) {
