@@ -2777,28 +2777,23 @@
                         if (!factory.outputBin) factory.outputBin = [];
                         
                         const currentJob = factory.queue[0];
-                        const recipe = GAME_DATA[factory.factoryId].recipes.find(r => r.id === currentJob.recipeId);
+                        const recipe = findRecipeById(currentJob.recipeId); // ใช้ findRecipeById ที่ดีกว่า
+                        if (!recipe) continue; // ข้ามถ้าหาสูตรไม่เจอ
+                        
                         const completionTime = currentJob.startTime + (recipe.processTime * 1000);
 
                         if (now >= completionTime && factory.outputBin.length < MAX_OUTPUT_BIN_SIZE) {
                             hasChanges = true;
                             const finishedJob = factory.queue.shift(); 
                             
-                            // --- ส่วนที่แก้ไข: เพิ่ม Logic การสุ่มคุณภาพสำหรับโรงแปรรูปเนื้อสัตว์ ---
-                            let outputQuality = 0; // กำหนดคุณภาพเริ่มต้นเป็น 0
+                            let outputQuality = 0;
 
                             if (factory.factoryId === 'meat_processor') {
-                                // ถ้าเป็นโรงแปรรูปเนื้อสัตว์ ให้สุ่มคุณภาพ
                                 const rand = Math.random();
-                                if (rand < 0.1) { // 10%
-                                    outputQuality = 2;
-                                } else if (rand < 0.4) { // 30% (0.1 + 0.3)
-                                    outputQuality = 1;
-                                } else { // 60% ที่เหลือ
-                                    outputQuality = 0;
-                                }
+                                if (rand < 0.1) outputQuality = 2;
+                                else if (rand < 0.4) outputQuality = 1;
+                                else outputQuality = 0;
                             } else {
-                                // --- Logic เดิม: สำหรับโรงงานอื่นๆ ทั้งหมด ---
                                 const qualities = finishedJob.ingredientQualities || [];
                                 if (qualities.length > 0) {
                                     const sum = qualities.reduce((a, b) => a + b, 0);
@@ -2809,16 +2804,17 @@
                             const outputCount = recipe.output.count || 1;
                             for (let i = 0; i < outputCount; i++) {
                                 if (factory.outputBin.length < MAX_OUTPUT_BIN_SIZE) {
+                                    // --- ส่วนที่แก้ไข: เพิ่ม ?. และ || เพื่อป้องกัน Error จากข้อมูลเก่า ---
                                     factory.outputBin.push({
-                                        item: { id: recipe.output.id, quality: outputQuality }, // ใช้ outputQuality ที่ได้
-                                        owner: finishedJob.processedBy.uid,
-                                        ownerNickname: finishedJob.processedBy.nickname
+                                        item: { id: recipe.output.id, quality: outputQuality },
+                                        owner: finishedJob.processedBy?.uid || 'unknown', // ถ้าไม่มี uid ให้เป็น 'unknown'
+                                        ownerNickname: finishedJob.processedBy?.nickname || '??' // ถ้าไม่มี nickname ให้เป็น '??'
                                     });
+                                    // --- จบส่วนที่แก้ไข ---
                                 } else {
                                     break;
                                 }
                             }
-                            // --- จบส่วนที่แก้ไข ---
 
                             if (factory.queue.length > 0) {
                                 factory.queue[0].startTime = completionTime;
