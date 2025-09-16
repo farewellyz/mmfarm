@@ -499,7 +499,7 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        const CLIENT_VERSION = "1.0.11"; // Updated version
+        const CLIENT_VERSION = "1.0.12"; // Updated version
 
         const FARM_GRID_SIZE = 24;
         const ANIMAL_PEN_SIZE = 8;
@@ -599,15 +599,16 @@
 
         // --- START NEW HELPER FUNCTION ---
         function findRecipeById(recipeId) {
-            // 1. ค้นหาในสูตรทำอาหารก่อน
-            if (GAME_DATA.recipes[recipeId]) {
-                return GAME_DATA.recipes[recipeId];
+            // 1. ค้นหาในสูตรทำอาหารก่อน (GAME_DATA.recipes)
+            if (GAME_DATA.recipes && GAME_DATA.recipes[recipeId]) {
+                return { ...GAME_DATA.recipes[recipeId], id: recipeId };
             }
 
-            // 2. ถ้าไม่เจอ ให้ค้นหาในโรงงานทั้งหมด
+            // 2. ถ้าไม่เจอ ให้ค้นหาในโรงงานทั้งหมดที่อยู่ใน GAME_DATA
             for (const key in GAME_DATA) {
                 const itemData = GAME_DATA[key];
-                if (itemData.type === 'factory_instance' && Array.isArray(itemData.recipes)) {
+                // ตรวจสอบทั้งที่เป็น factory_instance โดยตรง หรือเป็น factory ที่ซ้อนอยู่ใน deed
+                if (itemData && Array.isArray(itemData.recipes)) {
                     const foundRecipe = itemData.recipes.find(r => r.id === recipeId);
                     if (foundRecipe) {
                         return foundRecipe;
@@ -615,8 +616,23 @@
                 }
             }
             
-            // 3. ถ้าไม่เจอเลย ให้ trả về null
-            return null;
+            // 3. ถ้ายังไม่เจออีก อาจเป็นเพราะโครงสร้างซ้อนกัน (เช่น winery_deed -> winery)
+            // เราจะวนลูปอีกครั้งเพื่อค้นหาใน factoryId ที่อ้างอิงจาก deed
+            for (const key in GAME_DATA) {
+                const itemData = GAME_DATA[key];
+                if (itemData.type === 'factory_deed' && itemData.factoryId) {
+                    const factoryData = GAME_DATA[itemData.factoryId];
+                    if (factoryData && Array.isArray(factoryData.recipes)) {
+                         const foundRecipe = factoryData.recipes.find(r => r.id === recipeId);
+                         if (foundRecipe) {
+                            return foundRecipe;
+                        }
+                    }
+                }
+            }
+            
+            console.error(`[CRITICAL] ไม่พบสูตรสำหรับ ID: ${recipeId}`);
+            return null; // ถ้าไม่เจอเลยจริงๆ ให้ trả về null
         }
         // --- END NEW HELPER FUNCTION ---
 
@@ -1006,46 +1022,46 @@
             'cheese_press_deed': { name: 'แบบแปลนโรงทำชีส', type: 'factory_deed', cost: 10000, factoryId: 'cheese_press', icon: '🧀', imageUrl: 'cheese_press.png' },
             'preserves_jar_deed': { name: 'แบบแปลนโรงทำแยม', type: 'factory_deed', cost: 7500, factoryId: 'preserves_jar', icon: '🍓', imageUrl: 'preserves_jar.png' },
             'mayonnaise_machine_deed': { name: 'แบบแปลนเครื่องทำมายองเนส', type: 'factory_deed', cost: 5000, factoryId: 'mayonnaise_machine', icon: '🥚', imageUrl: 'mayonnaise_machine.png' },
-            'winery': {name: 'โรงหมักไวน์', type: 'factory_instance', imageUrl: 'winery.png',recipes: [ { id: 'grape_wine_recipe', name: 'ทำไวน์องุ่น', inputs: [{ id: 'grape_produce', count: 20 }], output: { id: 'grape_wine', count: 1 }, processTime: 7200 } ]},
-            'cheese_press': {name: 'โรงทำชีส', type: 'factory_instance', imageUrl: 'cheese_press.png',recipes: [ { id: 'cheese_recipe', name: 'ทำชีส', inputs: [{ id: 'milk', count: 10 }], output: { id: 'cheese', count: 1 }, processTime: 6000 } ]},
+            'winery': {name: 'โรงหมักไวน์', type: 'factory_instance', imageUrl: 'winery.png',recipes: [ { id: 'grape_wine_recipe', name: 'ทำไวน์องุ่น', inputs: [{ id: 'grape_produce', count: 20 }], resultId: 'grape_wine', output: { id: 'grape_wine', count: 1 }, processTime: 7200 } ]},
+            'cheese_press': {name: 'โรงทำชีส', type: 'factory_instance', imageUrl: 'cheese_press.png',recipes: [ { id: 'cheese_recipe', name: 'ทำชีส', inputs: [{ id: 'milk', count: 10 }], resultId: 'cheese', output: { id: 'cheese', count: 1 }, processTime: 6000 } ]},
             'preserves_jar': {
                 name: 'โรงทำแยม', type: 'factory_instance', imageUrl: 'preserves_jar.png',
                 recipes: [
-                    { id: 'strawberry_jam_recipe', name: 'ทำแยมสตรอว์เบอร์รี', inputs: [{ id: 'strawberry_produce', count: 5 }], output: { id: 'strawberry_jam', count: 1 }, processTime: 4800 },
-                    { id: 'apple_jam_recipe', name: 'ทำแยมแอปเปิ้ล', inputs: [{ id: 'apple_produce', count: 5 }], output: { id: 'apple_jam', count: 1 }, processTime: 4800 },
-                    { id: 'grape_jam_recipe', name: 'ทำแยมองุ่น', inputs: [{ id: 'grape_produce', count: 5 }], output: { id: 'grape_jam', count: 1 }, processTime: 4800 },
-                    { id: 'peach_jam_recipe', name: 'ทำแยมพีช', inputs: [{ id: 'peach_produce', count: 5 }], output: { id: 'peach_jam', count: 1 }, processTime: 4800 },
-                    { id: 'orange_jam_recipe', name: 'ทำแยมส้ม', inputs: [{ id: 'orange_produce', count: 5 }], output: { id: 'orange_jam', count: 1 }, processTime: 4800 },
-                    { id: 'mango_jam_recipe', name: 'ทำแยมมะม่วง', inputs: [{ id: 'mango_produce', count: 5 }], output: { id: 'mango_jam', count: 1 }, processTime: 4800 },
-                    { id: 'pineapple_jam_recipe', name: 'ทำแยมสับปะรด', inputs: [{ id: 'pineapple_produce', count: 5 }], output: { id: 'pineapple_jam', count: 1 }, processTime: 4800 },
-                    { id: 'guava_jam_recipe', name: 'ทำแยมฝรั่ง', inputs: [{ id: 'guava_produce', count: 5 }], output: { id: 'guava_jam', count: 1 }, processTime: 4800 },
-                    { id: 'roseapple_jam_recipe', name: 'ทำแยมชมพู่', inputs: [{ id: 'roseapple_produce', count: 5 }], output: { id: 'roseapple_jam', count: 1 }, processTime: 4800 },
+                    { id: 'strawberry_jam_recipe', name: 'ทำแยมสตรอว์เบอร์รี', inputs: [{ id: 'strawberry_produce', count: 5 }], resultId: 'strawberry_jam', output: { id: 'strawberry_jam', count: 1 }, processTime: 4800 },
+                    { id: 'apple_jam_recipe', name: 'ทำแยมแอปเปิ้ล', inputs: [{ id: 'apple_produce', count: 5 }], resultId: 'apple_jam', output: { id: 'apple_jam', count: 1 }, processTime: 4800 },
+                    { id: 'grape_jam_recipe', name: 'ทำแยมองุ่น', inputs: [{ id: 'grape_produce', count: 5 }], resultId: 'grape_jam', output: { id: 'grape_jam', count: 1 }, processTime: 4800 },
+                    { id: 'peach_jam_recipe', name: 'ทำแยมพีช', inputs: [{ id: 'peach_produce', count: 5 }], resultId: 'peach_jam', output: { id: 'peach_jam', count: 1 }, processTime: 4800 },
+                    { id: 'orange_jam_recipe', name: 'ทำแยมส้ม', inputs: [{ id: 'orange_produce', count: 5 }], resultId: 'orange_jam', output: { id: 'orange_jam', count: 1 }, processTime: 4800 },
+                    { id: 'mango_jam_recipe', name: 'ทำแยมมะม่วง', inputs: [{ id: 'mango_produce', count: 5 }], resultId: 'mango_jam', output: { id: 'mango_jam', count: 1 }, processTime: 4800 },
+                    { id: 'pineapple_jam_recipe', name: 'ทำแยมสับปะรด', inputs: [{ id: 'pineapple_produce', count: 5 }], resultId: 'pineapple_jam', output: { id: 'pineapple_jam', count: 1 }, processTime: 4800 },
+                    { id: 'guava_jam_recipe', name: 'ทำแยมฝรั่ง', inputs: [{ id: 'guava_produce', count: 5 }], resultId: 'guava_jam', output: { id: 'guava_jam', count: 1 }, processTime: 4800 },
+                    { id: 'roseapple_jam_recipe', name: 'ทำแยมชมพู่', inputs: [{ id: 'roseapple_produce', count: 5 }], resultId: 'roseapple_jam', output: { id: 'roseapple_jam', count: 1 }, processTime: 4800 },
                 ]
             },
             'mayonnaise_machine': {
                 name: 'เครื่องทำมายองเนส', type: 'factory_instance', imageUrl: 'mayonnaise_machine.png',
                 recipes: [
-                    { id: 'mayonnaise_recipe', name: 'ทำมายองเนส', inputs: [{ id: 'egg', count: 5 }], output: { id: 'mayonnaise', count: 1 }, processTime: 1200 },
-                    { id: 'duck_mayonnaise_recipe', name: 'ทำมายองเนสไข่เป็ด', inputs: [{ id: 'duck_egg', count: 5 }], output: { id: 'duck_mayonnaise', count: 1 }, processTime: 1200 }
+                    { id: 'mayonnaise_recipe', name: 'ทำมายองเนส', inputs: [{ id: 'egg', count: 5 }], resultId: 'mayonnaise', output: { id: 'mayonnaise', count: 1 }, processTime: 1200 },
+                    { id: 'duck_mayonnaise_recipe', name: 'ทำมายองเนสไข่เป็ด', inputs: [{ id: 'duck_egg', count: 5 }], resultId: 'duck_mayonnaise', output: { id: 'duck_mayonnaise', count: 1 }, processTime: 1200 }
                 ]
             },
 			'meat_processor_deed': { name: 'แบบแปลนโรงแปรรูปเนื้อสัตว์', type: 'factory_deed', cost: 20000, factoryId: 'meat_processor', icon: '🥩', imageUrl: 'meat_processor.png' },
 			'smokehouse_deed': { name: 'แบบแปลนโรงรมควัน', type: 'factory_deed', cost: 18000, factoryId: 'smokehouse', icon: '🥓', imageUrl: 'smokehouse.png' },
 			'meat_processor': {
-				name: 'โรงแปรรูปเนื้อสัตว์', type: 'factory_instance', imageUrl: 'meat_processor.png',
-				recipes: [
-					// สังเกตว่า inputs คือ 'chicken_deed' ไม่ใช่ไก่ที่มีชีวิต
-					{ id: 'process_chicken', name: 'แปรรูปเนื้อไก่', inputs: [{ id: 'chicken_deed', count: 1 }], output: { id: 'chicken_meat', count: 5 }, processTime: 3600 },
-					{ id: 'process_cow', name: 'แปรรูปเนื้อวัว', inputs: [{ id: 'cow_deed', count: 1 }], output: { id: 'beef', count: 5 }, processTime: 3600 },
-					{ id: 'process_duck', name: 'แปรรูปเนื้อเป็ด', inputs: [{ id: 'duck_deed', count: 1 }], output: { id: 'duck_meat', count: 5 }, processTime: 3600 },
-					{ id: 'process_pig', name: 'แปรรูปเนื้อหมู', inputs: [{ id: 'pig_deed', count: 1 }], output: { id: 'pig_meat', count: 5 }, processTime: 3600 }
-				]
-			},
+			name: 'โรงแปรรูปเนื้อสัตว์', type: 'factory_instance', imageUrl: 'meat_processor.png',
+			recipes: [
+				// สังเกตว่า inputs คือ 'chicken_deed' ไม่ใช่ไก่ที่มีชีวิต
+				{ id: 'process_chicken', name: 'แปรรูปเนื้อไก่', inputs: [{ id: 'chicken_deed', count: 1 }], resultId: 'chicken_meat', output: { id: 'chicken_meat', count: 5 }, processTime: 3600 },
+				{ id: 'process_cow', name: 'แปรรูปเนื้อวัว', inputs: [{ id: 'cow_deed', count: 1 }], resultId: 'beef', output: { id: 'beef', count: 5 }, processTime: 3600 },
+				{ id: 'process_duck', name: 'แปรรูปเนื้อเป็ด', inputs: [{ id: 'duck_deed', count: 1 }], resultId: 'duck_meat', output: { id: 'duck_meat', count: 5 }, processTime: 3600 },
+				{ id: 'process_pig', name: 'แปรรูปเนื้อหมู', inputs: [{ id: 'pig_deed', count: 1 }], resultId: 'pig_meat', output: { id: 'pig_meat', count: 5 }, processTime: 3600 }
+			]
+		},
 			'smokehouse': {
             name: 'โรงรมควัน', type: 'factory_instance', imageUrl: 'smokehouse.png',
             recipes: [
-                { id: 'process_bacon', name: 'รมควันเบคอน', inputs: [{ id: 'pig_meat', count: 1 }], output: { id: 'bacon', count: 2 }, processTime: 7200 },
-                { id: 'process_ham', name: 'รมควันแฮม', inputs: [{ id: 'pig_meat', count: 1 }], output: { id: 'ham', count: 2 }, processTime: 7200 }
+                { id: 'process_bacon', name: 'รมควันเบคอน', inputs: [{ id: 'pig_meat', count: 1 }], resultId: 'bacon', output: { id: 'bacon', count: 2 }, processTime: 7200 },
+                { id: 'process_ham', name: 'รมควันแฮม', inputs: [{ id: 'pig_meat', count: 1 }], resultId: 'ham', output: { id: 'ham', count: 2 }, processTime: 7200 }
             ]
         },
             'grape_wine': { name: 'ไวน์องุ่น', type: 'produce', sellPrice: [800, 1200, 1600], icon: '🍷', energyRestore: 20, imageUrl: 'wine.png' },
@@ -1109,8 +1125,8 @@
             'artisan_workshop': {
                 name: 'โรงประดิษฐ์', type: 'factory_instance', imageUrl: 'artisan_workshop.png',
                 recipes: [
-                    { id: 'leather_bag_recipe', name: 'ทำกระเป๋าหนัง', inputs: [{ id: 'crocodile_skin', count: 1 }], output: { id: 'leather_bag', count: 1 }, processTime: 43200 }, 
-                    { id: 'pearl_necklace_recipe', name: 'ทำสร้อยมุก', inputs: [{ id: 'pearl', count: 1 }], output: { id: 'pearl_necklace', count: 1 }, processTime: 21600 } 
+                    { id: 'leather_bag_recipe', name: 'ทำกระเป๋าหนัง', inputs: [{ id: 'crocodile_skin', count: 1 }], resultId: 'leather_bag', output: { id: 'leather_bag', count: 1 }, processTime: 43200 }, 
+                    { id: 'pearl_necklace_recipe', name: 'ทำสร้อยมุก', inputs: [{ id: 'pearl', count: 1 }], resultId: 'pearl_necklace', output: { id: 'pearl_necklace', count: 1 }, processTime: 21600 } 
                 ]
             },
 
@@ -1118,7 +1134,7 @@
             'clothing_mill': {
                 name: 'โรงทอผ้า', type: 'factory_instance', imageUrl: 'clothing_mill.png',
                 recipes: [
-                    { id: 'clothing_recipe', name: 'ทำเสื้อผ้า', inputs: [{ id: 'wool', count: 1 }], output: { id: 'clothing', count: 1 }, processTime: 14400 } 
+                    { id: 'clothing_recipe', name: 'ทำเสื้อผ้า', inputs: [{ id: 'wool', count: 1 }], resultId: 'clothing', output: { id: 'clothing', count: 1 }, processTime: 14400 } 
                 ]
             },
             
