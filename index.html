@@ -2244,28 +2244,22 @@
                     const factoryData = GAME_DATA[factory.factoryId];
                     detailsEl.innerHTML = `<p class="font-bold">${factoryData.name}</p>`;
 
-                    // --- ส่วนที่แก้ไข: สร้าง UI สำหรับแสดงคิวการผลิตทั้งหมด ---
                     if (factory.queue && factory.queue.length > 0) {
                         let queueHTML = '<div class="mt-2 pt-2 border-t space-y-2">';
                         queueHTML += '<p class="text-xs font-semibold">คิวการผลิต:</p>';
-
                         factory.queue.forEach((job, jobIndex) => {
                             const recipe = findRecipeById(job.recipeId);
                             if (!recipe) return;
-                            
                             const outputData = GAME_DATA[recipe.resultId];
                             const ownerNickname = job.processedBy?.nickname || '??';
                             let statusText = '';
-
                             if (jobIndex === 0 && job.startTime) {
                                 const remainingMillis = Math.max(0, (job.startTime + recipe.processTime * 1000) - Date.now());
                                 statusText = `<span class="font-semibold text-blue-600">เสร็จใน ${formatTime(Math.ceil(remainingMillis / 1000))}</span>`;
                             } else {
                                 statusText = '<span class="text-gray-500">รอคิว</span>';
                             }
-
                             const iconHTML = outputData.imageUrl ? `<img src="${outputData.imageUrl}" class="w-8 h-8 object-contain flex-shrink-0">` : `<span>${outputData.icon}</span>`;
-
                             queueHTML += `
                                 <div class="flex items-center gap-2 text-xs bg-gray-100 p-1 rounded-md">
                                     ${iconHTML}
@@ -2280,9 +2274,7 @@
                         queueHTML += '</div>';
                         detailsEl.innerHTML += queueHTML;
                     }
-                    // --- จบส่วนที่แก้ไข ---
 
-                    // --- ส่วนแสดงของที่เสร็จแล้ว (Output Bin) ปรับปรุงเล็กน้อย ---
                     if (factory.outputBin && factory.outputBin.length > 0) {
                         let outputBinHTML = '<div class="mt-2 pt-2 border-t space-y-1">';
                         outputBinHTML += `<p class="text-xs font-semibold">ของที่เสร็จแล้ว (ชั้นวาง):</p>`;
@@ -2294,15 +2286,15 @@
                         outputBinHTML += `</div>`;
                         detailsEl.innerHTML += outputBinHTML;
                     }
-                    // --- จบส่วนปรับปรุง ---
-
-
+                    
                     actionsEl.before(detailsEl);
 
-                    const myItemsInBinCount = factory.outputBin?.filter(item => item.owner === userId).length || 0;
-                    if (myItemsInBinCount > 0) {
-                        actionsEl.appendChild(createButton(`🎁 รับของ (${myItemsInBinCount} ชิ้น)`, () => collectMyFactoryGoods(index)));
+                    // --- ส่วนที่แก้ไข: ให้นับรวมของที่ไม่มีเจ้าของ ('unknown') ด้วย ---
+                    const myCollectableItemsCount = factory.outputBin?.filter(item => item.owner === userId || item.owner === 'unknown').length || 0;
+                    if (myCollectableItemsCount > 0) {
+                        actionsEl.appendChild(createButton(`🎁 รับของ (${myCollectableItemsCount} ชิ้น)`, () => collectMyFactoryGoods(index)));
                     }
+                    // --- จบส่วนที่แก้ไข ---
 
                     const isQueueFull = (factory.queue?.length || 0) >= 5;
                     actionsEl.appendChild(createButton('⚙️ เพิ่มของเข้าคิว', () => showSubMenu('useFactory', index, factoryData.recipes.map(r => r.id)), isQueueFull));
@@ -2846,20 +2838,22 @@
             const myItems = [];
             const remainingItems = [];
             
-            // แยกของที่เป็นของเราออกจากของคนอื่น
+            // --- ส่วนที่แก้ไข: เพิ่มเงื่อนไขให้เก็บของที่ไม่มีเจ้าของได้ ---
             factory.outputBin.forEach(output => {
-                if (output.owner === userId) {
+                // เก็บได้ถ้า 1. ของเป็นของเรา หรือ 2. ของไม่มีเจ้าของ
+                if (output.owner === userId || output.owner === 'unknown') {
                     myItems.push(output.item);
                 } else {
                     remainingItems.push(output);
                 }
             });
+            // --- จบส่วนที่แก้ไข ---
 
             if (myItems.length > 0) {
                 if (!newPlayerState.storageBin) newPlayerState.storageBin = [];
-                newPlayerState.storageBin.push(...myItems); // เพิ่มของทั้งหมดเข้าคลัง
+                newPlayerState.storageBin.push(...myItems);
                 
-                factory.outputBin = remainingItems; // อัปเดตชั้นวางของ
+                factory.outputBin = remainingItems;
 
                 await updatePlayerState(newPlayerState);
                 await updateFarmState(newFarmState);
