@@ -155,7 +155,29 @@
                 <button id="info-modal-close" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg w-full">เข้าใจแล้ว</button>
             </div>
         </div>
-
+                <div id="quantity-modal" class="hidden fixed inset-0 bg-black/50 z-[53] flex items-center justify-center p-4">
+            <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm modal-enter">
+                <h2 id="quantity-modal-title" class="text-2xl font-bold text-gray-800 mb-4">ระบุจำนวน</h2>
+                <div class="flex items-center gap-4 mb-4">
+                    <div id="quantity-modal-icon" class="w-16 h-16 bg-contain bg-no-repeat bg-center flex-shrink-0"></div>
+                    <div class="flex-grow">
+                        <p id="quantity-modal-name" class="font-bold"></p>
+                        <p id="quantity-modal-quality" class="text-sm text-gray-500"></p>
+                    </div>
+                </div>
+                <div class="space-y-3">
+                    <input type="range" id="quantity-modal-slider" min="1" value="1" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                    <div class="flex items-center gap-2">
+                        <input type="number" id="quantity-modal-input" min="1" value="1" class="w-full border rounded-lg px-3 py-2 text-center">
+                        <button id="quantity-modal-max-btn" class="bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-bold py-2 px-4 rounded-lg">สูงสุด</button>
+                    </div>
+                </div>
+                <div class="mt-6 flex justify-end gap-3">
+                    <button id="quantity-modal-cancel" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg">ยกเลิก</button>
+                    <button id="quantity-modal-ok" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg">ตกลง</button>
+                </div>
+            </div>
+        </div>
         <div id="name-modal" class="hidden fixed inset-0 bg-black/50 z-[52] flex items-center justify-center p-4">
             <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm modal-enter">
                 <h2 id="name-modal-title" class="text-2xl font-bold text-gray-800 mb-4">เปลี่ยนชื่อเล่น</h2>
@@ -277,6 +299,18 @@
                     <span>ชื่อ:</span>
                     <span id="player-name" class="font-bold text-green-900 cursor-pointer hover:underline" title="คลิกเพื่อเปลี่ยนชื่อ">...</span>
                 </div>
+                <div id="admin-panel" class="hidden mt-4 p-3 bg-red-100 border-2 border-red-300 rounded-lg text-left text-sm space-y-2">
+                <h3 class="font-bold text-red-800 text-center">แผงควบคุมแอดมิน</h3>
+                <div>
+                    <label for="admin-player-select" class="font-semibold text-red-700">เป้าหมาย:</label>
+                    <select id="admin-player-select" class="w-full border rounded px-2 py-1 mt-1"></select>
+                </div>
+                <div class="flex flex-wrap gap-2 items-center">
+                    <select id="admin-item-select" class="flex-grow border rounded px-2 py-1"></select>
+                    <input type="number" id="admin-item-quantity" value="1" min="1" class="w-20 border rounded px-2 py-1">
+                    <button id="admin-add-item-btn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-3 rounded">เพิ่มของเข้าคลัง</button>
+                </div>
+            </div>
                 <span class="font-semibold bg-yellow-100 px-3 py-1 rounded-full">💰: <span id="money-display" class="font-bold text-yellow-800">0</span></span>
                 <div class="flex items-center justify-center gap-2 bg-blue-100 px-3 py-1 rounded-full text-sm">
                     <span>⚡:</span>
@@ -455,6 +489,93 @@
         const ADMIN_UID = "p7Ujrm9dBZcL6bK5EHYEsrJOCvl2";
 
         // --- MASTER GAME DATA ---
+        async function initAdminPanel(currentUserId, currentPlayerState) {
+            if (currentUserId !== ADMIN_UID) return;
+
+            const panel = document.getElementById('admin-panel');
+            const playerSelect = document.getElementById('admin-player-select');
+            const itemSelect = document.getElementById('admin-item-select');
+            const quantityInput = document.getElementById('admin-item-quantity');
+            const addButton = document.getElementById('admin-add-item-btn');
+
+            panel.classList.remove('hidden');
+
+            playerSelect.innerHTML = '';
+            
+            const selfOption = document.createElement('option');
+            selfOption.value = currentUserId;
+            selfOption.textContent = `ตัวเอง (${currentPlayerState.nickname})`;
+            playerSelect.appendChild(selfOption);
+
+            try {
+                const playersCollectionRef = collection(db, "players");
+                const querySnapshot = await getDocs(playersCollectionRef); // <-- แก้ไขชื่อตัวแปรตรงนี้ให้ถูกต้อง
+                querySnapshot.forEach((doc) => {
+                    if (doc.id === currentUserId) return;
+
+                    const playerData = doc.data();
+                    const option = document.createElement('option');
+                    option.value = doc.id;
+                    option.textContent = playerData.nickname;
+                    playerSelect.appendChild(option);
+                });
+            } catch (e) {
+                console.error("Error fetching players for admin panel:", e);
+            }
+
+            itemSelect.innerHTML = '<option value="">-- เลือกไอเท็ม --</option>';
+            const itemTypesToInclude = ['produce', 'seed', 'item', 'animal_deed', 'factory_deed'];
+            Object.entries(GAME_DATA).forEach(([id, data]) => {
+                if (itemTypesToInclude.includes(data.type)) {
+                    const option = document.createElement('option');
+                    option.value = id;
+                    option.textContent = `${data.icon || ''} ${data.name}`;
+                    itemSelect.appendChild(option);
+                }
+            });
+
+            addButton.onclick = async () => {
+                const targetUserId = playerSelect.value;
+                const itemId = itemSelect.value;
+                const quantity = parseInt(quantityInput.value, 10);
+
+                if (!targetUserId || !itemId || !quantity || quantity < 1) {
+                    alert('กรุณาเลือกเป้าหมาย, ไอเท็ม และใส่จำนวนที่ถูกต้อง');
+                    return;
+                }
+
+                if (targetUserId === currentUserId) {
+                    const newPlayerState = { ...playerState };
+                    if (!newPlayerState.storageBin) newPlayerState.storageBin = [];
+                    for (let i = 0; i < quantity; i++) {
+                        newPlayerState.storageBin.push({ id: itemId, quality: 0 });
+                    }
+                    await updatePlayerState(newPlayerState);
+                    alert(`เพิ่ม ${GAME_DATA[itemId].name} x${quantity} ชิ้น เข้าคลังของคุณสำเร็จ!`);
+                } else {
+                    const playerDocRef = doc(db, "players", targetUserId);
+                    try {
+                        const playerDoc = await getDoc(playerDocRef);
+                        if (playerDoc.exists()) {
+                            const targetPlayerData = playerDoc.data();
+                            if (!targetPlayerData.storageBin) targetPlayerData.storageBin = [];
+                            
+                            for (let i = 0; i < quantity; i++) {
+                                targetPlayerData.storageBin.push({ id: itemId, quality: 0 });
+                            }
+                            
+                            await setDoc(playerDocRef, targetPlayerData);
+                            alert(`เพิ่ม ${GAME_DATA[itemId].name} x${quantity} ชิ้น เข้าคลังของ ${targetPlayerData.nickname} สำเร็จ!`);
+                        } else {
+                            alert('ไม่พบข้อมูลผู้เล่นคนดังกล่าว!');
+                        }
+                    } catch (e) {
+                        console.error("Error giving item to other player:", e);
+                        alert('เกิดข้อผิดพลาดในการส่งของ!');
+                    }
+                }
+            };
+        }
         const WEATHER_DATA = {
             'sunny': { 
                 name: 'แดดจ้า', 
@@ -1551,7 +1672,7 @@
                 const itemData = GAME_DATA[item.id];
                 const itemDiv = document.createElement('div');
                 itemDiv.className = 'flex justify-between items-center bg-white/80 p-2 rounded-lg gap-2';
-                let buttonsHTML = `<button class="sell-storage-btn bg-green-500 text-white font-bold py-1 px-3 rounded-full hover:bg-green-600 text-xs" data-item-id="${item.id}" data-quality="${item.quality}">ขาย</button>`;
+                let buttonsHTML = `<button class="sell-storage-btn bg-green-500 text-white font-bold py-1 px-3 rounded-full hover:bg-green-600 text-xs" data-item-id="${item.id}" data-quality="${item.quality}" data-max="${item.count}">ขาย</button>`;
                 if (itemData.energyRestore > 0) {
                     buttonsHTML += `<button class="eat-storage-btn bg-blue-500 text-white font-bold py-1 px-3 rounded-full hover:bg-blue-600 text-xs" data-item-id="${item.id}" data-quality="${item.quality}">กิน (+${itemData.energyRestore}⚡)</button>`;
                 }
@@ -1892,6 +2013,60 @@
             
             modal.classList.remove('hidden', 'modal-leave');
             modal.classList.add('modal-enter');
+        }
+        
+        function showQuantityModal(itemId, quality, maxQuantity, onConfirm) {
+            const modal = document.getElementById('quantity-modal');
+            const itemData = GAME_DATA[itemId];
+
+            // แสดงข้อมูลไอเท็ม
+            document.getElementById('quantity-modal-name').textContent = itemData.name;
+            document.getElementById('quantity-modal-quality').textContent = `คุณภาพ: ${'★'.repeat(quality)}`;
+            const iconEl = document.getElementById('quantity-modal-icon');
+            iconEl.style.backgroundImage = itemData.imageUrl ? `url('${itemData.imageUrl}')` : 'none';
+            iconEl.textContent = itemData.imageUrl ? '' : itemData.icon;
+
+            // ตั้งค่า input และ slider
+            const slider = document.getElementById('quantity-modal-slider');
+            const input = document.getElementById('quantity-modal-input');
+            const maxBtn = document.getElementById('quantity-modal-max-btn');
+            
+            slider.max = maxQuantity;
+            input.max = maxQuantity;
+            slider.value = 1;
+            input.value = 1;
+
+            // ทำให้ slider กับ input เชื่อมกัน
+            slider.oninput = () => input.value = slider.value;
+            input.oninput = () => slider.value = input.value;
+            maxBtn.onclick = () => {
+                input.value = maxQuantity;
+                slider.value = maxQuantity;
+            };
+
+            // ตั้งค่าปุ่ม
+            document.getElementById('quantity-modal-cancel').onclick = hideQuantityModal;
+            
+            const okButton = document.getElementById('quantity-modal-ok');
+            const newOkButton = okButton.cloneNode(true); // สร้างปุ่มใหม่เพื่อล้าง event เก่า
+            okButton.parentNode.replaceChild(newOkButton, okButton);
+            newOkButton.addEventListener('click', () => {
+                const quantity = parseInt(input.value, 10);
+                if (quantity > 0 && quantity <= maxQuantity) {
+                    onConfirm(quantity);
+                    hideQuantityModal();
+                }
+            });
+
+            // แสดง Modal
+            modal.classList.remove('hidden', 'modal-leave');
+            modal.classList.add('modal-enter');
+        }
+
+        function hideQuantityModal() {
+            const modal = document.getElementById('quantity-modal');
+            modal.classList.add('modal-leave');
+            setTimeout(() => modal.classList.add('hidden'), 200);
         }
 
 		function showInfoModal(icon, title, text) {
@@ -2384,16 +2559,32 @@
             }
         }
         
-        function sellFromStorage(itemId, quality) {
+        function sellFromStorage(itemId, quality, quantity) {
             const newPlayerState = { ...playerState };
-            const itemIndex = newPlayerState.storageBin.findIndex(item => item.id === itemId && item.quality === quality);
-            if (itemIndex > -1) {
-                const itemToSell = newPlayerState.storageBin.splice(itemIndex, 1)[0];
-                newPlayerState.produceBin.push(itemToSell);
+            
+            const itemsToSell = [];
+            const remainingStorage = [];
+            let itemsFound = 0;
+
+            // วนลูปเพื่อหาของที่จะขายและแยกออกจากคลัง
+            for (const item of newPlayerState.storageBin) {
+                if (item.id === itemId && item.quality === quality && itemsFound < quantity) {
+                    itemsToSell.push(item);
+                    itemsFound++;
+                } else {
+                    remainingStorage.push(item);
+                }
+            }
+
+            // ถ้าหาของได้ครบตามจำนวน
+            if (itemsFound === quantity) {
+                newPlayerState.storageBin = remainingStorage;
+                newPlayerState.produceBin.push(...itemsToSell);
+                
                 updatePlayerState(newPlayerState);
-                updateQuestProgress('sell_item');
+                updateQuestProgress('sell_item', quantity);
                 if (quality === 2) {
-                    updateQuestProgress('sell_high_quality');
+                    updateQuestProgress('sell_high_quality', quantity);
                 }
             }
         }
@@ -2936,8 +3127,10 @@
         let gameLoopInterval = null;
         let logicInterval = null;
         let resetSchedulerStarted = false;
-        async function startGame(uid) {
+        async function startGame(uid, initialPlayerState) {
             userId = uid;
+            playerState = initialPlayerState; // <--- 2. กำหนดค่าให้ตัวแปรส่วนกลางทันที
+            initAdminPanel(uid, initialPlayerState); // <--- 3. ส่งข้อมูลต่อไปให้ initAdminPanel
             initPlayerListeners(uid);
             initFarmListeners();
 			setTimeout(async () => {
@@ -3139,11 +3332,24 @@
             const storageItemsEl = document.getElementById('storage-items');
             if(storageItemsEl) storageItemsEl.addEventListener('click', e => {
                 const button = e.target;
+                if (!button.dataset.itemId) return; // ถ้าไม่ใช่ปุ่มที่มีข้อมูลไอเท็ม ให้หยุด
+
                 const itemId = button.dataset.itemId;
                 const quality = parseInt(button.dataset.quality, 10);
-                if (button.classList.contains('sell-storage-btn')) sellFromStorage(itemId, quality);
-                else if (button.classList.contains('eat-storage-btn')) eatFromStorage(itemId, quality);
-                else if (button.classList.contains('move-to-inventory-btn')) moveFromStorageToInventory(itemId, quality);
+
+                if (button.classList.contains('sell-storage-btn')) {
+                    const maxQuantity = parseInt(button.dataset.max, 10);
+                    const sellAction = (quantityToSell) => {
+                        sellFromStorage(itemId, quality, quantityToSell);
+                    };
+                    showQuantityModal(itemId, quality, maxQuantity, sellAction);
+                } 
+                else if (button.classList.contains('eat-storage-btn')) {
+                    eatFromStorage(itemId, quality);
+                } 
+                else if (button.classList.contains('move-to-inventory-btn')) {
+                    moveFromStorageToInventory(itemId, quality);
+                }
             });
 
             const recipeListEl = document.getElementById('recipe-list');
@@ -3318,7 +3524,8 @@
                             await ensureFarmDataExists();
                             const docSnap = await getDoc(playerDocRef);
                             if (docSnap.exists()) {
-                                await startGame(userId);
+                                const initialPlayerState = docSnap.data(); // <-- 1. ดึงข้อมูลผู้เล่นมาก่อน
+                                await startGame(userId, initialPlayerState); // <-- 2. ส่งข้อมูลเข้าไปใน startGame
                             } else {
                                 document.getElementById('loading-screen').classList.add('loading-hidden');
                                 showNameModal(true);
