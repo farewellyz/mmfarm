@@ -2234,6 +2234,62 @@
                     actionsEl.appendChild(createButton('➕ ตั้งโรงงาน', () => showSubMenu('placeFactory', index, uniqueDeeds), uniqueDeeds.length === 0));
                 } else {
                     const factoryData = GAME_DATA[factory.factoryId];
+                    detailsEl.innerHTML = `<p class="font-bold">${factoryData.name}</p>`;
+
+                    // --- ส่วนที่แก้ไข: สร้าง UI สำหรับแสดงคิวการผลิตทั้งหมด ---
+                    if (factory.queue && factory.queue.length > 0) {
+                        let queueHTML = '<div class="mt-2 pt-2 border-t space-y-2">';
+                        queueHTML += '<p class="text-xs font-semibold">คิวการผลิต:</p>';
+
+                        factory.queue.forEach((job, jobIndex) => {
+                            const recipe = findRecipeById(job.recipeId);
+                            if (!recipe) return;
+                            
+                            const outputData = GAME_DATA[recipe.resultId];
+                            const ownerNickname = job.processedBy?.nickname || '??';
+                            let statusText = '';
+
+                            if (jobIndex === 0 && job.startTime) {
+                                const remainingMillis = Math.max(0, (job.startTime + recipe.processTime * 1000) - Date.now());
+                                statusText = `<span class="font-semibold text-blue-600">เสร็จใน ${formatTime(Math.ceil(remainingMillis / 1000))}</span>`;
+                            } else {
+                                statusText = '<span class="text-gray-500">รอคิว</span>';
+                            }
+
+                            const iconHTML = outputData.imageUrl ? `<img src="${outputData.imageUrl}" class="w-8 h-8 object-contain flex-shrink-0">` : `<span>${outputData.icon}</span>`;
+
+                            queueHTML += `
+                                <div class="flex items-center gap-2 text-xs bg-gray-100 p-1 rounded-md">
+                                    ${iconHTML}
+                                    <div class="flex-grow">
+                                        <p class="font-semibold">${recipe.name}</p>
+                                        <p>โดย: ${ownerNickname}</p>
+                                    </div>
+                                    <div class="flex-shrink-0 w-20 text-right">${statusText}</div>
+                                </div>
+                            `;
+                        });
+                        queueHTML += '</div>';
+                        detailsEl.innerHTML += queueHTML;
+                    }
+                    // --- จบส่วนที่แก้ไข ---
+
+                    // --- ส่วนแสดงของที่เสร็จแล้ว (Output Bin) ปรับปรุงเล็กน้อย ---
+                    if (factory.outputBin && factory.outputBin.length > 0) {
+                        let outputBinHTML = '<div class="mt-2 pt-2 border-t space-y-1">';
+                        outputBinHTML += `<p class="text-xs font-semibold">ของที่เสร็จแล้ว (ชั้นวาง):</p>`;
+                        factory.outputBin.forEach(output => {
+                            const itemName = GAME_DATA[output.item.id]?.name || 'Unknown';
+                            const ownerText = output.owner === userId ? '<span class="text-green-600 font-bold">(ของเรา)</span>' : `(${output.ownerNickname})`;
+                            outputBinHTML += `<p class="text-xs pl-2">- ${itemName} ${ownerText}</p>`;
+                        });
+                        outputBinHTML += `</div>`;
+                        detailsEl.innerHTML += outputBinHTML;
+                    }
+                    // --- จบส่วนปรับปรุง ---
+
+
+                    actionsEl.before(detailsEl);
 
                     const myItemsInBinCount = factory.outputBin?.filter(item => item.owner === userId).length || 0;
                     if (myItemsInBinCount > 0) {
@@ -2242,31 +2298,6 @@
 
                     const isQueueFull = (factory.queue?.length || 0) >= 5;
                     actionsEl.appendChild(createButton('⚙️ เพิ่มของเข้าคิว', () => showSubMenu('useFactory', index, factoryData.recipes.map(r => r.id)), isQueueFull));
-
-                    let detailsText = `<p class="font-bold">${factoryData.name}</p>`;
-
-                    if (factory.outputBin && factory.outputBin.length > 0) {
-                        detailsText += `<p class="text-xs mt-2 font-semibold">ของที่เสร็จแล้ว:</p><ul class="text-xs text-left list-disc list-inside">`;
-                        factory.outputBin.forEach(output => {
-                            const itemName = GAME_DATA[output.item.id]?.name || 'Unknown';
-                            const ownerText = output.owner === userId ? ' (ของเรา)' : ` (${output.ownerNickname})`;
-                            detailsText += `<li>${itemName}${ownerText}</li>`;
-                        });
-                        detailsText += `</ul>`;
-                    }
-
-                    if (factory.queue && factory.queue.length > 0) {
-                        const currentJob = factory.queue[0];
-                        const recipe = factoryData.recipes.find(r => r.id === currentJob.recipeId);
-                        const remainingMillis = Math.max(0, (currentJob.startTime + recipe.processTime * 1000) - Date.now());
-                        const remainingTimeText = currentJob.startTime ? formatTime(Math.ceil(remainingMillis / 1000)) : 'รอเริ่ม...';
-                        detailsText += `<p class="text-xs mt-2 font-semibold">กำลังผลิต:</p><p class="text-xs">${recipe.name} (เสร็จใน ${remainingTimeText})</p>`;
-                        if (factory.queue.length > 1) {
-                            detailsText += `<p class="text-xs">รอในคิวอีก: ${factory.queue.length - 1} ชิ้น</p>`;
-                        }
-                    }
-                    detailsEl.innerHTML = detailsText;
-                    actionsEl.before(detailsEl);
                 }
             }
             
