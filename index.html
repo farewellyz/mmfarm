@@ -777,7 +777,6 @@
         function executeCraft(recipeId, quantity, consumedItems, craftType) {
             const newPlayerState = { ...playerState };
             
-            // Consume exact items
             consumedItems.forEach(consumedItem => {
                 const indexToRemove = newPlayerState.storageBin.findIndex(storageItem => 
                     storageItem.id === consumedItem.id && storageItem.quality === consumedItem.quality
@@ -792,21 +791,29 @@
             
             const newJob = {
                 recipeId: recipeId,
-                quantity: quantity,
-                startTime: Date.now(),
-                cookedBy: { uid: userId, nickname: playerState.nickname },
                 ingredientQualities: ingredientQualities
             };
 
             if (craftType === 'cook') {
+                newJob.quantity = quantity;
+                newJob.startTime = Date.now();
+                newJob.cookedBy = { uid: userId, nickname: playerState.nickname };
+
                 if (!newFarmState.kitchen) newFarmState.kitchen = { queue: [] };
                 newFarmState.kitchen.queue.push(newJob);
                 updateQuestProgress('cook', quantity);
+
             } else if (craftType === 'process') {
-                const factoryIndex = selectionSession.factoryIndex; // We need to store this
+                const factoryIndex = selectionSession.factoryIndex;
                 const factory = newFarmState.factories[factoryIndex];
+
+                // --- บรรทัดที่เพิ่มเข้ามา ---
+                newJob.processedBy = { uid: userId, nickname: playerState.nickname };
+                
                 if (!factory.queue) factory.queue = [];
-                if (factory.queue.length === 0) newJob.startTime = Date.now();
+                if (factory.queue.length === 0) {
+                    newJob.startTime = Date.now();
+                }
                 factory.queue.push(newJob);
             }
 
