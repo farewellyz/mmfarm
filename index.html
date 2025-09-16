@@ -1683,12 +1683,32 @@
                 }
 				
 				if (itemData.type === 'item' || itemData.type === 'factory_deed' || itemData.type === 'animal_deed') {
-                     buttonsHTML += `<button class="move-to-inventory-btn bg-purple-500 text-white font-bold py-1 px-3 rounded-full hover:bg-purple-600 text-xs" data-item-id="${item.id}" data-quality="${item.quality}">ย้ายเข้าตัว</button>`;
+                     buttonsHTML += `<button class="move-to-inventory-btn bg-purple-500 text-white font-bold py-1 px-3 rounded-full hover:bg-purple-600 text-xs" data-item-id="${item.id}" data-quality="${item.quality}" data-max="${item.count}">ย้ายเข้าตัว</button>`;
                 }
                 
                 const iconHTML = itemData.imageUrl 
                     ? `<div class="w-10 h-10 mr-2 bg-contain bg-no-repeat bg-center" style="background-image: url('${itemData.imageUrl}')"></div>`
                     : `<span class="text-2xl">${itemData.icon}</span>`;
+
+                // --- ส่วนที่แก้ไข: เพิ่ม Logic การคำนวณและแสดงราคาตลาด ---
+                let priceHTML = '';
+                if (itemData && itemData.sellPrice) {
+                    const basePriceForQuality = itemData.sellPrice[item.quality];
+                    const basePriceForNormal = itemData.sellPrice[0];
+                    
+                    const marketBasePrice = farmState.marketPrices[item.id] || basePriceForNormal;
+                    const qualityRatio = basePriceForQuality / basePriceForNormal;
+                    const finalMarketPrice = Math.round(marketBasePrice * qualityRatio);
+
+                    let priceColorClass = 'text-yellow-700'; // สีปกติ
+                    if (finalMarketPrice > basePriceForQuality) {
+                        priceColorClass = 'text-green-600'; // สีเขียวถ้าราคาขึ้น
+                    } else if (finalMarketPrice < basePriceForQuality) {
+                        priceColorClass = 'text-red-600'; // สีแดงถ้าราคาตก
+                    }
+                    priceHTML = `<p class="text-xs ${priceColorClass} font-semibold">ราคาตลาด: ${finalMarketPrice}💰</p>`;
+                }
+                // --- จบส่วนที่แก้ไข ---
 
                 itemDiv.innerHTML = `
                     <div class="flex-grow flex items-center">
@@ -1697,7 +1717,7 @@
                             <span>${itemData.name}</span>
                             <span class="quality-star">${'★'.repeat(item.quality)}</span>
                             <span class="text-gray-600 text-sm ml-2">x${item.count}</span>
-                            <p class="text-xs text-yellow-700 font-semibold">ราคา: ${itemData.sellPrice ? itemData.sellPrice[item.quality] : 0}💰</p>
+                            ${priceHTML}
                         </div>
                     </div>
                     <div class="flex gap-1">
