@@ -778,6 +778,7 @@
             const newPlayerState = { ...playerState };
             
             consumedItems.forEach(consumedItem => {
+                // --- ส่วนที่แก้ไข: แก้ไขชื่อตัวแปรให้ถูกต้อง ---
                 const indexToRemove = newPlayerState.storageBin.findIndex(storageItem => 
                     storageItem.id === consumedItem.id && storageItem.quality === consumedItem.quality
                 );
@@ -789,7 +790,6 @@
             const newFarmState = { ...farmState };
             const ingredientQualities = consumedItems.map(item => item.quality);
             
-            // --- ส่วนที่แก้ไข: สร้าง newJob พื้นฐานก่อน ---
             const newJob = {
                 recipeId: recipeId,
                 ingredientQualities: ingredientQualities
@@ -801,11 +801,10 @@
                 newJob.cookedBy = { uid: userId, nickname: playerState.nickname };
 
                 if (!newFarmState.kitchen) newFarmState.kitchen = { queue: [] };
-                newFarm-State.kitchen.queue.push(newJob);
+                newFarmState.kitchen.queue.push(newJob);
                 updateQuestProgress('cook', quantity);
 
             } else if (craftType === 'process') {
-                // --- ส่วนที่แก้ไข: เพิ่มข้อมูลที่ถูกต้องสำหรับโรงงาน ---
                 const factoryIndex = selectionSession.factoryIndex;
                 const factory = newFarmState.factories[factoryIndex];
                 
