@@ -684,10 +684,10 @@
 				name: 'โรงแปรรูปเนื้อสัตว์', type: 'factory_instance', imageUrl: 'meat_processor.png',
 				recipes: [
 					// สังเกตว่า inputs คือ 'chicken_deed' ไม่ใช่ไก่ที่มีชีวิต
-					{ id: 'process_chicken', name: 'แปรรูปกรรมสิทธิ์ไก่', inputs: [{ id: 'chicken_deed', count: 1 }], output: { id: 'chicken_meat', count: 5 }, processTime: 3600 },
-					{ id: 'process_cow', name: 'แปรรูปกรรมสิทธิ์วัว', inputs: [{ id: 'cow_deed', count: 1 }], output: { id: 'beef', count: 5 }, processTime: 3600 },
-					{ id: 'process_duck', name: 'แปรรูปกรรมสิทธิ์เป็ด', inputs: [{ id: 'duck_deed', count: 1 }], output: { id: 'duck_meat', count: 5 }, processTime: 3600 },
-					{ id: 'process_pig', name: 'แปรรูปกรรมสิทธิ์หมู', inputs: [{ id: 'pig_deed', count: 1 }], output: { id: 'pig_meat', count: 5 }, processTime: 3600 }
+					{ id: 'process_chicken', name: 'แปรรูปเนื้อไก่', inputs: [{ id: 'chicken_deed', count: 1 }], output: { id: 'chicken_meat', count: 5 }, processTime: 3600 },
+					{ id: 'process_cow', name: 'แปรรูปเนื้อวัว', inputs: [{ id: 'cow_deed', count: 1 }], output: { id: 'beef', count: 5 }, processTime: 3600 },
+					{ id: 'process_duck', name: 'แปรรูปเนื้อเป็ด', inputs: [{ id: 'duck_deed', count: 1 }], output: { id: 'duck_meat', count: 5 }, processTime: 3600 },
+					{ id: 'process_pig', name: 'แปรรูปเนื่อหมู', inputs: [{ id: 'pig_deed', count: 1 }], output: { id: 'pig_meat', count: 5 }, processTime: 3600 }
 				]
 			},
 			'smokehouse': {
@@ -775,8 +775,8 @@
             'rice_mill': {
                 name: 'โรงสี', type: 'factory_instance', imageUrl: 'rice_mill.png',
                 recipes: [
-                    { id: 'husked_rice_recipe', name: 'สีข้าว', inputs: [{ id: 'unhusked_rice', count: 1 }], output: { id: 'husked_rice', count: 1 }, processTime: 600 }, 
-                    { id: 'rice_flour_recipe', name: 'โม่แป้ง', inputs: [{ id: 'husked_rice', count: 1 }], output: { id: 'rice_flour', count: 1 }, processTime: 900 },
+                    { id: 'husked_rice_recipe', name: 'ทำข้าวสาร', inputs: [{ id: 'unhusked_rice', count: 1 }], output: { id: 'husked_rice', count: 1 }, processTime: 600 }, 
+                    { id: 'rice_flour_recipe', name: 'ทำแป้งข้าว', inputs: [{ id: 'husked_rice', count: 1 }], output: { id: 'rice_flour', count: 1 }, processTime: 900 },
 					{ id: 'pasta_dough_recipe', name: 'ทำเส้นแป้ง', inputs: [{ id: 'rice_flour', count: 2 }], output: { id: 'pasta_dough', count: 1 }, processTime: 1200 },
 					{ id: 'pastry_dough_recipe', name: 'ทำแป้งขนม', inputs: [{ id: 'rice_flour', count: 1 }, { id: 'egg', count: 1 }], output: { id: 'pastry_dough', count: 1 }, processTime: 1200 }	
                 ]
@@ -1805,8 +1805,11 @@
                 const animal = farmState.animals[index];
                 titleEl.textContent = `คอกที่ ${index + 1}`;
                 if (!animal.animalId) {
-                     const buyableItems = Object.keys(playerState.inventory).filter(id => GAME_DATA[id]?.type === 'animal_deed' && playerState.inventory[id] > 0);
-                     actionsEl.appendChild(createButton('➕ วางสัตว์', () => showSubMenu('placeAnimal', index, buyableItems), buyableItems.length === 0));
+                     const deedsInStorage = playerState.storageBin
+                        .filter(item => GAME_DATA[item.id]?.type === 'animal_deed')
+                        .map(item => item.id);
+                     const uniqueDeeds = [...new Set(deedsInStorage)];
+                     actionsEl.appendChild(createButton('➕ วางสัตว์', () => showSubMenu('placeAnimal', index, uniqueDeeds), uniqueDeeds.length === 0));
                 } else {
                     const weatherMultiplier = WEATHER_DATA[farmState.currentWeather]?.animalMultiplier || 1;
 					const animalData = GAME_DATA[animal.animalId];
@@ -1827,8 +1830,11 @@
                 titleEl.textContent = `โรงงานช่องที่ ${index + 1}`;
 
                 if (!factory.factoryId) {
-                    const placeableItems = Object.keys(playerState.inventory).filter(id => GAME_DATA[id]?.type === 'factory_deed' && playerState.inventory[id] > 0);
-                    actionsEl.appendChild(createButton('➕ ตั้งโรงงาน', () => showSubMenu('placeFactory', index, placeableItems), placeableItems.length === 0));
+                    const deedsInStorage = playerState.storageBin
+                        .filter(item => GAME_DATA[item.id]?.type === 'factory_deed')
+                        .map(item => item.id);
+                    const uniqueDeeds = [...new Set(deedsInStorage)];
+                    actionsEl.appendChild(createButton('➕ ตั้งโรงงาน', () => showSubMenu('placeFactory', index, uniqueDeeds), uniqueDeeds.length === 0));
                 } else {
                     const factoryData = GAME_DATA[factory.factoryId];
 
@@ -2119,8 +2125,16 @@
             const newFarmState = { ...farmState };
             const newPlayerState = { ...playerState };
             const deedData = GAME_DATA[deedId];
+
+            // หาและลบ Deed จาก storageBin
+            const deedIndex = newPlayerState.storageBin.findIndex(item => item.id === deedId);
+            if (deedIndex > -1) {
+                newPlayerState.storageBin.splice(deedIndex, 1);
+            } else {
+                return; // ไม่เจอ Deed ให้หยุดทำงาน
+            }
+
             newFarmState.animals[slotIndex] = { animalId: deedData.animalId, startTime: Date.now() };
-            newPlayerState.inventory[deedId]--;
             updateFarmState(newFarmState);
             updatePlayerState(newPlayerState);
         }
@@ -2170,8 +2184,16 @@
             const newFarmState = { ...farmState };
             const newPlayerState = { ...playerState };
             const deedData = GAME_DATA[deedId];
+            
+            // หาและลบ Deed จาก storageBin
+            const deedIndex = newPlayerState.storageBin.findIndex(item => item.id === deedId);
+            if (deedIndex > -1) {
+                newPlayerState.storageBin.splice(deedIndex, 1);
+            } else {
+                return; // ไม่เจอ Deed ให้หยุดทำงาน
+            }
+
             newFarmState.factories[slotIndex] = { factoryId: deedData.factoryId, queue: [], outputBin: [] };
-            newPlayerState.inventory[deedId]--;
             updateFarmState(newFarmState);
             updatePlayerState(newPlayerState);
             updateQuestProgress('place_factory');
@@ -3190,6 +3212,10 @@
                         newFarmState.ownedKitchenTools.push(itemId);
                         updateFarmState(newFarmState);
                     }
+                } else if (itemData.type === 'animal_deed' || itemData.type === 'factory_deed') {
+                    // ถ้าเป็น Deed ให้ส่งไปที่คลังเก็บของ
+                    if (!newPlayerState.storageBin) newPlayerState.storageBin = [];
+                    newPlayerState.storageBin.push({ id: itemId, quality: 0 });
                 } else {
                    newPlayerState.inventory[itemId] = (newPlayerState.inventory[itemId] || 0) + 1;
                 }
