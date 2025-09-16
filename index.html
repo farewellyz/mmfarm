@@ -129,6 +129,14 @@
         #character-preview {
             image-rendering: pixelated;
         }
+        .water-indicator {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            font-size: 1.5rem; /* 24px */
+            text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+            animation: pop 0.5s ease-out;
+        }
     </style>
 </head>
 <body class="min-h-screen">
@@ -1140,10 +1148,8 @@
             const farmGrid = document.getElementById('farm-grid');
             farmGrid.innerHTML = '';
 
-            // ดึงค่า Multiplier ของสภาพอากาศมาเก็บไว้ก่อนเริ่มลูป
             const weatherMultiplier = WEATHER_DATA[farmState.currentWeather]?.cropMultiplier || 1;
 
-            // ทำลูปแค่ชั้นเดียวเพื่อวาดแปลงผักทั้งหมด
             farmState.plots.forEach((plot, index) => {
                 const plotEl = document.createElement('div');
                 plotEl.className = 'plot aspect-square rounded-lg shadow-inner cursor-pointer flex items-center justify-center text-3xl relative';
@@ -1156,13 +1162,25 @@
                     } else {
                         let progress = 0;
                         if (plot.plantTime) { 
-							const elapsedSeconds = (Date.now() - plot.plantTime) / 1000;
+                            const elapsedSeconds = (Date.now() - plot.plantTime) / 1000;
                             const growthMultiplier = 1 + ((plot.wateredBy?.length || 0) * 0.5);
                             const effectiveGrowth = elapsedSeconds * growthMultiplier;
-                            // ใช้ค่า Multiplier ที่ดึงมา
                             const adjustedGrowTime = plantData.growTime * weatherMultiplier;
                             progress = Math.min(effectiveGrowth / adjustedGrowTime, 1);
                         }
+
+                        // --- ส่วนที่เพิ่มเข้ามาสำหรับแสดงไอคอนรดน้ำ ---
+                        const isNotGrown = progress < 1;
+                        const notWateredByMe = !plot.wateredBy?.some(p => p.uid === userId);
+
+                        if (isNotGrown && notWateredByMe) {
+                            const waterIcon = document.createElement('div');
+                            waterIcon.className = 'water-indicator';
+                            waterIcon.textContent = '💧';
+                            plotEl.appendChild(waterIcon);
+                        }
+                        // --- จบส่วนที่เพิ่ม ---
+
                         plotEl.style.backgroundImage = `linear-gradient(to top, rgba(96, 165, 250, 0.5) 0%, rgba(96, 165, 250, 0.5) ${progress*100}%, transparent ${progress*100}%)`;
                         const content = document.createElement('div');
                         content.style.backgroundImage = `url(${plantData.imageUrl})`;
@@ -1175,7 +1193,6 @@
                 farmGrid.appendChild(plotEl);
             });
             
-            // โค้ดปุ่มขยาย (ส่วนนี้ถูกต้องอยู่แล้ว)
             const cost = calculateExpansionCost('farm');
             const expandButton = document.createElement('div');
             expandButton.className = 'aspect-square rounded-lg shadow-inner cursor-pointer flex items-center justify-center p-2 bg-green-200/50 hover:bg-green-200/80 transition';
@@ -2261,7 +2278,7 @@
         async function processFactoryQueuesToOutputBin() {
             if (!farmState || !farmState.factories) return;
             const now = Date.now();
-            const MAX_OUTPUT_BIN_SIZE = 6; // จำกัดชั้นวางของไว้ที่ 6 ชิ้น
+            const MAX_OUTPUT_BIN_SIZE = 6; 
 
             try {
                 await runTransaction(db, async (transaction) => {
@@ -2276,27 +2293,31 @@
                         if (!factory.factoryId || !factory.queue || factory.queue.length === 0 || !factory.queue[0].startTime) continue;
                         if (!factory.outputBin) factory.outputBin = [];
                         
-                        // ตรวจสอบว่าชั้นวางของเต็มหรือยัง
-                        if (factory.outputBin.length >= MAX_OUTPUT_BIN_SIZE) {
-                            continue; // ถ้าเต็มแล้ว ให้ข้ามไป ไม่ต้องผลิตเพิ่ม
-                        }
-
                         const currentJob = factory.queue[0];
                         const recipe = GAME_DATA[factory.factoryId].recipes.find(r => r.id === currentJob.recipeId);
                         const completionTime = currentJob.startTime + (recipe.processTime * 1000);
 
-                        if (now >= completionTime) {
+                        // ตรวจสอบว่าผลิตเสร็จแล้ว และชั้นวางของยังไม่เต็ม
+                        if (now >= completionTime && factory.outputBin.length < MAX_OUTPUT_BIN_SIZE) {
                             hasChanges = true;
-                            const finishedJob = factory.queue.shift(); // นำออกจากคิว
+                            const finishedJob = factory.queue.shift(); 
                             
-                            // นำไปวางที่ชั้นวางของ (outputBin)
-                            factory.outputBin.push({
-                                item: { id: recipe.output.id, quality: 0 },
-                                owner: finishedJob.processedBy.uid,
-                                ownerNickname: finishedJob.processedBy.nickname
-                            });
+                            // --- ส่วนที่แก้ไข: เพิ่มลูปเพื่อสร้างผลผลิตตามจำนวนที่กำหนด ---
+                            const outputCount = recipe.output.count || 1; // ดึงจำนวนผลผลิต, ถ้าไม่มีให้เป็น 1
+                            for (let i = 0; i < outputCount; i++) {
+                                // เช็คอีกครั้งว่าชั้นวางเต็มหรือยังก่อนจะเพิ่มของชิ้นต่อไป
+                                if (factory.outputBin.length < MAX_OUTPUT_BIN_SIZE) {
+                                    factory.outputBin.push({
+                                        item: { id: recipe.output.id, quality: 0 },
+                                        owner: finishedJob.processedBy.uid,
+                                        ownerNickname: finishedJob.processedBy.nickname
+                                    });
+                                } else {
+                                    break; // ถ้าชั้นวางเต็มระหว่างเพิ่มของ ให้หยุดลูป
+                                }
+                            }
+                            // --- จบส่วนที่แก้ไข ---
 
-                            // เริ่มงานต่อไปถ้ามี
                             if (factory.queue.length > 0) {
                                 factory.queue[0].startTime = completionTime;
                             }
