@@ -39,6 +39,14 @@
         }
         .watered { animation: water-effect 0.5s ease-out; }
 
+        @keyframes count-up {
+            from { transform: translateY(10px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        #summary-earnings p {
+            animation: count-up 0.5s ease-out;
+        }
+
         @keyframes fertilize-effect {
             0% { box-shadow: 0 0 0 0px rgba(139, 69, 19, 0); }
             50% { box-shadow: 0 0 15px 5px rgba(139, 69, 19, 0.5); }
@@ -146,6 +154,30 @@
     </div>
 
 <div id="modal-container">
+        <div id="summary-modal" class="hidden fixed inset-0 bg-black/70 z-[60] flex items-center justify-center p-4">
+            <div class="bg-yellow-50 rounded-2xl shadow-xl p-6 w-full max-w-md modal-enter text-gray-800">
+                <h2 class="text-3xl font-bold text-yellow-800 mb-4 text-center">สรุปยอดประจำวัน</h2>
+                
+                <div id="summary-earnings" class="mb-4 p-4 bg-green-100 rounded-lg">
+                    <h3 class="font-bold text-green-800 text-lg">💰 รายรับเมื่อวาน</h3>
+                    <p class="text-2xl font-bold text-green-700">0 💰</p>
+                </div>
+
+                <div id="summary-weather" class="mb-4 p-4 bg-blue-100 rounded-lg">
+                    <h3 class="font-bold text-blue-800 text-lg">☀️ สภาพอากาศวันนี้</h3>
+                    <p class="text-lg">กำลังโหลด...</p>
+                </div>
+
+                <div id="summary-market-drops" class="p-4 bg-red-100 rounded-lg">
+                    <h3 class="font-bold text-red-800 text-lg">📉 5 อันดับสินค้าราคาตก</h3>
+                    <ul class="list-none space-y-1 mt-2 text-sm">
+                        <li>-</li>
+                    </ul>
+                </div>
+
+                <button id="summary-modal-close" class="mt-6 bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-6 rounded-lg w-full">เริ่มต้นวันใหม่</button>
+            </div>
+        </div>
         <div id="map-modal" class="hidden fixed inset-0 bg-black/60 z-[52] flex items-center justify-center p-4">
             <div class="bg-green-50 rounded-2xl shadow-xl p-4 w-full max-w-md modal-enter relative">
                 <h2 class="text-2xl font-bold text-green-800 mb-4 text-center">แผนที่ฟาร์ม</h2>               
@@ -325,7 +357,8 @@
         <header class="text-center mb-4 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-4 relative">
             <button id="admin-reset-btn" class="hidden absolute top-2 right-2 bg-red-600 text-white text-xs font-bold py-1 px-3 rounded-full hover:bg-red-700">รีเซ็ตฟาร์ม (แอดมิน)</button>
             <button id="admin-force-sell-btn" class="hidden absolute top-2 right-[150px] bg-blue-600 text-white text-xs font-bold py-1 px-3 rounded-full hover:bg-blue-700">ขายของทั้งหมด (แอดมิน)</button>
-			<button id="reset-player-btn" class="absolute bottom-1 right-2 bg-yellow-500 text-white text-xs font-bold py-1 px-3 rounded-full hover:bg-yellow-600">รีเซ็ตข้อมูลฉัน</button>
+			<button id="admin-test-reset-btn" class="hidden absolute top-10 right-2 bg-purple-600 text-white text-xs font-bold py-1 px-3 rounded-full hover:bg-purple-700">เทสรีเซ็ต (แอดมิน)</button>
+            <button id="reset-player-btn" class="absolute bottom-1 right-2 bg-yellow-500 text-white text-xs font-bold py-1 px-3 rounded-full hover:bg-yellow-600">รีเซ็ตข้อมูลฉัน</button>
             <h1 class="text-3xl md:text-4xl font-bold text-green-800">สวนผักของเรา 💚</h1>
             <div class="mt-3 flex flex-wrap justify-center items-center gap-x-4 gap-y-2 text-sm text-gray-600">
                 <div id="weather-display" class="flex items-center justify-center gap-2 bg-blue-100 px-3 py-1 rounded-full" title="สภาพอากาศวันนี้">
@@ -343,8 +376,9 @@
                     <select id="admin-player-select" class="w-full border rounded px-2 py-1 mt-1"></select>
                 </div>
                 <div class="flex flex-wrap gap-2 items-center">
-                    <select id="admin-item-select" class="flex-grow border rounded px-2 py-1"></select>
-                    <input type="number" id="admin-item-quantity" value="1" min="1" class="w-20 border rounded px-2 py-1">
+                    <select id="admin-item-select" class="flex-grow border rounded px-2 py-1" title="เลือกไอเท็ม"></select>
+                    <input type="number" id="admin-item-quantity" value="1" min="1" class="w-20 border rounded px-2 py-1" title="จำนวน">
+                    <input type="number" id="admin-item-quality" value="0" min="0" max="2" class="w-16 border rounded px-2 py-1" title="คุณภาพ (0-2 ดาว)">
                     <button id="admin-add-item-btn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-3 rounded">เพิ่มของเข้าคลัง</button>
                 </div>
             </div>
@@ -533,33 +567,29 @@
             const playerSelect = document.getElementById('admin-player-select');
             const itemSelect = document.getElementById('admin-item-select');
             const quantityInput = document.getElementById('admin-item-quantity');
+            const qualityInput = document.getElementById('admin-item-quality'); // <-- เพิ่มตัวแปรสำหรับช่องคุณภาพ
             const addButton = document.getElementById('admin-add-item-btn');
 
             panel.classList.remove('hidden');
 
+            // ... (โค้ดส่วนของการสร้าง playerSelect และ itemSelect เหมือนเดิม) ...
             playerSelect.innerHTML = '';
-            
             const selfOption = document.createElement('option');
             selfOption.value = currentUserId;
             selfOption.textContent = `ตัวเอง (${currentPlayerState.nickname})`;
             playerSelect.appendChild(selfOption);
-
             try {
                 const playersCollectionRef = collection(db, "players");
-                const querySnapshot = await getDocs(playersCollectionRef); // <-- แก้ไขชื่อตัวแปรตรงนี้ให้ถูกต้อง
+                const querySnapshot = await getDocs(playersCollectionRef);
                 querySnapshot.forEach((doc) => {
                     if (doc.id === currentUserId) return;
-
                     const playerData = doc.data();
                     const option = document.createElement('option');
                     option.value = doc.id;
                     option.textContent = playerData.nickname;
                     playerSelect.appendChild(option);
                 });
-            } catch (e) {
-                console.error("Error fetching players for admin panel:", e);
-            }
-
+            } catch (e) { console.error("Error fetching players for admin panel:", e); }
             itemSelect.innerHTML = '<option value="">-- เลือกไอเท็ม --</option>';
             const itemTypesToInclude = ['produce', 'seed', 'item', 'animal_deed', 'factory_deed'];
             Object.entries(GAME_DATA).forEach(([id, data]) => {
@@ -571,24 +601,28 @@
                 }
             });
 
+            // --- ส่วนที่แก้ไข: เพิ่มการอ่านค่า quality ---
             addButton.onclick = async () => {
                 const targetUserId = playerSelect.value;
                 const itemId = itemSelect.value;
                 const quantity = parseInt(quantityInput.value, 10);
+                const quality = parseInt(qualityInput.value, 10); // <-- อ่านค่าคุณภาพจาก input
 
-                if (!targetUserId || !itemId || !quantity || quantity < 1) {
-                    alert('กรุณาเลือกเป้าหมาย, ไอเท็ม และใส่จำนวนที่ถูกต้อง');
+                if (!targetUserId || !itemId || !quantity || quantity < 1 || quality < 0 || quality > 2) {
+                    alert('กรุณาเลือกเป้าหมาย, ไอเท็ม และใส่จำนวน/คุณภาพที่ถูกต้อง (0-2)');
                     return;
                 }
+
+                const itemToAdd = { id: itemId, quality: quality }; // <-- สร้าง object ไอเท็มพร้อมคุณภาพ
 
                 if (targetUserId === currentUserId) {
                     const newPlayerState = { ...playerState };
                     if (!newPlayerState.storageBin) newPlayerState.storageBin = [];
                     for (let i = 0; i < quantity; i++) {
-                        newPlayerState.storageBin.push({ id: itemId, quality: 0 });
+                        newPlayerState.storageBin.push(itemToAdd); // <-- เพิ่มไอเท็มที่มีคุณภาพ
                     }
                     await updatePlayerState(newPlayerState);
-                    alert(`เพิ่ม ${GAME_DATA[itemId].name} x${quantity} ชิ้น เข้าคลังของคุณสำเร็จ!`);
+                    alert(`เพิ่ม ${GAME_DATA[itemId].name} ${'★'.repeat(quality)} x${quantity} ชิ้น เข้าคลังของคุณสำเร็จ!`);
                 } else {
                     const playerDocRef = doc(db, "players", targetUserId);
                     try {
@@ -598,11 +632,11 @@
                             if (!targetPlayerData.storageBin) targetPlayerData.storageBin = [];
                             
                             for (let i = 0; i < quantity; i++) {
-                                targetPlayerData.storageBin.push({ id: itemId, quality: 0 });
+                                targetPlayerData.storageBin.push(itemToAdd); // <-- เพิ่มไอเท็มที่มีคุณภาพ
                             }
                             
                             await setDoc(playerDocRef, targetPlayerData);
-                            alert(`เพิ่ม ${GAME_DATA[itemId].name} x${quantity} ชิ้น เข้าคลังของ ${targetPlayerData.nickname} สำเร็จ!`);
+                            alert(`เพิ่ม ${GAME_DATA[itemId].name} ${'★'.repeat(quality)} x${quantity} ชิ้น เข้าคลังของ ${targetPlayerData.nickname} สำเร็จ!`);
                         } else {
                             alert('ไม่พบข้อมูลผู้เล่นคนดังกล่าว!');
                         }
@@ -654,6 +688,74 @@
             return null; // ถ้าไม่เจอเลยจริงๆ ให้ trả về null
         }
         // --- END NEW HELPER FUNCTION ---
+
+        function showSummaryModal(earningsData, currentFarmState) {
+            const modal = document.getElementById('summary-modal');
+            if (!modal) return;
+
+            // --- 1. แสดงข้อมูลรายรับ ---
+            const earningsEl = document.getElementById('summary-earnings').querySelector('p');
+            earningsEl.textContent = `${earningsData.total} 💰`;
+            earningsEl.classList.remove('pop-animation');
+            void earningsEl.offsetWidth;
+            earningsEl.classList.add('pop-animation');
+
+            // --- 2. แสดงข้อมูลสภาพอากาศ ---
+            const weatherEl = document.getElementById('summary-weather').querySelector('p');
+            if (currentFarmState && currentFarmState.currentWeather && WEATHER_DATA[currentFarmState.currentWeather]) { 
+                const weather = WEATHER_DATA[currentFarmState.currentWeather];
+                weatherEl.innerHTML = `<span class="text-2xl">${weather.icon}</span> ${weather.name}`;
+            } else {
+                weatherEl.textContent = 'ไม่ทราบ';
+            }
+
+            // --- 3. คำนวณและแสดง 5 อันดับสินค้าราคาตก ---
+            // --- ส่วนที่แก้ไข: เปลี่ยนชื่อตัวแปรที่ซ้ำกัน ---
+            const marketDropsEl = document.getElementById('summary-market-drops').querySelector('ul');
+            marketDropsEl.innerHTML = ''; 
+
+            const priceDrops = [];
+            Object.entries(GAME_DATA).forEach(([id, data]) => {
+                if (data.type === 'produce' && data.sellPrice) {
+                    const basePrice = data.sellPrice[0]; 
+                    const marketPrice = currentFarmState.marketPrices[id] || basePrice;
+                    
+                    if (marketPrice < basePrice) {
+                        priceDrops.push({
+                            name: data.name,
+                            icon: data.icon || '📉',
+                            dropAmount: basePrice - marketPrice
+                        });
+                    }
+                }
+            });
+
+            priceDrops.sort((a, b) => b.dropAmount - a.dropAmount);
+            const top5Drops = priceDrops.slice(0, 5);
+
+            if (top5Drops.length > 0) {
+                top5Drops.forEach(item => {
+                    const li = document.createElement('li');
+                    li.className = 'flex justify-between items-center';
+                    li.innerHTML = `
+                        <span>${item.icon} ${item.name}</span>
+                        <span class="font-bold text-red-600">-${item.dropAmount}💰</span>
+                    `;
+                    marketDropsEl.appendChild(li);
+                });
+            } else {
+                marketDropsEl.innerHTML = '<li>✨ ไม่มีสินค้าราคาตกวันนี้!</li>';
+            }
+
+            // --- 4. ตั้งค่าปุ่มปิดและแสดงหน้าต่าง ---
+            document.getElementById('summary-modal-close').onclick = () => {
+                modal.classList.add('modal-leave');
+                setTimeout(() => modal.classList.add('hidden'), 200);
+            };
+
+            modal.classList.remove('hidden', 'modal-leave');
+            modal.classList.add('modal-enter');
+        }
 
         function showIngredientSelector(recipeId, quantity, onConfirmCallback) {
             // --- ส่วนที่แก้ไข: ใช้ findRecipeById ในการค้นหาสูตร ---
@@ -1731,18 +1833,20 @@
             
             document.getElementById('user-id-display').textContent = `ID ของคุณ: ${userId}`;
             
-            // --- START CORRECTION ---
+            // --- ส่วนที่แก้ไข: รวมปุ่มแอดมินทั้งหมดไว้ที่นี่ ---
             const adminResetBtn = document.getElementById('admin-reset-btn');
-            const adminSellBtn = document.getElementById('admin-force-sell-btn'); // ดึงปุ่มมาเก็บในตัวแปรก่อน
+            const adminSellBtn = document.getElementById('admin-force-sell-btn');
+            const adminTestResetBtn = document.getElementById('admin-test-reset-btn');
             
             if (userId === ADMIN_UID) {
                 if (adminResetBtn) adminResetBtn.classList.remove('hidden');
                 if (adminSellBtn) adminSellBtn.classList.remove('hidden');
+                if (adminTestResetBtn) adminTestResetBtn.classList.remove('hidden');
             } else {
                 if (adminResetBtn) adminResetBtn.classList.add('hidden');
                 if (adminSellBtn) adminSellBtn.classList.add('hidden');
+                if (adminTestResetBtn) adminTestResetBtn.classList.add('hidden');
             }
-            // --- END CORRECTION ---
         }
 
         function renderShop() {
@@ -3026,28 +3130,23 @@
             await updateFarmState(newFarmState);
         }
 		
-		async function checkForTimeResets() {
-            if (!playerState || !farmState) return;
+		async function checkForTimeResets(currentPlayerState) { // <--- รับ currentPlayerState เข้ามา
+            // ใช้ currentPlayerState ที่รับเข้ามาแทน playerState ส่วนกลาง
+            if (!currentPlayerState || !farmState) return;
+
             const now = new Date();
-            
-            // --- STATE PREPARATION ---
-            // สร้างตัวแปรมารอรับการเปลี่ยนแปลงแค่ครั้งเดียว
-            let newFarmState = null;
-            let newPlayerState = null;
-            let dailyResetOccurred = false;
+            const lastReset = new Date(currentPlayerState.lastResetTime || 0);
 
-            // --- DAILY RESET CHECK ---
-            const lastPlayerReset = new Date(playerState.lastResetTime || 0);
-            if (lastPlayerReset.getDate() !== now.getDate() || lastPlayerReset.getMonth() !== now.getMonth()) {
-                dailyResetOccurred = true;
-                console.log("New day detected! Running daily reset...");
+            const needsDailyReset = lastReset.getDate() !== now.getDate() || 
+                                    lastReset.getMonth() !== now.getMonth() || 
+                                    lastReset.getFullYear() !== now.getFullYear();
+
+            if (needsDailyReset) {
+                console.log("New day detected! Running daily reset for this player.");
                 
-                // เริ่มต้นการเปลี่ยนแปลงจาก State ปัจจุบัน
-                newFarmState = { ...farmState };
-                newPlayerState = { ...playerState };
-                if (!newFarmState.salesVolume) newFarmState.salesVolume = {};
+                let newFarmState = { ...farmState };
+                let newPlayerState = { ...currentPlayerState }; // <--- เริ่มต้นจาก currentPlayerState
 
-                // Action 1: Sell items
                 if (newPlayerState.produceBin && newPlayerState.produceBin.length > 0) {
                     let totalValue = 0;
                     newPlayerState.produceBin.forEach(item => {
@@ -3057,6 +3156,8 @@
                             const qualityRatio = itemData.sellPrice[item.quality] / itemData.sellPrice[0];
                             const finalSellPrice = Math.round(marketBasePrice * qualityRatio);
                             totalValue += finalSellPrice;
+                            
+                            if (!newFarmState.salesVolume) newFarmState.salesVolume = {};
                             newFarmState.salesVolume[item.id] = (newFarmState.salesVolume[item.id] || 0) + 1;
                         }
                     });
@@ -3064,53 +3165,44 @@
                     newPlayerState.produceBin = [];
                 }
 
-                // Action 2: Reset Daily Quests
-                newFarmState.quests.daily = generateRandomQuests('daily', 5);
-                newFarmState.quests.lastDailyReset = now.getTime();
-
-                // Action 3: Reset Player Stats
                 newPlayerState.energy = getMaxEnergy();
                 newPlayerState.dailyRestCount = 0;
 				newPlayerState.dailyNapCount = 0;
                 newPlayerState.lastResetTime = now.getTime();
-				
-				// Action 4: Set new weather <<<<<< เพิ่มส่วนนี้
-                const weatherTypes = Object.keys(WEATHER_DATA);
-                const randomWeather = weatherTypes[Math.floor(Math.random() * weatherTypes.length)];
-                newFarmState.currentWeather = randomWeather;
-                console.log(`Today's weather is: ${randomWeather}`);
-            }
-
-            // --- WEEKLY RESET CHECK ---
-            const lastWeeklyQuestReset = new Date(farmState.quests?.lastWeeklyReset || 0);
-            const currentWeek = getWeekNumber(now);
-            const lastResetWeek = getWeekNumber(lastWeeklyQuestReset);
-
-            if (currentWeek[0] !== lastResetWeek[0] || currentWeek[1] !== lastResetWeek[1]) {
-                console.log("New week detected! Resetting weekly quests.");
                 
-                // หากยังไม่มีการเปลี่ยนแปลงเกิดขึ้น ให้สร้าง newFarmState ขึ้นมาใหม่
-                if (!newFarmState) {
-                    newFarmState = { ...farmState };
-                }
-                
-                newFarmState.quests.weekly = generateRandomQuests('weekly', 5);
-                newFarmState.quests.lastWeeklyReset = now.getTime();
-            }
-
-            // --- FINAL SAVE ---
-            // ตรวจสอบว่ามีการเปลี่ยนแปลงใดๆ เกิดขึ้นหรือไม่ แล้วค่อยบันทึกข้อมูลทั้งหมดในครั้งเดียว
-            if (newPlayerState) {
+                // ตอนอัปเดต ให้ใช้ newPlayerState ที่สร้างจาก currentPlayerState
                 await updatePlayerState(newPlayerState);
-            }
-            if (newFarmState) {
-                await updateFarmState(newFarmState);
-                // ถ้ามีการรีเซ็ตประจำวันเกิดขึ้นเท่านั้น ถึงจะอัปเดตราคาตลาด
-                if (dailyResetOccurred) {
+
+                const lastFarmReset = new Date(newFarmState.quests.lastDailyReset || 0);
+                const needsFarmReset = lastFarmReset.getDate() !== now.getDate() || 
+                                       lastFarmReset.getMonth() !== now.getMonth() || 
+                                       lastFarmReset.getFullYear() !== now.getFullYear();
+
+                if (needsFarmReset) {
+                    console.log("First player of the day! Resetting farm-wide data (quests, weather, market).");
+                    
+                    newFarmState.quests.daily = generateRandomQuests('daily', 5);
+                    newFarmState.quests.lastDailyReset = now.getTime();
+
+                    const weatherTypes = Object.keys(WEATHER_DATA);
+                    const randomWeather = weatherTypes[Math.floor(Math.random() * weatherTypes.length)];
+                    newFarmState.currentWeather = randomWeather;
+                    
                     await updateMarketPrices();
                 }
-                // อัปเดต state ในเครื่องให้ตรงกับบน server
-                farmState = await getDoc(doc(db, "publicFarmData", "farmState")).then(d => d.data());
+                
+                const lastWeeklyQuestReset = new Date(newFarmState.quests.lastWeeklyReset || 0);
+                const currentWeek = getWeekNumber(now);
+                const lastResetWeek = getWeekNumber(lastWeeklyQuestReset);
+                if (currentWeek[0] !== lastResetWeek[0] || currentWeek[1] !== lastResetWeek[1]) {
+                    console.log("New week detected! Resetting weekly quests.");
+                    newFarmState.quests.weekly = generateRandomQuests('weekly', 5);
+                    newFarmState.quests.lastWeeklyReset = now.getTime();
+                }
+
+                await updateFarmState(newFarmState);
+                
+                // ไม่ต้องแสดง Summary Modal ที่นี่แล้ว เพราะเราจะย้ายไปแสดงที่ onAuthStateChanged
             }
         }
         
@@ -3647,6 +3739,21 @@
             document.getElementById('cancel-name-btn').onclick = hideNameModal;
             document.getElementById('save-name-btn').onclick = saveNameChange;
 
+            // --- ส่วนที่เพิ่มเข้ามา: Event Listener ของปุ่มสภาพอากาศ ---
+            const weatherDisplay = document.getElementById('weather-display');
+            if (weatherDisplay) {
+                weatherDisplay.onclick = () => {
+                    if (farmState && farmState.currentWeather) {
+                        const weather = WEATHER_DATA[farmState.currentWeather];
+                        if (weather) {
+                            showInfoModal(weather.icon, weather.name, weather.description);
+                        }
+                    }
+                };
+            }
+            // --- จบส่วนที่เพิ่ม ---
+
+
             // Confirmation Modal
             document.getElementById('confirm-modal-cancel').onclick = hideConfirmationModal;
 
@@ -3679,9 +3786,7 @@
                 } else if (button.classList.contains('eat-storage-btn')) {
                     eatFromStorage(itemId, quality);
                 } else if (button.classList.contains('move-to-inventory-btn')) {
-                    const maxQuantity = parseInt(button.dataset.max, 10);
-                    const moveAction = (quantityToMove) => moveFromStorageToInventory(itemId, quality, quantityToMove);
-                    showQuantityModal({ title: `ย้าย ${GAME_DATA[itemId].name}`, itemId: itemId, quality: quality, maxQuantity: maxQuantity, onConfirm: moveAction });
+                    moveFromStorageToInventory(itemId, quality);
                 }
             });
             
@@ -3722,8 +3827,23 @@
             const resetPlayerBtn = document.getElementById('reset-player-btn');
             if (adminResetBtn) adminResetBtn.onclick = forceResetFarm;
             if (adminSellBtn) adminSellBtn.onclick = forceSellAllPlayersItems;
-            if (resetPlayerBtn) resetPlayerBtn.onclick = resetPlayerProgress;
+            if (resetPlayerBtn) resetPlayerProgress;
             
+            // --- เพิ่มส่วนนี้เข้าไปใน setupControls ---
+            const adminTestResetBtn = document.getElementById('admin-test-reset-btn');
+            if (adminTestResetBtn) {
+                 adminTestResetBtn.onclick = () => {
+                    if (userId !== ADMIN_UID) return;
+                    const yesterday = new Date();
+                    yesterday.setDate(yesterday.getDate() - 1);
+                    
+                    const newPlayerState = { ...playerState, lastResetTime: yesterday.getTime() };
+                    updatePlayerState(newPlayerState);
+                    
+                    alert('ตั้งค่าเวลาสำเร็จ! กรุณารีเฟรชหน้าจอ (F5 หรือ Ctrl+R) เพื่อดูหน้าต่างสรุปผล');
+                };
+            }
+            // --- จบส่วนที่เพิ่ม ---
             // Character Creator
             setupCharacterCreatorControls();
         }
@@ -3827,21 +3947,53 @@
                         initializeVersionChecker();
                         
                         const playerDocRef = doc(db, "players", userId);
+                        const farmDocRef = doc(db, "publicFarmData", "farmState"); // <--- เพิ่มตัวแปรอ้างอิง farmState
+
                         try {
                             await ensureFarmDataExists();
-                            const docSnap = await getDoc(playerDocRef);
-                            if (docSnap.exists()) {
-                                const initialPlayerState = docSnap.data(); // <-- 1. ดึงข้อมูลผู้เล่นมาก่อน
-                                await startGame(userId, initialPlayerState); // <-- 2. ส่งข้อมูลเข้าไปใน startGame
+                            const playerDocSnap = await getDoc(playerDocRef);
+                            
+                            if (playerDocSnap.exists()) {
+                                const initialPlayerState = playerDocSnap.data();
+                                
+                                // --- ส่วนที่แก้ไข ---
+                                const lastReset = new Date(initialPlayerState.lastResetTime || 0);
+                                const now = new Date();
+                                const needsReset = lastReset.getDate() !== now.getDate() || lastReset.getMonth() !== now.getMonth() || lastReset.getFullYear() !== now.getFullYear();
+                                
+                                if (needsReset) {
+                                    // ดึงข้อมูล farmState ล่าสุดมาก่อนเสมอ
+                                    const farmDocSnap = await getDoc(farmDocRef);
+                                    if (farmDocSnap.exists()) {
+                                        const currentFarmState = farmDocSnap.data();
+                                        let totalValue = 0;
+                                        if(initialPlayerState.produceBin && initialPlayerState.produceBin.length > 0) {
+                                            initialPlayerState.produceBin.forEach(item => {
+                                                const itemData = GAME_DATA[item.id];
+                                                if (itemData && itemData.sellPrice) {
+                                                    const marketBasePrice = currentFarmState.marketPrices[item.id] || itemData.sellPrice[0];
+                                                    const qualityRatio = itemData.sellPrice[item.quality] / itemData.sellPrice[0];
+                                                    totalValue += Math.round(marketBasePrice * qualityRatio);
+                                                }
+                                            });
+                                        }
+                                        // ส่ง currentFarmState ไปพร้อมกับ earningsData
+                                        showSummaryModal({ total: totalValue }, currentFarmState); 
+                                    }
+                                }
+                                
+                                await startGame(userId, initialPlayerState);
+                                
+                                if (!resetSchedulerStarted) {
+                                    await checkForTimeResets(initialPlayerState);
+                                    scheduleNextMidnightReset();
+                                    resetSchedulerStarted = true;
+                                }
+                                // --- จบส่วนที่แก้ไข ---
+
                             } else {
                                 document.getElementById('loading-screen').classList.add('loading-hidden');
                                 showNameModal(true);
-                            }
-                            
-                            if (!resetSchedulerStarted) {
-                                checkForTimeResets();
-                                scheduleNextMidnightReset();
-                                resetSchedulerStarted = true;
                             }
 
                         } catch (error) { handleFirestoreError(error); }
