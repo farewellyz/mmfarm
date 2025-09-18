@@ -383,6 +383,7 @@
             <button id="admin-force-sell-btn" class="hidden absolute top-2 right-[150px] bg-blue-600 text-white text-xs font-bold py-1 px-3 rounded-full hover:bg-blue-700">ขายของทั้งหมด (แอดมิน)</button>
 			<button id="admin-test-reset-btn" class="hidden absolute top-10 right-2 bg-purple-600 text-white text-xs font-bold py-1 px-3 rounded-full hover:bg-purple-700">เทสรีเซ็ต (แอดมิน)</button>
             <button id="reset-player-btn" class="absolute bottom-1 right-2 bg-yellow-500 text-white text-xs font-bold py-1 px-3 rounded-full hover:bg-yellow-600">รีเซ็ตข้อมูลฉัน</button>
+            <button id="admin-force-reset-quests-btn" class="hidden absolute top-10 right-[150px] bg-green-600 text-white text-xs font-bold py-1 px-3 rounded-full hover:bg-green-700">รีเซ็ตเควส (แอดมิน)</button>
             <h1 class="text-3xl md:text-4xl font-bold text-green-800">สวนผักของเรา 💚</h1>
             <div class="mt-3 flex flex-wrap justify-center items-center gap-x-4 gap-y-2 text-sm text-gray-600">
                 <div id="weather-display" class="flex items-center justify-center gap-2 bg-blue-100 px-3 py-1 rounded-full" title="สภาพอากาศวันนี้">
@@ -1309,47 +1310,41 @@
         };
         const QUEST_DATA = {
             daily: [
-                { id: 'water_25', action: 'water', description: 'ช่วยกันรดน้ำต้นไม้ 25 ครั้ง', target: 25, reward: { type: 'item', id: 'fertilizer_1', count: 3 } },
-                { id: 'harvest_15', action: 'harvest', description: 'ช่วยกันเก็บเกี่ยวผลผลิต 15 ชิ้น', target: 15, reward: { type: 'seed', id: 'carrot_seed', count: 15 } },
-                { id: 'fish_10', action: 'fish', description: 'ช่วยกันตกปลา 10 ตัว', target: 10, reward: { type: 'seed', id: 'tomato_seed', count: 8 } },
-                { id: 'collect_5', action: 'collect_product', description: 'ช่วยกันเก็บผลผลิตจากสัตว์ 5 ชิ้น', target: 5, reward: { type: 'item', id: 'fertilizer_1', count: 2 } },
-                { id: 'cook_3', action: 'cook', description: 'ช่วยกันทำอาหาร 3 อย่าง', target: 3, reward: { type: 'produce', id: 'egg', count: 5 } },
-                { id: 'plant_10', action: 'plant', description: 'ช่วยกันปลูกเมล็ดพืช 10 ต้น', target: 10, reward: { type: 'seed', id: 'carrot_seed', count: 10 } },
-                { id: 'fertilize_5', action: 'fertilize', description: 'ช่วยกันใส่ปุ๋ย 5 แปลง', target: 5, reward: { type: 'item', id: 'fertilizer_1', count: 2 } },
-                { id: 'fish_15_more', action: 'fish', description: 'ช่วยกันตกปลาเพิ่มอีก 15 ตัว', target: 15, reward: { type: 'produce', id: 'sardine', count: 5 } },
-                { id: 'sell_item_10', action: 'sell_item', description: 'ช่วยกันใส่ของลงกล่องขาย 10 ชิ้น', target: 10, reward: { type: 'seed', id: 'strawberry_seed', count: 10 } },
-                { id: 'collect_8_more', action: 'collect_product', description: 'ช่วยกันเก็บผลผลิตจากสัตว์เพิ่ม 8 ชิ้น', target: 8, reward: { type: 'produce', id: 'duck_egg', count: 2 } },
-                { id: 'cook_2_more', action: 'cook', description: 'ช่วยกันทำอาหารเพิ่ม 2 อย่าง', target: 2, reward: { type: 'produce', id: 'sashimi_food', count: 1 } },
-                { id: 'harvest_10_more', action: 'harvest', description: 'ช่วยกันเก็บเกี่ยวเพิ่ม 10 ชิ้น', target: 10, reward: { type: 'produce', id: 'carrot_produce', count: 5 } },
-                { id: 'buy_item_5', action: 'buy_item', description: 'ช่วยกันซื้อของในร้านค้า 5 ชิ้น', target: 5, reward: { type: 'seed', id: 'orange_seed', count: 5 } },
-                { id: 'eat_2', action: 'eat', description: 'ช่วยกันกินอาหาร 2 ครั้ง', target: 2, reward: { type: 'produce', id: 'fried_egg_food', count: 1 } },
-                { id: 'place_animal_1', action: 'place_animal', description: 'ช่วยกันวางสัตว์ในคอก 1 ตัว', target: 1, reward: { type: 'seed', id: 'strawberry_seed', count: 15 } },
-                { id: 'buy_seed_15', action: 'buy_seed', description: 'ช่วยกันซื้อเมล็ดพันธุ์ 15 ถุง', target: 15, reward: { type: 'seed', id: 'grape_seed', count: 5 } },
-                { id: 'buy_fertilizer_5', action: 'buy_fertilizer', description: 'ช่วยกันซื้อปุ๋ย 5 ชิ้น', target: 5, reward: { type: 'seed', id: 'peach_seed', count: 5 } },
-                { id: 'spend_250', action: 'spend_money', description: 'ช่วยกันใช้เงิน 250💰', target: 250, reward: { type: 'produce', id: 'tomato_produce', count: 5 } },
-                { id: 'water_20_more', action: 'water', description: 'ช่วยกันรดน้ำเพิ่ม 20 ครั้ง', target: 20, reward: { type: 'item', id: 'fertilizer_1', count: 3 } },
-                { id: 'buy_animal_1', action: 'buy_animal', description: 'ช่วยกันซื้อสัตว์ 1 ตัว', target: 1, reward: { type: 'seed', id: 'strawberry_seed', count: 5 } },
+                { id: 'weekly_craft_beef_burger_2star', action: 'craft_specific', description: 'ช่วยกันทำ "เบอร์เกอร์เนื้อ" คุณภาพ 2 ดาว จำนวน 10 ชิ้น', target: 10, itemId: 'beef_burger_food', minQuality: 2, reward: { type: 'produce', id: 'gem', count: 10 } },
+                { id: 'weekly_craft_carbonara_20', action: 'craft_specific', description: 'ช่วยกันทำ "สปาเก็ตตี้คาโบนาร่า" จำนวน 20 จาน', target: 20, itemId: 'carbonara_spaghetti_food', minQuality: 0, reward: { type: 'animal_deed', id: 'crocodile_deed', count: 1 } },
+                { id: 'weekly_craft_any_jam_2star_50', action: 'craft_specific', description: 'ช่วยกันทำ "แยมผลไม้" ชนิดใดก็ได้ คุณภาพ 2 ดาว จำนวน 30 ขวด', target: 30, itemId: 'any_jam', minQuality: 2, reward: { type: 'animal_deed', id: 'pearl_oyster_deed', count: 1 } },
+                { id: 'weekly_craft_grape_wine_2star_25', action: 'craft_specific', description: 'ช่วยกันหมัก "ไวน์องุ่น" คุณภาพ 2 ดาว จำนวน 15 ขวด', target: 15, itemId: 'grape_wine', minQuality: 2, reward: { type: 'produce', id: 'pearl', count: 5 } },
+                { id: 'weekly_craft_ham_cheese_sandwich_2star_15', action: 'craft_specific', description: 'ช่วยกันทำ "แซนวิชแฮมชีส" คุณภาพ 2 ดาว จำนวน 15 ชิ้น', target: 15, itemId: 'ham_cheese_sandwich_food', minQuality: 2, reward: { type: 'produce', id: 'truffle', count: 5 } },
+                { id: 'weekly_craft_leather_bag_5', action: 'craft_specific', description: 'ช่วยกันประดิษฐ์ "กระเป๋าหนังจระเข้" จำนวน 5 ใบ', target: 5, itemId: 'leather_bag', minQuality: 0, reward: { type: 'produce', id: 'gem', count: 40 } },
+                { id: 'weekly_craft_pearl_necklace_3', action: 'craft_specific', description: 'ช่วยกันประดิษฐ์ "สร้อยไข่มุก" จำนวน 3 เส้น', target: 3, itemId: 'pearl_necklace', minQuality: 0, reward: { type: 'animal_deed', id: 'crocodile_deed', count: 1 } },
+                { id: 'weekly_fish_shrimp_10', action: 'fish_specific', description: 'ช่วยกันตก "กุ้ง" ให้ได้ 10 ตัว', target: 10, itemId: 'shrimp', reward: { type: 'animal_deed', id: 'pearl_oyster_deed', count: 2 } },
+                { id: 'weekly_collect_truffle_50', action: 'collect_specific', description: 'ช่วยกันเก็บ "ทรัฟเฟิล" จากหมูให้ได้ 30 ชิ้น', target: 30, itemId: 'truffle', reward: { type: 'produce', id: 'gem', count: 20 } },
+                { id: 'weekly_harvest_pineapple_2star_100', action: 'harvest_specific', description: 'ช่วยกันเก็บเกี่ยว "สับปะรด" คุณภาพ 2 ดาว จำนวน 50 ผล', target: 50, itemId: 'pineapple_produce', minQuality: 2, reward: { type: 'animal_deed', id: 'pearl_oyster_deed', count: 1 } },
+                { id: 'weekly_harvest_1000', action: 'harvest', description: 'ช่วยกันเก็บเกี่ยวพืชผลทุกชนิดรวมกันให้ครบ 500 ชิ้น', target: 500, reward: { type: 'produce', id: 'truffle', count: 10 } },
+                { id: 'weekly_fish_500', action: 'fish', description: 'ช่วยกันตกปลาทุกชนิดรวมกันให้ครบ 200 ตัว', target: 200, reward: { type: 'produce', id: 'shrimp', count: 5 } },
+                { id: 'weekly_collect_product_750', action: 'collect_product', description: 'ช่วยกันเก็บผลผลิตจากสัตว์ทุกชนิดรวมกัน 500 ชิ้น', target: 500, reward: { type: 'animal_deed', id: 'sheep_deed', count: 2 } },
+                { id: 'weekly_place_factory_5', action: 'place_factory', description: 'ช่วยกันสร้างโรงงานใหม่ 5 แห่งในพื้นที่ฟาร์ม', target: 5, reward: { type: 'produce', id: 'gem', count: 50 } },
+                { id: 'weekly_spend_money_250k', action: 'spend_money', description: 'ช่วยกันใช้จ่ายเงินในร้านค้ารวมกัน 250,000💰', target: 250000, reward: { type: 'produce', id: 'gem', count: 40 } },
+                { id: 'weekly_sell_hq_200', action: 'sell_high_quality', description: 'ช่วยกันขายสินค้าคุณภาพ 2 ดาว (★★) จำนวน 200 ชิ้น', target: 200, reward: { type: 'produce', id: 'pearl', count: 20 } },
             ],
             weekly: [
-                { id: 'harvest_100', action: 'harvest', description: 'ช่วยกันเก็บเกี่ยวผลผลิต 100 ชิ้น', target: 100, reward: { type: 'item', id: 'fertilizer_2', count: 5 } },
-                { id: 'fish_50', action: 'fish', description: 'ช่วยกันตกปลา 100 ตัว', target: 100, reward: { type: 'seed', id: 'random', count: 30 } },
-                { id: 'fertilize_30', action: 'fertilize', description: 'ช่วยกันใส่ปุ๋ย 70 แปลง', target: 70, reward: { type: 'seed', id: 'mango_seed', count: 25 } },
-                { id: 'cook_10', action: 'cook', description: 'ช่วยกันทำอาหาร 50 อย่าง', target: 50, reward: { type: 'produce', id: 'milk', count: 15 } },
-                { id: 'collect_30', action: 'collect_product', description: 'ช่วยกันเก็บผลผลิตจากสัตว์ 200 ชิ้น', target: 200, reward: { type: 'produce', id: 'gem', count: 1 } },
-                { id: 'harvest_80_more', action: 'harvest', description: 'ช่วยกันเก็บเกี่ยวผลผลิตเพิ่ม 300 ชิ้น', target: 300, reward: { type: 'seed', id: 'apple_seed', count: 15 } },
-                { id: 'plant_80', action: 'plant', description: 'ช่วยกันปลูกเมล็ดพืช 200 ต้น', target: 200, reward: { type: 'item', id: 'fertilizer_2', count: 8 } },
-                { id: 'sell_item_100', action: 'sell_item', description: 'ช่วยกันใส่ของลงกล่องขาย 100 ชิ้น', target: 100, reward: { type: 'item', id: 'fertilizer_2', count: 15 } },
-                { id: 'fish_40_more', action: 'fish', description: 'ช่วยกันตกปลาเพิ่ม 100 ตัว', target: 100, reward: { type: 'produce', id: 'salmon', count: 20 } },
-                { id: 'collect_25_more', action: 'collect_product', description: 'ช่วยกันเก็บผลผลิตสัตว์เพิ่ม 250 ชิ้น', target: 250, reward: { type: 'produce', id: 'gem', count: 4 } },
-                { id: 'cook_8_more', action: 'cook', description: 'ช่วยกันทำอาหารเพิ่ม 50 อย่าง', target: 50, reward: { type: 'seed', id: 'chili_seed', count: 15 } },
-                { id: 'spend_3000', action: 'spend_money', description: 'ช่วยกันใช้จ่ายเงิน 30000💰', target: 30000, reward: { type: 'seed', id: 'rice_seed', count: 25 } },
-                { id: 'upgrade_house_1', action: 'upgrade_house', description: 'ช่วยกันอัปเกรดบ้าน 1 ครั้ง', target: 1, reward: { type: 'produce', id: 'gem', count: 4 } },
-                { id: 'upgrade_rod_1', action: 'upgrade_rod', description: 'ช่วยกันอัปเกรดเบ็ดตกปลา 1 ครั้ง', target: 1, reward: { type: 'seed', id: 'mango_seed', count: 15 } },
-                { id: 'fertilize_20_more', action: 'fertilize', description: 'ช่วยกันใส่ปุ๋ยเพิ่ม 50 แปลง', target: 50, reward: { type: 'seed', id: 'pineapple_seed', count: 20 } },
-                { id: 'eat_15', action: 'eat', description: 'ช่วยกันกินอาหาร 100 ครั้ง', target: 100, reward: { type: 'seed', id: 'guava_seed', count: 15 } },
-                { id: 'place_animal_3', action: 'place_animal', description: 'ช่วยกันวางสัตว์ในคอก 3 ตัว', target: 3, reward: { type: 'seed', id: 'guava_seed', count: 15 } },
-                { id: 'buy_animal_5', action: 'buy_animal', description: 'ช่วยกันซื้อสัตว์ 5 ตัว', target: 5, reward: { type: 'item', id: 'fertilizer_2', count: 10 } },
-                { id: 'sell_hq_10', action: 'sell_high_quality', description: 'ช่วยกันขายของคุณภาพสูงสุด 10 ชิ้น', target: 10, reward: { type: 'seed', id: 'chili_seed', count: 15 } },
+                { id: 'harvest_100', action: 'harvest', description: 'ช่วยกันเก็บเกี่ยวผลผลิต 1000 ชิ้น', target: 1000, reward: { type: 'item', id: 'fertilizer_2', count: 100 } },
+                { id: 'fish_50', action: 'fish', description: 'ช่วยกันตกปลา 700 ตัว', target: 700, reward: { type: 'seed', id: 'random', count: 100 } },
+                { id: 'fertilize_30', action: 'fertilize', description: 'ช่วยกันใส่ปุ๋ย 500 แปลง', target: 500, reward: { type: 'produce', id: 'pearl', count: 5 } },
+                { id: 'cook_10', action: 'cook', description: 'ช่วยกันทำอาหาร 500 อย่าง', target: 500, reward: { type: 'produce', id: 'milk', count: 50 } },
+                { id: 'collect_30', action: 'collect_product', description: 'ช่วยกันเก็บผลผลิตจากสัตว์ 200 ชิ้น', target: 200, reward: { type: 'produce', id: 'gem', count: 30 } },
+                { id: 'harvest_80_more', action: 'harvest', description: 'ช่วยกันเก็บเกี่ยวผลผลิตเพิ่ม 700 ชิ้น', target: 700, reward: { type: 'item', id: 'fertilizer_2', count: 70 } },
+                { id: 'plant_80', action: 'plant', description: 'ช่วยกันปลูกเมล็ดพืช 200 ต้น', target: 200, reward: { type: 'item', id: 'fertilizer_2', count: 50 } },
+                { id: 'sell_item_100', action: 'sell_item', description: 'ช่วยกันใส่ของลงกล่องขาย 1000 ชิ้น', target: 1000, reward: { type: 'item', id: 'fertilizer_2', count: 100 } },
+                { id: 'fish_40_more', action: 'fish', description: 'ช่วยกันตกปลาเพิ่ม 100 ตัว', target: 100, reward: { type: 'produce', id: 'shrimp', count: 1 } },
+                { id: 'collect_25_more', action: 'collect_product', description: 'ช่วยกันเก็บผลผลิตสัตว์เพิ่ม 500 ชิ้น', target: 500, reward: { type: 'produce', id: 'gem', count: 15 } },
+                { id: 'cook_8_more', action: 'cook', description: 'ช่วยกันทำอาหารเพิ่ม 250 อย่าง', target: 250, reward: { type: 'produce', id: 'milk', count: 25 } },
+                { id: 'spend_3000', action: 'spend_money', description: 'ช่วยกันใช้จ่ายเงิน 500,000💰', target: 500000, reward: { type: 'seed', id: 'rice_seed', count: 100 } },
+                { id: 'upgrade_house_1', action: 'upgrade_house', description: 'ช่วยกันอัปเกรดบ้าน 1 ครั้ง', target: 1, reward: { type: 'produce', id: 'gem', count: 5 } },
+                { id: 'fertilize_20_more', action: 'fertilize', description: 'ช่วยกันใส่ปุ๋ยเพิ่ม 250 แปลง', target: 50, reward: { type: 'produce', id: 'pearl', count: 2 } },
+                { id: 'eat_15', action: 'eat', description: 'ช่วยกันกินอาหาร 1000 ครั้ง', target: 1000, reward: { type: 'produce', id: 'egg', count: 50 } },
+                { id: 'buy_animal_5', action: 'buy_animal', description: 'ช่วยกันซื้อสัตว์ 50 ตัว', target: 50, reward: { type: 'item', id: 'fertilizer_2', count: 100 } },
+                { id: 'sell_hq_10', action: 'sell_high_quality', description: 'ช่วยกันขายของคุณภาพสูงสุด 100 ชิ้น', target: 100, reward: { type: 'produce', id: 'truffle', count: 10 } },
             ],
 
         };
@@ -1998,11 +1993,13 @@
             const adminResetBtn = document.getElementById('admin-reset-btn');
             const adminSellBtn = document.getElementById('admin-force-sell-btn');
             const adminTestResetBtn = document.getElementById('admin-test-reset-btn');
+            const adminResetQuestsBtn = document.getElementById('admin-force-reset-quests-btn');
             
             if (userId === ADMIN_UID) {
                 if (adminResetBtn) adminResetBtn.classList.remove('hidden');
                 if (adminSellBtn) adminSellBtn.classList.remove('hidden');
                 if (adminTestResetBtn) adminTestResetBtn.classList.remove('hidden');
+                if (adminResetQuestsBtn) adminResetQuestsBtn.classList.remove('hidden');
             } else {
                 if (adminResetBtn) adminResetBtn.classList.add('hidden');
                 if (adminSellBtn) adminSellBtn.classList.add('hidden');
@@ -3144,6 +3141,7 @@
             updatePlayerState(newPlayerState);
             updateFarmState(newFarmState);
             updateQuestProgress('harvest');
+            updateQuestProgress('harvest_specific', { itemId: cropData.produceId, quality: quality });
         }
         
         function placeAnimal(slotIndex, deedId, quality = 0) {
@@ -3188,6 +3186,7 @@
             updatePlayerState(newPlayerState);
             updateFarmState(newFarmState);
             updateQuestProgress('collect_product');
+            updateQuestProgress('collect_specific', { itemId: animalData.produceId, quality: quality });
         }
 
         function releaseAnimal(index) {
@@ -3596,7 +3595,7 @@
                 if (needsFarmReset) {
                     console.log("First player of the day! Resetting farm-wide data (quests, weather, market).");
                     
-                    newFarmState.quests.daily = generateRandomQuests('daily', 5);
+                    newFarmState.quests.daily = generateRandomQuests('daily', 2);
                     newFarmState.quests.lastDailyReset = now.getTime();
 
                     const weatherTypes = Object.keys(WEATHER_DATA);
@@ -3611,7 +3610,7 @@
                 const lastResetWeek = getWeekNumber(lastWeeklyQuestReset);
                 if (currentWeek[0] !== lastResetWeek[0] || currentWeek[1] !== lastResetWeek[1]) {
                     console.log("New week detected! Resetting weekly quests.");
-                    newFarmState.quests.weekly = generateRandomQuests('weekly', 5);
+                    newFarmState.quests.weekly = generateRandomQuests('weekly', 2);
                     newFarmState.quests.lastWeeklyReset = now.getTime();
                 }
 
@@ -3621,6 +3620,26 @@
             }
         }
         
+        async function forceResetQuests() {
+            if (userId !== ADMIN_UID) return;
+            if (!confirm("คุณแน่ใจหรือไม่ว่าจะบังคับรีเซ็ตเควสทั้งหมด (รายวันและรายสัปดาห์)?")) return;
+
+            console.log("ADMIN: Forcing quest reset...");
+            const newFarmState = { ...farmState };
+
+            // แก้เลข 5 ตรงนี้ให้ตรงกับจำนวนเควสที่คุณตั้งค่าไว้
+            newFarmState.quests.daily = generateRandomQuests('daily', 5); 
+            newFarmState.quests.weekly = generateRandomQuests('weekly', 5);
+            
+            // อัปเดตเวลาเพื่อป้องกันการรีเซ็ตซ้ำซ้อน
+            newFarmState.quests.lastDailyReset = Date.now();
+            newFarmState.quests.lastWeeklyReset = Date.now();
+
+            await updateFarmState(newFarmState);
+            alert("รีเซ็ตเควสสำเร็จ!");
+            console.log("ADMIN: Quests have been reset successfully.");
+        }
+
         function forceResetFarm() {
             showConfirmationModal('คุณแน่ใจ 100% หรือไม่? การกระทำนี้จะล้างข้อมูลฟาร์มทั้งหมด และไม่สามารถย้อนกลับได้!', async () => {
                 const farmDocRef = doc(db, "publicFarmData", "farmState");
@@ -3799,6 +3818,7 @@
                     updatePlayerState(newPlayerState);
                     showFishCatchModal(caughtFishId);
                     updateQuestProgress('fish');
+                    updateQuestProgress('fish_specific', { itemId: caughtFishId });
                 }
             };
             minigameLoopId = requestAnimationFrame(gameLoop);
@@ -3941,17 +3961,31 @@
                     const questData = QUEST_DATA[type].find(q => q.id === quest.id);
                     if (!questData || quest.progress >= questData.target) return;
 
-                    // ตรวจสอบว่า action ตรงกันหรือไม่
                     if (questData.action === action) {
                         let isMatch = false;
 
-                        // โหมดใหม่: ตรวจสอบเควสแบบเจาะจงไอเท็ม (craft_specific)
+                        // โหมดใหม่: ตรวจสอบเควสแบบเจาะจง
                         if (action === 'craft_specific') {
+                            // กรณีพิเศษ: เควสแบบหมวดหมู่ เช่น 'any_jam'
+                            if (questData.itemId === 'any_jam' && GAME_DATA[itemId]?.category === 'jam' && quality >= (questData.minQuality || 0)) {
+                                isMatch = true;
+                            } 
+                            // กรณีปกติ: เจาะจงไอเท็ม
+                            else if (questData.itemId === itemId && quality >= (questData.minQuality || 0)) {
+                                isMatch = true;
+                            }
+                        }
+                        else if (action === 'harvest_specific' || action === 'collect_specific') {
                             if (questData.itemId === itemId && quality >= (questData.minQuality || 0)) {
                                 isMatch = true;
                             }
-                        } 
-                        // โหมดเก่า: เควสทั่วไปที่นับแค่การกระทำ
+                        }
+                        else if (action === 'fish_specific') {
+                            if (questData.itemId === itemId) { // การตกปลาไม่มี quality
+                                isMatch = true;
+                            }
+                        }
+                        // โหมดเก่า: เควสทั่วไป
                         else {
                             isMatch = true;
                         }
@@ -4040,7 +4074,7 @@
                         plots: Array(FARM_GRID_SIZE).fill(null).map(() => ({ plantId: null })),
                         animals: Array(ANIMAL_PEN_SIZE).fill(null).map(() => ({ animalId: null })),
                         factories: Array(FACTORY_GRID_SIZE).fill(null).map(() => ({ factoryId: null, queue: [], outputBin: [] })),
-                        quests: { daily: generateRandomQuests('daily', 5), weekly: generateRandomQuests('weekly', 5), lastDailyReset: Date.now(), lastWeeklyReset: Date.now() },
+                        quests: { daily: generateRandomQuests('daily', 2), weekly: generateRandomQuests('weekly', 2), lastDailyReset: Date.now(), lastWeeklyReset: Date.now() },
                         ownedKitchenTools: [],
                         kitchen: { queue: [] },
                         marketPrices: {},
@@ -4277,6 +4311,8 @@
             if (adminResetBtn) adminResetBtn.onclick = forceResetFarm;
             if (adminSellBtn) adminSellBtn.onclick = forceSellAllPlayersItems;
             if (resetPlayerBtn) resetPlayerBtn.onclick = resetPlayerProgress;
+            const adminResetQuestsBtn = document.getElementById('admin-force-reset-quests-btn');
+            if (adminResetQuestsBtn) adminResetQuestsBtn.onclick = forceResetQuests;
             
             const adminTestResetBtn = document.getElementById('admin-test-reset-btn');
             if (adminTestResetBtn) {
