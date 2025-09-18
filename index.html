@@ -3628,8 +3628,8 @@
             const newFarmState = { ...farmState };
 
             // แก้เลข 5 ตรงนี้ให้ตรงกับจำนวนเควสที่คุณตั้งค่าไว้
-            newFarmState.quests.daily = generateRandomQuests('daily', 5); 
-            newFarmState.quests.weekly = generateRandomQuests('weekly', 5);
+            newFarmState.quests.daily = generateRandomQuests('daily', 2); 
+            newFarmState.quests.weekly = generateRandomQuests('weekly', 2);
             
             // อัปเดตเวลาเพื่อป้องกันการรีเซ็ตซ้ำซ้อน
             newFarmState.quests.lastDailyReset = Date.now();
