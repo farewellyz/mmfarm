@@ -3252,7 +3252,7 @@
         async function processFactoryQueuesToOutputBin() {
             if (!farmState || !farmState.factories) return;
             const now = Date.now();
-            const MAX_OUTPUT_BIN_SIZE = 6; 
+            // --- ไม่มีการกำหนด MAX_OUTPUT_BIN_SIZE อีกต่อไป ---
 
             try {
                 await runTransaction(db, async (transaction) => {
@@ -3273,11 +3273,11 @@
                         
                         const completionTime = currentJob.startTime + (recipe.processTime * 1000);
 
-                        if (now >= completionTime && factory.outputBin.length < MAX_OUTPUT_BIN_SIZE) {
+                        // ▼▼▼▼▼ แก้ไขเงื่อนไขตรงนี้: เอาการเช็คของเต็มออกไปเลย ▼▼▼▼▼
+                        if (now >= completionTime) {
                             hasChanges = true;
                             const finishedJob = factory.queue.shift(); 
                             
-                            // <--- วางบรรทัดสำหรับ Debug ไว้ตรงนี้ ---
                             console.log("Processing Job:", finishedJob);
 
                             let outputQuality = 0;
@@ -3298,16 +3298,14 @@
                             updateQuestProgress('craft_specific', { itemId: recipe.output.id, quality: outputQuality, amount: recipe.output.count || 1 });
 
                             const outputCount = recipe.output.count || 1;
+                            
+                            // ▼▼▼▼▼ แก้ไขลูปตรงนี้: ไม่ต้องเช็คของเต็มแล้ว เพิ่มของเข้าไปได้เลย ▼▼▼▼▼
                             for (let i = 0; i < outputCount; i++) {
-                                if (factory.outputBin.length < MAX_OUTPUT_BIN_SIZE) {
-                                    factory.outputBin.push({
-                                        item: { id: recipe.output.id, quality: outputQuality },
-                                        owner: finishedJob.processedBy?.uid || 'unknown',
-                                        ownerNickname: finishedJob.processedBy?.nickname || '??'
-                                    });
-                                } else {
-                                    break;
-                                }
+                                factory.outputBin.push({
+                                    item: { id: recipe.output.id, quality: outputQuality },
+                                    owner: finishedJob.processedBy?.uid || 'unknown',
+                                    ownerNickname: finishedJob.processedBy?.nickname || '??'
+                                });
                             }
 
                             if (factory.queue.length > 0) {
@@ -3544,25 +3542,24 @@
             await updateFarmState(newFarmState);
         }
 		
-		async function checkForTimeResets(currentPlayerState) { // <--- รับ currentPlayerState เข้ามา
-            // ใช้ currentPlayerState ที่รับเข้ามาแทน playerState ส่วนกลาง
-            if (!currentPlayerState || !farmState) return;
+		async function checkForTimeResets(currentPlayerState) {
+            if (!currentPlayerState || !farmState) return { wasReset: false }; // ใหม่: คืนค่าถ้าข้อมูลไม่พร้อม
 
             const now = new Date();
             const lastReset = new Date(currentPlayerState.lastResetTime || 0);
 
-            const needsDailyReset = lastReset.getDate() !== now.getDate() || 
-                                    lastReset.getMonth() !== now.getMonth() || 
+            const needsDailyReset = lastReset.getDate() !== now.getDate() ||
+                                    lastReset.getMonth() !== now.getMonth() ||
                                     lastReset.getFullYear() !== now.getFullYear();
 
             if (needsDailyReset) {
                 console.log("New day detected! Running daily reset for this player.");
-                
+
                 let newFarmState = { ...farmState };
-                let newPlayerState = { ...currentPlayerState }; // <--- เริ่มต้นจาก currentPlayerState
+                let newPlayerState = { ...currentPlayerState };
+                let totalValue = 0;
 
                 if (newPlayerState.produceBin && newPlayerState.produceBin.length > 0) {
-                    let totalValue = 0;
                     newPlayerState.produceBin.forEach(item => {
                         const itemData = GAME_DATA[item.id];
                         if (itemData && itemData.sellPrice) {
@@ -3570,7 +3567,7 @@
                             const qualityRatio = itemData.sellPrice[item.quality] / itemData.sellPrice[0];
                             const finalSellPrice = Math.round(marketBasePrice * qualityRatio);
                             totalValue += finalSellPrice;
-                            
+
                             if (!newFarmState.salesVolume) newFarmState.salesVolume = {};
                             newFarmState.salesVolume[item.id] = (newFarmState.salesVolume[item.id] || 0) + 1;
                         }
@@ -3581,30 +3578,25 @@
 
                 newPlayerState.energy = getMaxEnergy();
                 newPlayerState.dailyRestCount = 0;
-				newPlayerState.dailyNapCount = 0;
+                newPlayerState.dailyNapCount = 0;
                 newPlayerState.lastResetTime = now.getTime();
-                
-                // ตอนอัปเดต ให้ใช้ newPlayerState ที่สร้างจาก currentPlayerState
+
                 await updatePlayerState(newPlayerState);
 
                 const lastFarmReset = new Date(newFarmState.quests.lastDailyReset || 0);
-                const needsFarmReset = lastFarmReset.getDate() !== now.getDate() || 
-                                       lastFarmReset.getMonth() !== now.getMonth() || 
+                const needsFarmReset = lastFarmReset.getDate() !== now.getDate() ||
+                                       lastFarmReset.getMonth() !== now.getMonth() ||
                                        lastFarmReset.getFullYear() !== now.getFullYear();
 
                 if (needsFarmReset) {
                     console.log("First player of the day! Resetting farm-wide data (quests, weather, market).");
-                    
                     newFarmState.quests.daily = generateRandomQuests('daily', 2);
                     newFarmState.quests.lastDailyReset = now.getTime();
-
                     const weatherTypes = Object.keys(WEATHER_DATA);
-                    const randomWeather = weatherTypes[Math.floor(Math.random() * weatherTypes.length)];
-                    newFarmState.currentWeather = randomWeather;
-                    
+                    newFarmState.currentWeather = weatherTypes[Math.floor(Math.random() * weatherTypes.length)];
                     await updateMarketPrices();
                 }
-                
+
                 const lastWeeklyQuestReset = new Date(newFarmState.quests.lastWeeklyReset || 0);
                 const currentWeek = getWeekNumber(now);
                 const lastResetWeek = getWeekNumber(lastWeeklyQuestReset);
@@ -3616,8 +3608,12 @@
 
                 await updateFarmState(newFarmState);
                 
-                // ไม่ต้องแสดง Summary Modal ที่นี่แล้ว เพราะเราจะย้ายไปแสดงที่ onAuthStateChanged
+                // ใหม่: คืนค่าผลลัพธ์ของการรีเซ็ต
+                return { wasReset: true, earningsData: { total: totalValue } };
             }
+            
+            // ใหม่: คืนค่าถ้าไม่มีการรีเซ็ต
+            return { wasReset: false };
         }
         
         async function forceResetQuests() {
@@ -4436,41 +4432,28 @@
                             const playerDocSnap = await getDoc(playerDocRef);
                             
                             if (playerDocSnap.exists()) {
-                                const initialPlayerState = playerDocSnap.data();
+                            const initialPlayerState = playerDocSnap.data();
+                            // เริ่มเกมและตั้งค่า listener ต่างๆ ก่อน
+                            await startGame(userId, initialPlayerState); 
+
+                            // เช็คการรีเซ็ตแค่ครั้งแรกที่โหลดหน้าเว็บ
+                            if (!resetSchedulerStarted) {
+                                // เรียกฟังก์ชันรีเซ็ตที่อัปเกรดแล้ว
+                                const resetResult = await checkForTimeResets(playerState); 
                                 
-                                // --- ส่วนที่แก้ไข ---
-                                const lastReset = new Date(initialPlayerState.lastResetTime || 0);
-                                const now = new Date();
-                                const needsReset = lastReset.getDate() !== now.getDate() || lastReset.getMonth() !== now.getMonth() || lastReset.getFullYear() !== now.getFullYear();
-                                
-                                if (needsReset) {
-                                    // ดึงข้อมูล farmState ล่าสุดมาก่อนเสมอ
+                                // ถ้ามีการรีเซ็ตเกิดขึ้นจริง ให้แสดงหน้าต่างสรุปผล
+                                if (resetResult.wasReset) {
+                                    // ดึงข้อมูลฟาร์มล่าสุดอีกครั้งหลังรีเซ็ตเสร็จ เพื่อให้ข้อมูลสภาพอากาศถูกต้อง
                                     const farmDocSnap = await getDoc(farmDocRef);
                                     if (farmDocSnap.exists()) {
-                                        const currentFarmState = farmDocSnap.data();
-                                        let totalValue = 0;
-                                        if(initialPlayerState.produceBin && initialPlayerState.produceBin.length > 0) {
-                                            initialPlayerState.produceBin.forEach(item => {
-                                                const itemData = GAME_DATA[item.id];
-                                                if (itemData && itemData.sellPrice) {
-                                                    const marketBasePrice = currentFarmState.marketPrices[item.id] || itemData.sellPrice[0];
-                                                    const qualityRatio = itemData.sellPrice[item.quality] / itemData.sellPrice[0];
-                                                    totalValue += Math.round(marketBasePrice * qualityRatio);
-                                                }
-                                            });
-                                        }
-                                        // ส่ง currentFarmState ไปพร้อมกับ earningsData
-                                        showSummaryModal({ total: totalValue }, currentFarmState); 
+                                        showSummaryModal(resetResult.earningsData, farmDocSnap.data());
                                     }
                                 }
                                 
-                                await startGame(userId, initialPlayerState);
-                                
-                                if (!resetSchedulerStarted) {
-                                    await checkForTimeResets(initialPlayerState);
-                                    scheduleNextMidnightReset();
-                                    resetSchedulerStarted = true;
-                                }
+                                // เริ่มต้นการนับถอยหลังสู่เที่ยงคืนถัดไป
+                                scheduleNextMidnightReset();
+                                resetSchedulerStarted = true;
+                            }
                                 // --- จบส่วนที่แก้ไข ---
 
                             } else {
