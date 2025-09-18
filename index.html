@@ -154,6 +154,29 @@
     </div>
 
 <div id="modal-container">
+        <div id="breeding-modal" class="hidden fixed inset-0 bg-black/60 z-[52] flex items-center justify-center p-4">
+            <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-lg modal-enter">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4 text-center">🧬 โรงเพาะพันธุ์</h2>
+                
+                <div id="breeding-parent-selector" class="flex justify-around items-center mb-4 relative">
+                    <div id="parent-slot-1" class="w-24 h-24 border-2 border-dashed border-gray-400 rounded-lg flex items-center justify-center text-3xl text-gray-400 cursor-pointer hover:bg-gray-100 relative">+</div>
+                    <div class="text-4xl text-red-400">❤️</div>
+                    <div id="parent-slot-2" class="w-24 h-24 border-2 border-dashed border-gray-400 rounded-lg flex items-center justify-center text-3xl text-gray-400 cursor-pointer hover:bg-gray-100 relative">+</div>
+                </div>
+
+                <div id="breeding-info" class="text-center mb-4 h-14 flex flex-col justify-center">
+                    </div>
+                
+                <div class="border-t pt-4">
+                    <h3 class="font-semibold text-center mb-2">ผลผลิตที่ได้</h3>
+                    <div id="breeding-output-slot" class="w-24 h-24 mx-auto border-2 border-gray-300 bg-gray-100 rounded-lg flex items-center justify-center relative">
+                        ...
+                    </div>
+                </div>
+
+                <button id="breeding-modal-close" class="mt-4 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg w-full">ปิด</button>
+            </div>
+        </div>
         <div id="summary-modal" class="hidden fixed inset-0 bg-black/70 z-[60] flex items-center justify-center p-4">
             <div class="bg-yellow-50 rounded-2xl shadow-xl p-6 w-full max-w-md modal-enter text-gray-800">
                 <h2 class="text-3xl font-bold text-yellow-800 mb-4 text-center">สรุปยอดประจำวัน</h2>
@@ -191,6 +214,7 @@
                     <button data-view="factory" class="map-location-btn absolute top-[49%] left-[73%] -translate-x-1/2 -translate-y-1/2 p-2 bg-white/80 rounded-full shadow-lg hover:scale-110 transition">โรงงาน</button>
                     <button data-view="quests" class="map-location-btn absolute top-[46%] left-[22%] -translate-x-1/2 -translate-y-1/2 p-2 bg-white/80 rounded-full shadow-lg hover:scale-110 transition">เควส</button>
                     <button data-view="market" class="map-location-btn absolute top-[69.5%] left-[25%] -translate-x-1/2 -translate-y-1/2 p-2 bg-white/80 rounded-full shadow-lg hover:scale-110 transition">ตลาด</button>
+                    <button data-view="breeding" class="map-location-btn absolute top-[90%] left-[25%] -translate-x-1/2 -translate-y-1/2 p-2 bg-white/80 rounded-full shadow-lg hover:scale-110 transition">ศูนย์เพาะพันธุ์</button>
 
                 </div>
 
@@ -209,7 +233,7 @@
             <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md modal-enter">
                 <h2 id="ingredient-selector-title" class="text-2xl font-bold text-gray-800 mb-4 text-center">เลือกวัตถุดิบ</h2>
                 
-                <div id="ingredient-requirements-list" class="space-y-3 mb-4">
+                <div id="ingredient-requirements-list" class="space-y-3 mb-4 max-h-[60vh] overflow-y-auto">
                     </div>
                 
                 <div class="mt-6 flex justify-end gap-3">
@@ -265,7 +289,7 @@
 
         <div id="confirm-modal" class="hidden fixed inset-0 bg-black/50 z-[53] flex items-center justify-center p-4">
             <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm modal-enter">
-                <h2 class="text-2xl font-bold text-gray-800 mb-4">ยืนันการกระทำ</h2>
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">ยืนยันการกระทำ</h2>
                 <p id="confirm-modal-text" class="text-gray-600 mb-4">คุณแน่ใจหรือไม่?</p>
                 <div class="mt-6 flex justify-end gap-3">
                     <button id="confirm-modal-cancel" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg">ยกเลิก</button>
@@ -282,7 +306,7 @@
             </div>
         </div>
 
-        <div id="submenu-modal" class="hidden fixed inset-0 bg-black/60 z-[51] flex items-center justify-center p-4">
+        <div id="submenu-modal" class="hidden fixed inset-0 bg-black/60 z-[55] flex items-center justify-center p-4">
             <div class="bg-white rounded-2xl shadow-xl p-5 w-full max-w-md">
                 <h3 id="submenu-modal-title" class="text-xl font-bold text-gray-800 mb-4 text-center"></h3>
                 <div id="submenu-modal-items" class="grid grid-cols-3 gap-3 text-center"></div>
@@ -405,6 +429,12 @@
              <div id="factory-view" class="hidden">
                 <h2 class="text-3xl font-bold text-green-800 mb-4 text-center">โรงงานแปรรูป 🏭</h2>
                 <div id="factory-grid" class="grid grid-cols-3 sm:grid-cols-4 gap-2 md:gap-4"></div>
+            </div>
+            <div id="breeding-view" class="hidden">
+                <h2 class="text-3xl font-bold text-green-800 mb-4 text-center">🧬 ศูนย์เพาะพันธุ์</h2>
+                <p class="text-center text-gray-600 mb-4">สถานที่สำหรับเพาะพันธุ์สัตว์เพื่อให้ได้สายพันธุ์ที่ดีขึ้น</p>
+                <div id="breeding-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    </div>
             </div>
 			<div id="bedroom-view" class="hidden">
                  <div class="w-full max-w-2xl mx-auto text-center">
@@ -552,7 +582,7 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        const CLIENT_VERSION = "1.0.14"; // Updated version
+        const CLIENT_VERSION = "1.0.15"; // Updated version
 
         const FARM_GRID_SIZE = 24;
         const ANIMAL_PEN_SIZE = 8;
@@ -986,7 +1016,7 @@
                 { name: 'เบ็ดไฟเบอร์กลาส', cost: 2500, imageUrl: 'rod2.png' },
                 { name: 'เบ็ดเหล็ก', cost: 7500, imageUrl: 'rod3.png' },
                 { name: 'เบ็ดทอง', cost: 15000, imageUrl: 'rod4.png' },
-                { name: 'เบ็ดในตำนาน', cost: 0, imageUrl: 'rod5.png' },
+                { name: 'เบ็ดในตำนาน', cost: 50000, imageUrl: 'rod5.png' },
             ],
             'recipes': {
                 'fried_egg': { resultId: 'fried_egg_food', ingredients: [{ category: 'egg' }], tool: 'kitchen_pan' },
@@ -1083,12 +1113,12 @@
             'kitchen_pot': { name: 'หม้อ', type: 'kitchen_tool', cost: 2000, icon: '🍲', imageUrl: 'pot.png' },
             'kitchen_oven': { name: 'เตาอบ', type: 'kitchen_tool', cost: 5000, icon: '🔥', imageUrl: 'oven.png' },
 
-            'carp': { name: 'ปลาคาร์ป', icon: '🐟', rarity: 'Common', sellPrice: [15, 20, 25], type: 'produce', energyRestore: 3, imageUrl: 'carp.png', category: 'fish' },
-            'sardine': { name: 'ปลาซาร์ดีน', icon: '🐠', rarity: 'Common', sellPrice: [20, 25, 30], type: 'produce', energyRestore: 4, imageUrl: 'sardine.png', category: 'fish' },
-            'tuna': { name: 'ปลาทูน่า', icon: '🐟', rarity: 'Uncommon', sellPrice: [35, 50, 65], type: 'produce', energyRestore: 15, imageUrl: 'tuna.png', category: 'fish' },
-            'salmon': { name: 'ปลาแซลมอน', icon: '🐠', rarity: 'Uncommon', sellPrice: [45, 60, 80], type: 'produce', energyRestore: 18, imageUrl: 'salmon.png', category: 'fish' },
-            'eel': { name: 'ปลาไหล', icon: '鰻', rarity: 'Rare', sellPrice: [150, 200, 250], type: 'produce', energyRestore: 30, imageUrl: 'eel.png', category: 'fish' },
-            'pufferfish': { name: 'ปลาปักเป้า', icon: '🐡', rarity: 'Rare', sellPrice: [200, 250, 300], type: 'produce', energyRestore: 35, imageUrl: 'pufferfish.png', category: 'fish' },
+            'carp': { name: 'ปลาคาร์ป', icon: '🐟', rarity: 'Common', sellPrice: [15, 20, 25], type: 'produce', energyRestore: 3, imageUrl: 'carp.png', category: 'fish', breedingTime: 86400 },
+            'sardine': { name: 'ปลาซาร์ดีน', icon: '🐠', rarity: 'Common', sellPrice: [20, 25, 30], type: 'produce', energyRestore: 4, imageUrl: 'sardine.png', category: 'fish', breedingTime: 86400 },
+            'tuna': { name: 'ปลาทูน่า', icon: '🐟', rarity: 'Uncommon', sellPrice: [35, 50, 65], type: 'produce', energyRestore: 15, imageUrl: 'tuna.png', category: 'fish', breedingTime: 172800 },
+            'salmon': { name: 'ปลาแซลมอน', icon: '🐠', rarity: 'Uncommon', sellPrice: [45, 60, 80], type: 'produce', energyRestore: 18, imageUrl: 'salmon.png', category: 'fish', breedingTime: 172800 },
+            'eel': { name: 'ปลาไหล', icon: '鰻', rarity: 'Rare', sellPrice: [150, 200, 250], type: 'produce', energyRestore: 30, imageUrl: 'eel.png', category: 'fish', breedingTime: 259200 },
+            'pufferfish': { name: 'ปลาปักเป้า', icon: '🐡', rarity: 'Rare', sellPrice: [200, 250, 300], type: 'produce', energyRestore: 35, imageUrl: 'pufferfish.png', category: 'fish', breedingTime: 259200 },
             'carrot_seed':   { name: 'เมล็ดแครอท', type: 'seed', cost: 5, plantId: 'carrot', icon: '🥕', imageUrl: 'carrot.png' },
             'carrot':        { name: 'แครอท', type: 'crop', growTime: 9600, produceId: 'carrot_produce', icon: '🥕', imageUrl: 'carrot.png' },
             'carrot_produce':{ name: 'แครอท', type: 'produce', sellPrice: [8, 12, 16], icon: '🥕', imageUrl: 'carrot.png', energyRestore: 2, category: 'vegetable' },
@@ -1125,22 +1155,22 @@
             'fertilizer_1': { name: 'ปุ๋ยธรรมดา', type: 'item', cost: 10, qualityBonus: 0.3, icon: '💩', imageUrl: 'manure.png' },
             'fertilizer_2': { name: 'ปุ๋ยอย่างดี', type: 'item', cost: 25, qualityBonus: 0.6, icon: '✨', imageUrl: 'fertilizer.png' },
             'chicken_deed': { name: 'กรรมสิทธิ์ไก่', type: 'animal_deed', cost: 100, animalId: 'chicken', icon: '🐔', imageUrl: 'chicken.png' },
-            'chicken':      { name: 'ไก่', type: 'animal_instance', produceTime: 600, produceId: 'egg', icon: '🐔', imageUrl: 'chicken.png' },
+            'chicken':      { name: 'ไก่', type: 'animal_instance', produceTime: 600, produceId: 'egg', icon: '🐔', imageUrl: 'chicken.png', breedingTime: 86400 },
             'egg':          { name: 'ไข่', type: 'produce', sellPrice: [12, 18, 25], icon: '🥚', imageUrl: 'egg.png', energyRestore: 5, category: 'egg' },
             'cow_deed':     { name: 'กรรมสิทธิ์วัว', type: 'animal_deed', cost: 500, animalId: 'cow', icon: '🐄', imageUrl: 'cow.png' },
-            'cow':          { name: 'วัว', type: 'animal_instance', produceTime: 3600, produceId: 'milk', icon: '🐄', imageUrl: 'cow.png' },
+            'cow':          { name: 'วัว', type: 'animal_instance', produceTime: 3600, produceId: 'milk', icon: '🐄', imageUrl: 'cow.png', breedingTime: 172800 },
             'milk':         { name: 'นม', type: 'produce', sellPrice: [50, 70, 90], icon: '🥛', imageUrl: 'milk.png', energyRestore: 10, category: 'milk' },
             'duck_deed':    { name: 'กรรมสิทธิ์เป็ด', type: 'animal_deed', cost: 120, animalId: 'duck', icon: '🦆', imageUrl: 'duck.png' },
-            'duck':         { name: 'เป็ด', type: 'animal_instance', produceTime: 900, produceId: 'duck_egg', icon: '🦆', imageUrl: 'duck.png' },
+            'duck':         { name: 'เป็ด', type: 'animal_instance', produceTime: 900, produceId: 'duck_egg', icon: '🦆', imageUrl: 'duck.png', breedingTime: 86400 },
             'duck_egg':     { name: 'ไข่เป็ด', type: 'produce', sellPrice: [15, 22, 30], icon: '🥚', imageUrl: 'egg_duck.png', energyRestore: 6, category: 'egg' },
             'goose_deed':   { name: 'กรรมสิทธิ์ห่าน', type: 'animal_deed', cost: 150, animalId: 'goose', icon: '🦢', imageUrl: 'swan.png' },
-            'goose':        { name: 'ห่าน', type: 'animal_instance', produceTime: 1800, produceId: 'feather', icon: '🦢', imageUrl: 'swan.png' },
+            'goose':        { name: 'ห่าน', type: 'animal_instance', produceTime: 1800, produceId: 'feather', icon: '🦢', imageUrl: 'swan.png', breedingTime: 86400 },
             'feather':      { name: 'ขนนก', type: 'produce', sellPrice: [25, 38, 55], icon: '🪶', imageUrl: 'feather.png', energyRestore: 0 },
             'turtle_deed':  { name: 'กรรมสิทธิ์เต่า', type: 'animal_deed', cost: 1000, animalId: 'turtle', icon: '🐢', imageUrl: 'turtle.png' },
-            'turtle':       { name: 'เต่า', type: 'animal_instance', produceTime: 86400, produceId: 'gem', icon: '🐢', imageUrl: 'turtle.png' },
+            'turtle':       { name: 'เต่า', type: 'animal_instance', produceTime: 86400, produceId: 'gem', icon: '🐢', imageUrl: 'turtle.png', breedingTime: 259200 },
             'gem':          { name: 'อัญมณี', type: 'produce', sellPrice: [200, 300, 500], icon: '💎', imageUrl: 'gem.png', energyRestore: 0 },
             'pig_deed': 	{ name: 'กรรมสิทธิ์หมู', type: 'animal_deed', cost: 400, animalId: 'pig', icon: '🐷', imageUrl: 'pig.png' },
-            'pig':      	{ name: 'หมู', type: 'animal_instance', produceTime: 14400, produceId: 'truffle', icon: '🐷', imageUrl: 'pig.png' },
+            'pig':      	{ name: 'หมู', type: 'animal_instance', produceTime: 14400, produceId: 'truffle', icon: '🐷', imageUrl: 'pig.png', breedingTime: 172800 },
             'truffle':      { name: 'ทรัฟเฟิล', type: 'produce', sellPrice: [500, 600, 700], icon: '🍄', imageUrl: 'truffle.png', energyRestore: 10, category: 'truffle' },
 			'chicken_meat': { name: 'เนื้อไก่', icon: '🍗', type: 'produce', sellPrice: [70, 75, 85], energyRestore: 15, imageUrl: 'chicken_meat.png' },
 			'beef': 		{ name: 'เนื้อวัว', icon: '🥩', type: 'produce', sellPrice: [170, 180, 190], energyRestore: 25, imageUrl: 'beef.png' },
@@ -1227,22 +1257,22 @@
             'lime': { name: 'เมล็ดมะนาว', type: 'crop', growTime: 14500, produceId: 'lime_produce', icon: '🍋', imageUrl: 'lime.png' }, 
             'lime_produce': { name: 'มะนาว', type: 'produce', sellPrice: [30, 40, 55], icon: '🍋', imageUrl: 'lime.png', energyRestore: 5, category: 'fruit' },
 
-            'shrimp': { name: 'กุ้ง', icon: '🦐', rarity: 'Legendary', sellPrice: [500, 600, 750], type: 'produce', energyRestore: 25, imageUrl: 'shrimp.png', category: 'fish' },
+            'shrimp': { name: 'กุ้ง', icon: '🦐', rarity: 'Legendary', sellPrice: [500, 600, 750], type: 'produce', energyRestore: 25, imageUrl: 'shrimp.png', category: 'fish', breedingTime: 432000 },
 
             'crocodile_deed': { name: 'กรรมสิทธิ์จระเข้', type: 'animal_deed', cost: 25000, animalId: 'crocodile', icon: '🐊', imageUrl: 'crocodile.png' },
-            'crocodile': { name: 'จระเข้', type: 'animal_instance', produceTime: 172800, produceId: 'crocodile_skin', icon: '🐊', imageUrl: 'crocodile.png' }, 
+            'crocodile': { name: 'จระเข้', type: 'animal_instance', produceTime: 172800, produceId: 'crocodile_skin', icon: '🐊', imageUrl: 'crocodile.png', breedingTime: 432000 }, 
             'crocodile_skin': { name: 'หนังจระเข้', type: 'produce', sellPrice: [1200, 1500, 1800], icon: '👜', imageUrl: 'crocodile_skin.png', energyRestore: 0 },
 
             'sheep_deed': { name: 'กรรมสิทธิ์แกะ', type: 'animal_deed', cost: 8000, animalId: 'sheep', icon: '🐑', imageUrl: 'sheep.png' },
-            'sheep': { name: 'แกะ', type: 'animal_instance', produceTime: 86400, produceId: 'wool', icon: '🐑', imageUrl: 'sheep.png' }, 
+            'sheep': { name: 'แกะ', type: 'animal_instance', produceTime: 86400, produceId: 'wool', icon: '🐑', imageUrl: 'sheep.png', breedingTime: 172800 }, 
             'wool': { name: 'ขนแกะ', type: 'produce', sellPrice: [350, 450, 550], icon: '🧶', imageUrl: 'wool.png', energyRestore: 0 },
 
             'pearl_oyster_deed': { name: 'กรรมสิทธิ์หอยมุก', type: 'animal_deed', cost: 20000, animalId: 'pearl_oyster', icon: '🦪', imageUrl: 'pearl_oyster.png' },
-            'pearl_oyster': { name: 'หอยมุก', type: 'animal_instance', produceTime: 259200, produceId: 'pearl', icon: '🦪', imageUrl: 'pearl_oyster.png' }, 
+            'pearl_oyster': { name: 'หอยมุก', type: 'animal_instance', produceTime: 259200, produceId: 'pearl', icon: '🦪', imageUrl: 'pearl_oyster.png', breedingTime: 432000 }, 
             'pearl': { name: 'ไข่มุก', type: 'produce', sellPrice: [2500, 3000, 4000], icon: '⚪', imageUrl: 'pearl.png', energyRestore: 0 },
             
             'beehive_deed': { name: 'กรรมสิทธิ์รังผึ้ง', type: 'animal_deed', cost: 2500, animalId: 'beehive', icon: '🐝', imageUrl: 'beehive.png' },
-            'beehive': { name: 'รังผึ้ง', type: 'animal_instance', produceTime: 86400, produceId: 'honey', icon: '🐝', imageUrl: 'beehive.png' }, 
+            'beehive': { name: 'รังผึ้ง', type: 'animal_instance', produceTime: 86400, produceId: 'honey', icon: '🐝', imageUrl: 'beehive.png', breedingTime: 86400 }, 
             'honey': { name: 'น้ำผึ้ง', type: 'produce', sellPrice: [200, 250, 320], icon: '🍯', imageUrl: 'honey.png', energyRestore: 20 },
 
             'leather_bag': { name: 'กระเป๋าหนังจระเข้', type: 'produce', sellPrice: [5000, 6500, 8000], icon: '👜', imageUrl: 'leather_bag.png', energyRestore: 0 },
@@ -1320,7 +1350,8 @@
                 { id: 'place_animal_3', action: 'place_animal', description: 'ช่วยกันวางสัตว์ในคอก 3 ตัว', target: 3, reward: { type: 'seed', id: 'guava_seed', count: 15 } },
                 { id: 'buy_animal_5', action: 'buy_animal', description: 'ช่วยกันซื้อสัตว์ 5 ตัว', target: 5, reward: { type: 'item', id: 'fertilizer_2', count: 10 } },
                 { id: 'sell_hq_10', action: 'sell_high_quality', description: 'ช่วยกันขายของคุณภาพสูงสุด 10 ชิ้น', target: 10, reward: { type: 'seed', id: 'chili_seed', count: 15 } },
-            ]
+            ],
+
         };
         let userId = null;
         let farmState = null;
@@ -1577,6 +1608,7 @@
             renderKitchen();
             renderMarket();
             renderParkActions();
+            renderBreedingView();
         }
         
         function renderMarket() {
@@ -1746,6 +1778,135 @@
             `;
             expandButton.onclick = () => expandGrid('animals');
             animalPen.appendChild(expandButton);
+        }
+
+        function calculateBreedingStationCost() {
+            const baseCost = 10000;
+            const perStationCost = 15000; // ราคาจะแพงขึ้นเรื่อยๆ
+            const ownedStations = farmState.breedingStations?.length || 1;
+            return baseCost + ((ownedStations - 1) * perStationCost);
+        }
+
+        function renderBreedingView() {
+            if (!farmState || !farmState.breedingStations) return;
+            const grid = document.getElementById('breeding-grid');
+            if (!grid) { console.error("Could not find #breeding-grid element."); return; }
+            grid.innerHTML = '';
+
+            farmState.breedingStations.forEach((station, index) => {
+                const slotEl = document.createElement('div');
+                slotEl.className = 'factory-slot aspect-square rounded-2xl shadow-inner cursor-pointer flex flex-col items-center justify-center p-1 bg-pink-200/50 relative';
+                slotEl.style.backgroundImage = `url('breeding_center.png')`;
+
+                if (station.job && station.job.result) {
+                    const doneIcon = document.createElement('div');
+                    doneIcon.className = 'absolute top-1 right-1 text-3xl animate-bounce';
+                    doneIcon.textContent = '💖';
+                    slotEl.appendChild(doneIcon);
+                } else if (station.job) {
+                    const progress = (Date.now() - station.job.startTime) / (station.job.breedingTime * 1000);
+                    const progressContainer = document.createElement('div');
+                    progressContainer.className = 'absolute bottom-1 left-1 right-1 h-2 bg-gray-800/70 rounded-full overflow-hidden';
+                    const progressFill = document.createElement('div');
+                    progressFill.className = 'h-full bg-pink-400 rounded-full';
+                    progressFill.style.width = `${Math.min(progress, 1) * 100}%`;
+                    progressContainer.appendChild(progressFill);
+                    slotEl.appendChild(progressContainer);
+                }
+
+                slotEl.onclick = () => showBreedingModal(index);
+                grid.appendChild(slotEl);
+            });
+
+            const cost = calculateBreedingStationCost();
+            const expandButton = document.createElement('div');
+            expandButton.className = 'aspect-square rounded-2xl shadow-inner cursor-pointer flex items-center justify-center p-2 bg-green-200/50 hover:bg-green-200/80 transition';
+            
+            // --- ส่วนที่แก้ไข: ใส่ HTML ที่ถูกต้องเข้าไป ---
+            expandButton.innerHTML = `
+                <div class="text-center">
+                    <span class="text-3xl font-bold text-green-800">➕</span>
+                    <p class="text-xs font-semibold mt-1">ซื้อสถานีเพิ่ม</p>
+                    <p class="text-xs font-bold text-yellow-900 bg-yellow-300 px-2 py-0.5 rounded-full mt-1">${cost}💰</p>
+                </div>
+            `;
+            // --- จบส่วนที่แก้ไข ---
+
+            expandButton.onclick = () => expandBreedingStation();
+            grid.appendChild(expandButton);
+        }
+        
+        function renderBreedingModal() {
+            if (currentBreedingStationIndex === null) return;
+            
+            const station = farmState.breedingStations[currentBreedingStationIndex];
+            const parentSelector = document.getElementById('breeding-parent-selector');
+            const infoEl = document.getElementById('breeding-info');
+            const outputSlot = document.getElementById('breeding-output-slot');
+            infoEl.innerHTML = '';
+            outputSlot.innerHTML = '...';
+
+            if (station.job) { // --- สถานะ: กำลังเพาะพันธุ์ หรือ เพาะพันธุ์เสร็จแล้ว ---
+                parentSelector.classList.add('hidden');
+                const animalData = GAME_DATA[station.job.animalId];
+
+                if (station.job.result) { // เสร็จแล้ว
+                    const resultDeedData = GAME_DATA[station.job.result.deedId];
+                    outputSlot.innerHTML = `
+                        <img src="${resultDeedData.imageUrl}" class="w-16 h-16 object-contain">
+                        <div class="absolute bottom-1 text-lg">${'★'.repeat(station.job.result.quality)}</div>
+                    `;
+                    infoEl.innerHTML = `<button class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-6 rounded-lg">รับผลผลิต</button>`;
+                    infoEl.querySelector('button').onclick = () => {
+                        collectBreedingResult(currentBreedingStationIndex);
+                        hideBreedingModal();
+                    };
+                } else { // กำลังทำงาน
+                    const remainingMillis = Math.max(0, (station.job.startTime + station.job.breedingTime * 1000) - Date.now());
+                    outputSlot.innerHTML = `<img src="${animalData.imageUrl}" class="w-16 h-16 object-contain opacity-50 animate-pulse">`;
+                    infoEl.innerHTML = `
+                        <p class="text-sm">กำลังเพาะพันธุ์... เสร็จใน</p>
+                        <p class="font-bold text-lg">${formatTime(remainingMillis/1000)}</p>
+                        <button id="cancel-breeding-btn" class="text-xs text-red-500 hover:underline">ยกเลิก</button>
+                    `;
+                    infoEl.querySelector('#cancel-breeding-btn').onclick = () => cancelBreeding(currentBreedingStationIndex);
+                }
+
+            } else { // --- สถานะ: รอเลือกพ่อแม่พันธุ์ ---
+                parentSelector.classList.remove('hidden');
+                const parentSlot1 = document.getElementById('parent-slot-1');
+                const parentSlot2 = document.getElementById('parent-slot-2');
+
+                const renderParent = (slotEl, parentData) => {
+                    if (parentData) {
+                        const animalData = GAME_DATA[parentData.animalId];
+                        slotEl.innerHTML = `<img src="${animalData.imageUrl}" class="w-full h-full object-contain"><div class="absolute bottom-0 text-xs">${'★'.repeat(parentData.quality)}</div>`;
+                    } else {
+                        slotEl.innerHTML = '+';
+                    }
+                };
+                renderParent(parentSlot1, station.parents[0]);
+                renderParent(parentSlot2, station.parents[1]);
+
+                const canBreed = station.parents.length === 2 && station.parents[0].animalId === station.parents[1].animalId;
+                
+                if (canBreed) {
+                    let chanceText = '';
+                    const [q1, q2] = [station.parents[0].quality, station.parents[1].quality];
+                    if (q1 === 0 && q2 === 0) chanceText = 'โอกาสได้ 1 ดาว: 10%';
+                    else if (q1 === 1 && q2 === 1) chanceText = 'โอกาสได้ 2 ดาว: 10%';
+                    else if (q1 === 2 && q2 === 2) chanceText = 'ได้ 2 ดาวแน่นอน!';
+                    else chanceText = `จะได้ ${Math.min(q1, q2)} ดาวเป็นอย่างน้อย`;
+                    
+                    infoEl.innerHTML = `
+                        <button id="start-breeding-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg">เริ่มเพาะพันธุ์</button>
+                        <p class="text-xs text-gray-500 mt-1">${chanceText}</p>
+                    `;
+                    infoEl.querySelector('#start-breeding-btn').onclick = startBreeding;
+                } else {
+                    infoEl.innerHTML = `<p class="text-sm text-gray-500">เลือกสัตว์ชนิดเดียวกัน 2 ตัวเพื่อเพาะพันธุ์</p>`;
+                }
+            }
         }
 
 		function renderFactory() {
@@ -2505,6 +2666,172 @@
             modal.classList.add('modal-enter');
         }
 
+        let currentBreedingStationIndex = null; // ตัวแปรส่วนกลางสำหรับเก็บ index ของสถานีที่กำลังดูอยู่
+
+        function showBreedingModal(stationIndex) {
+            currentBreedingStationIndex = stationIndex;
+            const modal = document.getElementById('breeding-modal');
+            renderBreedingModal();
+            modal.classList.remove('hidden');
+        }
+
+        function hideBreedingModal() {
+            document.getElementById('breeding-modal').classList.add('hidden');
+            currentBreedingStationIndex = null;
+        }
+
+        function openParentSelector(parentSlot) {
+            const station = farmState.breedingStations[currentBreedingStationIndex];
+            const availableDeeds = playerState.storageBin.map((item, index) => ({...item, originalIndex: index}))
+                .filter(item => {
+                    const itemData = GAME_DATA[item.id];
+                    if (!itemData || itemData.type !== 'animal_deed') return false;
+                    const otherParent = station.parents[parentSlot === 1 ? 1 : 0];
+                    return !otherParent || otherParent.originalIndex !== item.originalIndex;
+                });
+
+            const modal = document.getElementById('submenu-modal');
+            const titleEl = document.getElementById('submenu-modal-title');
+            const itemsEl = document.getElementById('submenu-modal-items');
+            itemsEl.innerHTML = '';
+            titleEl.textContent = 'เลือกกรรมสิทธิ์สัตว์จากคลัง';
+
+            if (availableDeeds.length === 0) {
+                itemsEl.innerHTML = `<p class="text-center col-span-3 text-gray-500">ไม่มีกรรมสิทธิ์สัตว์ในคลัง</p>`;
+            }
+
+            const groupedDeeds = availableDeeds.reduce((acc, deed) => {
+                const key = `${deed.id}_q${deed.quality}`;
+                if (!acc[key]) acc[key] = { ...deed, count: 0, originalIndexes: [] };
+                acc[key].count++;
+                acc[key].originalIndexes.push(deed.originalIndex);
+                return acc;
+            }, {});
+
+            Object.values(groupedDeeds).forEach(deedGroup => {
+                const deedData = GAME_DATA[deedGroup.id];
+                const itemButton = document.createElement('button');
+                itemButton.className = 'p-2 bg-gray-100 rounded-lg hover:bg-green-100 flex flex-col items-center justify-center gap-1';
+                itemButton.innerHTML = `
+                    <img src="${deedData.imageUrl}" class="w-10 h-10 object-contain">
+                    <div class="text-xs">${deedData.name} ${'★'.repeat(deedGroup.quality || 0)}</div>
+                    <div class="text-xs font-bold">x${deedGroup.count}</div>
+                `;
+                itemButton.onclick = () => {
+                    selectParent(deedGroup.originalIndexes[0], parentSlot);
+                    hideSubMenu();
+                };
+                itemsEl.appendChild(itemButton);
+            });
+            modal.classList.remove('hidden', 'modal-leave');
+            modal.classList.add('modal-enter');
+        }
+
+        function selectParent(storageBinIndex, parentSlot) {
+            const newFarmState = { ...farmState };
+            const deedToCopy = playerState.storageBin[storageBinIndex];
+            const station = newFarmState.breedingStations[currentBreedingStationIndex];
+            station.parents[parentSlot - 1] = {
+                deedId: deedToCopy.id,
+                animalId: GAME_DATA[deedToCopy.id].animalId,
+                quality: deedToCopy.quality || 0,
+                originalIndex: storageBinIndex
+            };
+            updateFarmState(newFarmState);
+            renderBreedingModal(); // <--- เพิ่มบรรทัดนี้เข้ามา
+        }
+
+        function unselectParent(parentSlot) {
+            const newFarmState = { ...farmState };
+            const station = newFarmState.breedingStations[currentBreedingStationIndex];
+            station.parents.splice(parentSlot - 1, 1);
+            // กรองเอา null ออกไปเผื่อกรณีที่ซับซ้อนขึ้น
+            station.parents = station.parents.filter(p => p); 
+            updateFarmState(newFarmState);
+            renderBreedingModal(); // <--- เพิ่มบรรทัดนี้เข้ามา
+        }
+
+        function startBreeding() {
+            if (currentBreedingStationIndex === null) return;
+            const newFarmState = { ...farmState };
+            const newPlayerState = { ...playerState };
+            const station = newFarmState.breedingStations[currentBreedingStationIndex];
+
+            if (station.parents.length !== 2 || station.parents[0].animalId !== station.parents[1].animalId || station.job) {
+                return;
+            }
+
+            const indexesToRemove = [station.parents[0].originalIndex, station.parents[1].originalIndex].sort((a, b) => b - a);
+            indexesToRemove.forEach(index => {
+                newPlayerState.storageBin.splice(index, 1);
+            });
+
+            const parent1 = station.parents[0];
+            const parent2 = station.parents[1];
+            const animalData = GAME_DATA[parent1.animalId];
+
+            station.job = {
+                startTime: Date.now(),
+                deedId: parent1.deedId,
+                animalId: parent1.animalId,
+                parentQualities: [parent1.quality, parent2.quality],
+                breedingTime: animalData.breedingTime
+            };
+            
+            station.parents = []; 
+            updatePlayerState(newPlayerState);
+            updateFarmState(newFarmState);
+            renderBreedingModal(); // <--- เพิ่มบรรทัดนี้เข้ามา (และเอา hideBreedingModal() ออก)
+        }
+
+        function cancelBreeding(stationIndex) {
+            showConfirmationModal('คุณแน่ใจหรือไม่ว่าจะยกเลิก? คุณจะได้รับกรรมสิทธิ์สัตว์คืน แต่จะถูกหักค่าธรรมเนียม 10% ของราคา', () => {
+                const newFarmState = { ...farmState };
+                const newPlayerState = { ...playerState };
+                const station = newFarmState.breedingStations[stationIndex];
+                
+                if (!station.job || station.job.result) return;
+
+                const deedData = GAME_DATA[station.job.deedId];
+                const fee = Math.floor(deedData.cost * 0.10);
+                
+                if(newPlayerState.money < fee) {
+                    alert("เงินไม่พอสำหรับค่าธรรมเนียมการยกเลิก!");
+                    return;
+                }
+                newPlayerState.money -= fee;
+
+                newPlayerState.storageBin.push({ id: station.job.deedId, quality: station.job.parentQualities[0] });
+                newPlayerState.storageBin.push({ id: station.job.deedId, quality: station.job.parentQualities[1] });
+                
+                station.job = null;
+                station.parents = [];
+
+                updatePlayerState(newPlayerState);
+                updateFarmState(newFarmState);
+                hideBreedingModal();
+            });
+        }
+
+        function collectBreedingResult(stationIndex) {
+            const newFarmState = { ...farmState };
+            const newPlayerState = { ...playerState };
+            const station = newFarmState.breedingStations[stationIndex];
+            
+            if (!station.job || !station.job.result) return;
+            
+            newPlayerState.storageBin.push({
+                id: station.job.result.deedId,
+                quality: station.job.result.quality
+            });
+            
+            station.parents = [];
+            station.job = null;
+            
+            updatePlayerState(newPlayerState);
+            updateFarmState(newFarmState);
+        }
+
         function hideQuantityModal() {
             const modal = document.getElementById('quantity-modal');
             modal.classList.add('modal-leave');
@@ -2542,51 +2869,87 @@
             const titles = {
                 plant: 'เลือกเมล็ดที่จะปลูก',
                 fertilize: 'เลือกปุ๋ย',
-                placeAnimal: 'เลือกสัตว์ที่จะวาง',
+                placeAnimal: 'เลือกกรรมสิทธิ์สัตว์ที่จะวาง',
                 placeFactory: 'เลือกโรงงานที่จะสร้าง',
                 useFactory: 'เลือกสูตรการผลิต'
             };
             titleEl.textContent = titles[actionType] || 'เลือกรายการ';
 
-            itemIds.forEach(itemId => {
-                let itemData, clickAction, name, iconHTML;
-                
-                if (actionType === 'useFactory') {
-                    const factoryData = GAME_DATA[farmState.factories[index].factoryId];
-                    const recipe = factoryData.recipes.find(r => r.id === itemId);
-                    const outputData = GAME_DATA[recipe.output.id];
-                    
-                    let ingredientsText = recipe.inputs.map(inp => `${GAME_DATA[inp.id].name} x${inp.count}`).join(', ');
-                    
-                    itemData = recipe;
-                    name = `${recipe.name}<br><small class="font-normal text-gray-500">${ingredientsText}</small>`;
-                    iconHTML = `<img src="${outputData.imageUrl}" class="w-10 h-10 object-contain">`;
-                    clickAction = () => startProcessing(index, recipe.id);
-                } else {
-                    itemData = GAME_DATA[itemId];
-                    name = itemData.name;
-                    iconHTML = itemData.imageUrl 
-                        ? `<img src="${itemData.imageUrl}" class="w-10 h-10 object-contain">`
-                        : `<div class="text-3xl">${itemData.icon}</div>`;
+            // --- Logic ใหม่สำหรับ placeAnimal ---
+            if (actionType === 'placeAnimal') {
+                const groupedDeeds = playerState.storageBin
+                    .filter(item => GAME_DATA[item.id]?.type === 'animal_deed')
+                    .reduce((acc, deed) => {
+                        const key = `${deed.id}_q${deed.quality}`;
+                        if (!acc[key]) {
+                            acc[key] = { ...deed, count: 0 };
+                        }
+                        acc[key].count++;
+                        return acc;
+                    }, {});
 
-                    const actions = {
-                        plant: () => plant(index, itemId),
-                        fertilize: () => fertilize(index, itemId),
-                        placeAnimal: () => placeAnimal(index, itemId),
-                        placeFactory: () => placeFactory(index, itemId),
-                    };
-                    clickAction = actions[actionType];
+                if (Object.keys(groupedDeeds).length === 0) {
+                     itemsEl.innerHTML = `<p class="text-center col-span-3 text-gray-500">ไม่มีกรรมสิทธิ์สัตว์ในคลัง</p>`;
                 }
 
-                const itemButton = document.createElement('button');
-                itemButton.className = 'p-2 bg-gray-100 rounded-lg hover:bg-green-100 flex flex-col items-center justify-center gap-1';
-                itemButton.innerHTML = `${iconHTML}<div class="text-xs">${name}</div>`;
-                itemButton.onclick = () => {
-                    clickAction();
-                    hideSubMenu();
-                };
-                itemsEl.appendChild(itemButton);
-            });
+                Object.values(groupedDeeds).forEach(deedGroup => {
+                    const deedData = GAME_DATA[deedGroup.id];
+                    const itemButton = document.createElement('button');
+                    itemButton.className = 'p-2 bg-gray-100 rounded-lg hover:bg-green-100 flex flex-col items-center justify-center gap-1';
+                    itemButton.innerHTML = `
+                        <img src="${deedData.imageUrl}" class="w-10 h-10 object-contain">
+                        <div class="text-xs">${deedData.name} ${'★'.repeat(deedGroup.quality || 0)}</div>
+                        <div class="text-xs font-bold">x${deedGroup.count}</div>
+                    `;
+                    itemButton.onclick = () => {
+                        placeAnimal(index, deedGroup.id, deedGroup.quality);
+                        hideSubMenu();
+                    };
+                    itemsEl.appendChild(itemButton);
+                });
+
+            } else {
+                // --- Logic เดิมสำหรับ action อื่นๆ ทั้งหมด ---
+                itemIds.forEach(itemId => {
+                    let itemData, clickAction, name, iconHTML;
+                    
+                    if (actionType === 'useFactory') {
+                        const factoryData = GAME_DATA[farmState.factories[index].factoryId];
+                        const recipe = factoryData.recipes.find(r => r.id === itemId);
+                        const outputData = GAME_DATA[recipe.resultId];
+                        let ingredientsText = recipe.inputs.map(inp => `${GAME_DATA[inp.id].name} x${inp.count}`).join(', ');
+                        
+                        itemData = recipe;
+                        name = `${recipe.name}<br><small class="font-normal text-gray-500">${ingredientsText}</small>`;
+                        iconHTML = `<img src="${outputData.imageUrl}" class="w-10 h-10 object-contain">`;
+                        clickAction = () => startProcessing(index, recipe.id);
+                    } else {
+                        itemData = GAME_DATA[itemId];
+                        name = itemData.name;
+                        iconHTML = itemData.imageUrl 
+                            ? `<img src="${itemData.imageUrl}" class="w-10 h-10 object-contain">`
+                            : `<div class="text-3xl">${itemData.icon}</div>`;
+
+                        const actions = {
+                            plant: () => plant(index, itemId),
+                            fertilize: () => fertilize(index, itemId),
+                            // placeAnimal ถูกย้ายไป Logic ข้างบนแล้ว
+                            placeFactory: () => placeFactory(index, itemId),
+                        };
+                        clickAction = actions[actionType];
+                    }
+
+                    const itemButton = document.createElement('button');
+                    itemButton.className = 'p-2 bg-gray-100 rounded-lg hover:bg-green-100 flex flex-col items-center justify-center gap-1';
+                    itemButton.innerHTML = `${iconHTML}<div class="text-xs">${name}</div>`;
+                    itemButton.onclick = () => {
+                        if (clickAction) clickAction();
+                        hideSubMenu();
+                    };
+                    itemsEl.appendChild(itemButton);
+                });
+            }
+
             modal.classList.remove('hidden', 'modal-leave');
             modal.classList.add('modal-enter');
         }
@@ -2783,20 +3146,32 @@
             updateQuestProgress('harvest');
         }
         
-        function placeAnimal(slotIndex, deedId) {
+        function placeAnimal(slotIndex, deedId, quality = 0) {
             const newFarmState = { ...farmState };
             const newPlayerState = { ...playerState };
             const deedData = GAME_DATA[deedId];
 
-            // หาและลบ Deed จาก storageBin
-            const deedIndex = newPlayerState.storageBin.findIndex(item => item.id === deedId);
+            // หาและลบ Deed จาก storageBin (ตัวแรกที่เจอและคุณภาพตรงกัน)
+            const deedIndex = newPlayerState.storageBin.findIndex(item => item.id === deedId && item.quality === quality);
             if (deedIndex > -1) {
                 newPlayerState.storageBin.splice(deedIndex, 1);
             } else {
-                return; // ไม่เจอ Deed ให้หยุดทำงาน
+                // ถ้าไม่เจอ deed ที่คุณภาพตรงกัน ลองหา deed เดียวกันที่ไม่มีดาวเผื่อไว้
+                const zeroQualityIndex = newPlayerState.storageBin.findIndex(item => item.id === deedId && item.quality === 0);
+                 if (zeroQualityIndex > -1) {
+                    newPlayerState.storageBin.splice(zeroQualityIndex, 1);
+                 } else {
+                    console.error("Could not find deed in storage to place animal.");
+                    return; 
+                 }
             }
-
-            newFarmState.animals[slotIndex] = { animalId: deedData.animalId, startTime: Date.now() };
+            
+            // สร้างสัตว์ใหม่พร้อมค่าคุณภาพ
+            newFarmState.animals[slotIndex] = { 
+                animalId: deedData.animalId, 
+                startTime: Date.now(),
+                quality: quality // บันทึกคุณภาพของสัตว์
+            };
             updateFarmState(newFarmState);
             updatePlayerState(newPlayerState);
         }
@@ -2806,7 +3181,9 @@
             const newFarmState = { ...farmState };
             const animal = newFarmState.animals[slotIndex];
             const animalData = GAME_DATA[animal.animalId];
-            newPlayerState.storageBin.push({ id: animalData.produceId, quality: 0 });
+            const quality = animal.quality || 0;
+
+            newPlayerState.storageBin.push({ id: animalData.produceId, quality: quality });
             animal.startTime = Date.now();
             updatePlayerState(newPlayerState);
             updateFarmState(newFarmState);
@@ -2919,6 +3296,8 @@
                                 }
                             }
                             
+                            updateQuestProgress('craft_specific', { itemId: recipe.output.id, quality: outputQuality, amount: recipe.output.count || 1 });
+
                             const outputCount = recipe.output.count || 1;
                             for (let i = 0; i < outputCount; i++) {
                                 if (factory.outputBin.length < MAX_OUTPUT_BIN_SIZE) {
@@ -2944,6 +3323,42 @@
                 });
             } catch (e) {
                 console.error("Factory processing to output bin failed: ", e);
+            }
+        }
+
+        async function processBreedingStations() {
+            if (!farmState || !farmState.breedingStations) return;
+            const now = Date.now();
+            let needsUpdate = false;
+
+            farmState.breedingStations.forEach(station => {
+                if (station.job && !station.job.result) {
+                    const completionTime = station.job.startTime + (station.job.breedingTime * 1000);
+                    if (now >= completionTime) {
+                        // --- Logic การสุ่มคุณภาพลูก ---
+                        const [q1, q2] = station.job.parentQualities;
+                        let newQuality = Math.min(q1, q2); // คุณภาพพื้นฐานคือดาวที่ต่ำกว่าของพ่อแม่
+                        const rand = Math.random();
+
+                        if (q1 === 0 && q2 === 0 && rand < 0.10) { // พ่อแม่ 0 ดาว -> 10% ได้ 1 ดาว
+                            newQuality = 1;
+                        } else if (q1 === 1 && q2 === 1 && rand < 0.10) { // พ่อแม่ 1 ดาว -> 10% ได้ 2 ดาว
+                            newQuality = 2;
+                        } else if (q1 === 2 && q2 === 2) { // พ่อแม่ 2 ดาว -> ได้ 2 ดาวเสมอ
+                            newQuality = 2;
+                        }
+
+                        station.job.result = {
+                            deedId: station.job.deedId,
+                            quality: newQuality
+                        };
+                        needsUpdate = true;
+                    }
+                }
+            });
+
+            if (needsUpdate) {
+                await updateFarmState(farmState);
             }
         }
 
@@ -3415,7 +3830,8 @@
                 averageQuality = Math.floor(totalQualitySum / (job.quantity * totalIngredientsPerDish));
             }
             // --- จบส่วนที่แก้ไข ---
-            
+            updateQuestProgress('craft_specific', { itemId: recipe.resultId, quality: averageQuality, amount: job.quantity });
+
             for (let i = 0; i < job.quantity; i++) {
                 // ใช้ averageQuality ที่คำนวณได้
                 newPlayerState.storageBin.push({ id: recipe.resultId, quality: averageQuality });
@@ -3468,6 +3884,22 @@
 			}
 		}
 
+        function expandBreedingStation() {
+            const cost = calculateBreedingStationCost();
+            if (playerState.money >= cost) {
+                showConfirmationModal(`คุณต้องการซื้อสถานีเพาะพันธุ์เพิ่มในราคา ${cost}💰 หรือไม่?`, () => {
+                    const newPlayerState = { ...playerState };
+                    newPlayerState.money -= cost;
+                    const newFarmState = { ...farmState };
+                    newFarmState.breedingStations.push({ parents: [], job: null });
+                    updatePlayerState(newPlayerState);
+                    updateFarmState(newFarmState);
+                });
+            } else {
+                alert("เงินไม่พอ!");
+            }
+        }
+
         function expandGrid(type) {
             const cost = calculateExpansionCost(type);
             const typeMap = {
@@ -3491,46 +3923,48 @@
             }
         }
 
-        async function updateQuestProgress(action, amount = 1) {
+        async function updateQuestProgress(action, details = {}) {
             if (!farmState || !farmState.quests) return;
+
+            // ตั้งค่าพื้นฐาน
+            const amount = details.amount || 1;
+            const itemId = details.itemId || null;
+            const quality = details.quality !== undefined ? details.quality : -1;
+
             const newFarmState = { ...farmState };
             let questsUpdated = false;
+
             ['daily', 'weekly'].forEach(type => {
-                newFarmState.quests[type]?.forEach(quest => {
+                if (!newFarmState.quests[type]) return;
+
+                newFarmState.quests[type].forEach(quest => {
                     const questData = QUEST_DATA[type].find(q => q.id === quest.id);
-                    if (questData?.action === action && quest.progress < questData.target) {
-                        quest.progress = Math.min(quest.progress + amount, questData.target);
-                        questsUpdated = true;
+                    if (!questData || quest.progress >= questData.target) return;
+
+                    // ตรวจสอบว่า action ตรงกันหรือไม่
+                    if (questData.action === action) {
+                        let isMatch = false;
+
+                        // โหมดใหม่: ตรวจสอบเควสแบบเจาะจงไอเท็ม (craft_specific)
+                        if (action === 'craft_specific') {
+                            if (questData.itemId === itemId && quality >= (questData.minQuality || 0)) {
+                                isMatch = true;
+                            }
+                        } 
+                        // โหมดเก่า: เควสทั่วไปที่นับแค่การกระทำ
+                        else {
+                            isMatch = true;
+                        }
+
+                        if (isMatch) {
+                            quest.progress = Math.min(quest.progress + amount, questData.target);
+                            questsUpdated = true;
+                        }
                     }
                 });
             });
+
             if (questsUpdated) await updateFarmState(newFarmState);
-        }
-
-        async function claimQuestReward(type, id) {
-            const quest = farmState.quests[type].find(q => q.id === id);
-            const questData = QUEST_DATA[type].find(q => q.id === id);
-            if (!quest || !questData || quest.claimedBy?.includes(userId) || quest.progress < questData.target) return;
-
-            const newFarmState = { ...farmState };
-            const questToUpdate = newFarmState.quests[type].find(q => q.id === id);
-            if (!questToUpdate.claimedBy) questToUpdate.claimedBy = [];
-            questToUpdate.claimedBy.push(userId);
-
-            const newPlayerState = { ...playerState };
-            const { reward } = questData;
-            let rewardId = reward.id === 'random' && reward.type === 'seed' 
-                ? Object.keys(GAME_DATA).filter(k => GAME_DATA[k].type === 'seed')[Math.floor(Math.random() * Object.keys(GAME_DATA).filter(k => GAME_DATA[k].type === 'seed').length)] 
-                : reward.id;
-            
-			if (reward.type === 'produce') {
-                 for (let i = 0; i < reward.count; i++) newPlayerState.storageBin.push({ id: rewardId, quality: 0 });
-            } else { 
-                newPlayerState.inventory[rewardId] = (newPlayerState.inventory[rewardId] || 0) + reward.count;
-            }
-            
-            await updateFarmState(newFarmState);
-            await updatePlayerState(newPlayerState);
         }
         
         let gameLoopInterval = null;
@@ -3556,7 +3990,8 @@
 
             gameLoopInterval = setInterval(renderAll, 2000);
             logicInterval = setInterval(() => {
-                processFactoryQueuesToOutputBin(); // เรียกใช้ฟังก์ชันประมวลผลตัวใหม่
+                processFactoryQueuesToOutputBin();
+                processBreedingStations();
             }, 10000); // เช็คทุก 10 วินาที
         }
 
@@ -3588,6 +4023,9 @@
                     if (!farmState.kitchen) farmState.kitchen = { queue: [] };
                     if (!farmState.marketPrices) farmState.marketPrices = {};
                     if (!farmState.salesVolume) farmState.salesVolume = {};
+                    if (!farmState.breedingStations) {
+                        farmState.breedingStations = [{ parents: [], job: null }];
+                    } // <--- เพิ่มปีกกาปิด } ที่นี่
                 }
             }, handleFirestoreError);
         }
@@ -3610,6 +4048,7 @@
                         sharedHouseLevel: 0,
                         sharedRodLevel: 0,
 						currentWeather: 'sunny',
+                        breedingStations:[{ parents: [], job: null }]
                     };
                     await setDoc(farmDocRef, initialFarmState);
                 }
@@ -3723,8 +4162,6 @@
                 };
             });
 
-            // --- Event Listener อื่นๆ ทั้งหมดที่เคยหายไป ---
-
             document.querySelector('.nav-btn[data-view="farm"]').classList.add('active');
             
             // Modals
@@ -3739,7 +4176,7 @@
             document.getElementById('cancel-name-btn').onclick = hideNameModal;
             document.getElementById('save-name-btn').onclick = saveNameChange;
 
-            // --- ส่วนที่เพิ่มเข้ามา: Event Listener ของปุ่มสภาพอากาศ ---
+            // Weather Display
             const weatherDisplay = document.getElementById('weather-display');
             if (weatherDisplay) {
                 weatherDisplay.onclick = () => {
@@ -3751,8 +4188,6 @@
                     }
                 };
             }
-            // --- จบส่วนที่เพิ่ม ---
-
 
             // Confirmation Modal
             document.getElementById('confirm-modal-cancel').onclick = hideConfirmationModal;
@@ -3821,29 +4256,40 @@
                 }
             });
 
+            // --- ส่วนที่แก้ไข: ลบ Event Listener ของปุ่มใน breeding-modal ออก ---
+            document.getElementById('breeding-modal-close').onclick = hideBreedingModal;
+            document.getElementById('parent-slot-1').onclick = () => {
+                const station = farmState.breedingStations[currentBreedingStationIndex];
+                if (station.parents.find((p, i) => i === 0)) unselectParent(1);
+                else openParentSelector(1);
+            };
+            document.getElementById('parent-slot-2').onclick = () => {
+                const station = farmState.breedingStations[currentBreedingStationIndex];
+                if (station.parents.find((p, i) => i === 1)) unselectParent(2);
+                else openParentSelector(2);
+            };
+            // --- ไม่มีการกำหนด onclick ให้ start-breeding-btn และ cancel-breeding-btn ที่นี่อีกต่อไป ---
+
             // Admin & Reset Buttons
             const adminResetBtn = document.getElementById('admin-reset-btn');
             const adminSellBtn = document.getElementById('admin-force-sell-btn');
             const resetPlayerBtn = document.getElementById('reset-player-btn');
             if (adminResetBtn) adminResetBtn.onclick = forceResetFarm;
             if (adminSellBtn) adminSellBtn.onclick = forceSellAllPlayersItems;
-            if (resetPlayerBtn) resetPlayerProgress;
+            if (resetPlayerBtn) resetPlayerBtn.onclick = resetPlayerProgress;
             
-            // --- เพิ่มส่วนนี้เข้าไปใน setupControls ---
             const adminTestResetBtn = document.getElementById('admin-test-reset-btn');
             if (adminTestResetBtn) {
                  adminTestResetBtn.onclick = () => {
                     if (userId !== ADMIN_UID) return;
                     const yesterday = new Date();
                     yesterday.setDate(yesterday.getDate() - 1);
-                    
                     const newPlayerState = { ...playerState, lastResetTime: yesterday.getTime() };
                     updatePlayerState(newPlayerState);
-                    
                     alert('ตั้งค่าเวลาสำเร็จ! กรุณารีเฟรชหน้าจอ (F5 หรือ Ctrl+R) เพื่อดูหน้าต่างสรุปผล');
                 };
             }
-            // --- จบส่วนที่เพิ่ม ---
+            
             // Character Creator
             setupCharacterCreatorControls();
         }
