@@ -4451,6 +4451,14 @@
             const primaryViews = ['farm', 'animals', 'shop', 'map', 'factory'];
             let currentView = 'farm';
 
+            // เพิ่มโค้ดสำหรับปุ่มบังคับรีเฟรช
+            const forceRefreshBtn = document.getElementById('force-refresh-btn');
+            if (forceRefreshBtn) {
+                forceRefreshBtn.onclick = () => {
+                    window.location.reload();
+                };
+            }
+
             // --- Event Listener หลักสำหรับการสลับ View ---
             document.addEventListener('click', e => {
                 const target = e.target.closest('[data-view]');
