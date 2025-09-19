@@ -1096,11 +1096,11 @@
                 { name: 'ปราสาท', cost: 0, imageUrl: 'beadroom5.png' }
             ],
             'fishing_rods': [
-                { name: 'เบ็ดไม้ไผ่', cost: 0, imageUrl: 'rod1.png' },
-                { name: 'เบ็ดไฟเบอร์กลาส', cost: 2500, imageUrl: 'rod2.png' },
-                { name: 'เบ็ดเหล็ก', cost: 7500, imageUrl: 'rod3.png' },
-                { name: 'เบ็ดทอง', cost: 15000, imageUrl: 'rod4.png' },
-                { name: 'เบ็ดในตำนาน', cost: 50000, imageUrl: 'rod5.png' },
+                { name: 'เบ็ดไม้ไผ่', cost: 0, imageUrl: 'rod1.png', barSizeMultiplier: 1.0 },
+                { name: 'เบ็ดไฟเบอร์กลาส', cost: 2500, imageUrl: 'rod2.png', barSizeMultiplier: 1.10 }, // +10%
+                { name: 'เบ็ดเหล็ก', cost: 7500, imageUrl: 'rod3.png', barSizeMultiplier: 1.25 }, // +25%
+                { name: 'เบ็ดทอง', cost: 15000, imageUrl: 'rod4.png', barSizeMultiplier: 1.40 }, // +40%
+                { name: 'เบ็ดในตำนาน', cost: 50000, imageUrl: 'rod5.png', barSizeMultiplier: 1.50 }, // +50%
             ],
             'pond_upgrades': [
             { name: 'บ่อปลาเริ่มต้น', cost: 0, description: 'บ่อปลาพื้นฐาน ไม่มีโบนัสพิเศษ' },
@@ -4356,7 +4356,7 @@
         
         let minigameLoopId = null;
         function startFishingMinigame(fishId) {
-            const modal = document.getElementById('fishing-minigame-modal'); // แก้ไขชื่อให้ถูกต้องแล้ว
+            const modal = document.getElementById('fishing-minigame-modal');
             modal.classList.remove('hidden');
 
             const track = document.getElementById('fishing-minigame-track');
@@ -4379,10 +4379,15 @@
                 fishEl.textContent = fishData.icon || '🐠';
             }
 
-            const trackHeight = track.clientHeight;
-            const barHeight = 80;
+            // ▼▼▼ ส่วนแก้ไข: คำนวณขนาดบาร์ตามระดับเบ็ด ▼▼▼
+            const rodLevel = farmState.sharedRodLevel || 0;
+            const rodData = GAME_DATA.fishing_rods[rodLevel];
+            const baseBarHeight = 80; // ขนาดบาร์พื้นฐาน
+            const barHeight = baseBarHeight * (rodData.barSizeMultiplier || 1.0); // คูณด้วยค่า multiplier
             barEl.style.height = `${barHeight}px`;
+            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
+            const trackHeight = track.clientHeight;
             let barPos = trackHeight / 2;
             let barVelocity = 0;
             let fishPos = trackHeight / 2;
@@ -4469,7 +4474,6 @@
                     updateQuestProgress('fish_specific', { itemId: caughtFishId, amount: catchCount });
                 }
             };
-
             minigameLoopId = requestAnimationFrame(gameLoop);
         }
         
