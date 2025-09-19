@@ -413,7 +413,7 @@
         <header class="text-center mb-4 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-4 relative">
             <button id="admin-reset-btn" class="hidden absolute top-2 right-2 bg-red-600 text-white text-xs font-bold py-1 px-3 rounded-full hover:bg-red-700">รีเซ็ตฟาร์ม (แอดมิน)</button>
             <button id="admin-force-sell-btn" class="hidden absolute top-2 right-[150px] bg-blue-600 text-white text-xs font-bold py-1 px-3 rounded-full hover:bg-blue-700">ขายของทั้งหมด (แอดมิน)</button>
-			<button id="admin-test-reset-btn" class="hidden absolute top-10 right-2 bg-purple-600 text-white text-xs font-bold py-1 px-3 rounded-full hover:bg-purple-700">เทสรีเซ็ต (แอดมิน)</button>
+			<button id="admin-test-reset-btn" class="hidden absolute top-10 right-2 bg-purple-600 text-white text-xs font-bold py-1 px-3 rounded-full hover:bg-purple-700">บังคับรีเซ็ต (แอดมิน)</button>
             <button id="reset-player-btn" class="absolute bottom-1 right-2 bg-yellow-500 text-white text-xs font-bold py-1 px-3 rounded-full hover:bg-yellow-600">รีเซ็ตข้อมูลฉัน</button>
             <button id="admin-force-reset-quests-btn" class="hidden absolute top-10 right-[150px] bg-green-600 text-white text-xs font-bold py-1 px-3 rounded-full hover:bg-green-700">รีเซ็ตเควส (แอดมิน)</button>
             <button id="admin-force-reset-weather-btn" class="hidden absolute top-10 right-[280px] bg-indigo-600 text-white text-xs font-bold py-1 px-3 rounded-full hover:bg-indigo-700">รีเซ็ตอากาศ (แอดมิน)</button>
@@ -1491,6 +1491,7 @@
         let userId = null;
         let farmState = null;
         let playerState = null;
+        let isProcessingFactoryQueue = false;
         let currentSortBy = 'category';
         let currentSortDirection = 'asc';
         const playerNameEl = document.getElementById('player-name');
@@ -3827,11 +3828,11 @@
 
         // ฟังก์ชันใหม่สำหรับประมวลผลของไปวางที่ชั้นวาง (OutputBin)
         async function processFactoryQueuesToOutputBin() {
-            if (!farmState || !farmState.factories) return;
-            const now = Date.now();
-            // --- ไม่มีการกำหนด MAX_OUTPUT_BIN_SIZE อีกต่อไป ---
+            if (isProcessingFactoryQueue || !farmState || !farmState.factories) return; // << เพิ่มตัวล็อค
+            isProcessingFactoryQueue = true; // << ล็อคการทำงาน
 
             try {
+                const now = Date.now();
                 await runTransaction(db, async (transaction) => {
                     const farmDocRef = doc(db, "publicFarmData", "farmState");
                     const farmDoc = await transaction.get(farmDocRef);
@@ -3843,27 +3844,21 @@
                     for (const factory of freshFarmState.factories) {
                         if (!factory.factoryId || !factory.queue || factory.queue.length === 0 || !factory.queue[0].startTime) continue;
                         if (!factory.outputBin) factory.outputBin = [];
-                        
+
                         const currentJob = factory.queue[0];
                         const recipe = findRecipeById(currentJob.recipeId);
                         if (!recipe) continue;
-                        
+
                         const completionTime = currentJob.startTime + (recipe.processTime * 1000);
 
-                        // ▼▼▼▼▼ แก้ไขเงื่อนไขตรงนี้: เอาการเช็คของเต็มออกไปเลย ▼▼▼▼▼
                         if (now >= completionTime) {
                             hasChanges = true;
                             const finishedJob = factory.queue.shift(); 
-                            
                             console.log("Processing Job:", finishedJob);
-
                             let outputQuality = 0;
-
                             if (factory.factoryId === 'meat_processor') {
                                 const rand = Math.random();
-                                if (rand < 0.1) outputQuality = 2;
-                                else if (rand < 0.4) outputQuality = 1;
-                                else outputQuality = 0;
+                                if (rand < 0.1) outputQuality = 2; else if (rand < 0.4) outputQuality = 1; else outputQuality = 0;
                             } else {
                                 const qualities = finishedJob.ingredientQualities || [];
                                 if (qualities.length > 0) {
@@ -3871,12 +3866,8 @@
                                     outputQuality = Math.floor(sum / qualities.length);
                                 }
                             }
-                            
                             updateQuestProgress('craft_specific', { itemId: recipe.output.id, quality: outputQuality, amount: recipe.output.count || 1 });
-
                             const outputCount = recipe.output.count || 1;
-                            
-                            // ▼▼▼▼▼ แก้ไขลูปตรงนี้: ไม่ต้องเช็คของเต็มแล้ว เพิ่มของเข้าไปได้เลย ▼▼▼▼▼
                             for (let i = 0; i < outputCount; i++) {
                                 factory.outputBin.push({
                                     item: { id: recipe.output.id, quality: outputQuality },
@@ -3884,7 +3875,6 @@
                                     ownerNickname: finishedJob.processedBy?.nickname || '??'
                                 });
                             }
-
                             if (factory.queue.length > 0) {
                                 factory.queue[0].startTime = completionTime;
                             }
@@ -3897,6 +3887,8 @@
                 });
             } catch (e) {
                 console.error("Factory processing to output bin failed: ", e);
+            } finally {
+                isProcessingFactoryQueue = false; // << ปลดล็อคเสมอ ไม่ว่าจะสำเร็จหรือล้มเหลว
             }
         }
 
@@ -4814,6 +4806,7 @@
 
             setTimeout(() => {
                 console.log("Midnight reset triggered!");
+                checkForTimeResets(playerState);
                 checkForTimeResets();
                 scheduleNextMidnightReset();
             }, msUntilMidnight);
@@ -5010,13 +5003,29 @@
             
             const adminTestResetBtn = document.getElementById('admin-test-reset-btn');
             if (adminTestResetBtn) {
-                 adminTestResetBtn.onclick = () => {
+                adminTestResetBtn.onclick = async () => {
                     if (userId !== ADMIN_UID) return;
+                    if (!confirm("คุณต้องการบังคับรีเซ็ตวันสำหรับผู้เล่นทุกคนทันทีหรือไม่? (ของจะถูกขาย, เควสจะรีเซ็ต)")) return;
+                    
+                    // บังคับให้เวลาของผู้เล่นปัจจุบันเป็นเมื่อวาน
                     const yesterday = new Date();
                     yesterday.setDate(yesterday.getDate() - 1);
-                    const newPlayerState = { ...playerState, lastResetTime: yesterday.getTime() };
-                    updatePlayerState(newPlayerState);
-                    alert('ตั้งค่าเวลาสำเร็จ! กรุณารีเฟรชหน้าจอ (F5 หรือ Ctrl+R) เพื่อดูหน้าต่างสรุปผล');
+                    const tempPlayerState = { ...playerState, lastResetTime: yesterday.getTime() };
+
+                    // เรียกใช้ฟังก์ชันรีเซ็ตหลัก
+                    const resetResult = await checkForTimeResets(tempPlayerState);
+
+                    if (resetResult.wasReset) {
+                        alert("บังคับรีเซ็ตวันสำเร็จ!");
+                        // หลังจากรีเซ็ตเสร็จ ดึงข้อมูลฟาร์มล่าสุดมาแสดงใน summary modal
+                        const farmDocRef = doc(db, "publicFarmData", "farmState");
+                        const farmDocSnap = await getDoc(farmDocRef);
+                        if (farmDocSnap.exists()) {
+                            showSummaryModal(resetResult.earningsData, farmDocSnap.data());
+                        }
+                    } else {
+                        alert("ไม่สามารถรีเซ็ตได้ อาจจะรีเซ็ตไปแล้ว");
+                    }
                 };
             }
             
