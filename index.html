@@ -4326,7 +4326,7 @@
                 'Legendary': Object.keys(GAME_DATA).filter(id => GAME_DATA[id].rarity === 'Legendary')
             };
             const rand = Math.random();
-            if (rodLevel > 2 && rand > 0.90) { 
+            if (rodLevel > 2 && rand > 0.95) { 
                 const possibleFish = fishTypes['Legendary'];
                 const caughtFishId = possibleFish[Math.floor(Math.random() * possibleFish.length)];
                 startFishingMinigame(caughtFishId);
