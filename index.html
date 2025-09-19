@@ -3537,37 +3537,49 @@
             const toolId = farmState.sharedTools[toolType];
             const toolDataArray = GAME_DATA[toolType + 's'];
             const toolData = toolDataArray.find(t => t.id === toolId);
-            if (!toolData) return [targetIndex]; // Fallback to single plot if tool not found
+            if (!toolData) return [targetIndex];
 
             const aoe = toolData.aoe;
             const plots = [];
-            const cols = 6; // จำนวนคอลัมน์ของฟาร์ม
+            
+            // ▼▼▼ แก้ไข: ตรวจสอบขนาดหน้าจอเพื่อกำหนดจำนวนคอลัมน์ ▼▼▼
+            const cols = window.innerWidth < 640 ? 4 : 6;
+            
+            const totalPlots = farmState.plots.length;
+            const targetRow = Math.floor(targetIndex / cols);
+            const targetCol = targetIndex % cols;
 
             if (aoe.shape === 'single') {
                 plots.push(targetIndex);
             } 
             else if (aoe.shape === 'line') {
-                const startCol = targetIndex % cols;
+                const startCol = targetCol; // เริ่มจากจุดที่คลิกเสมอ
                 for (let i = 0; i < aoe.size; i++) {
-                    if (startCol + i < cols) { // ป้องกันการล้นแถว
-                        plots.push(targetIndex + i);
+                    const currentX = startCol + i;
+                    if (currentX < cols) { // ตรวจสอบว่าไม่ล้นขอบขวา
+                        plots.push(targetRow * cols + currentX);
+                    } else {
+                        break;
                     }
                 }
             }
             else if (aoe.shape === 'rect') {
-                // สมมติว่าการเล็งเป้าจะเริ่มจากมุมซ้ายบนของพื้นที่
+                const startCol = targetCol; // เริ่มจากมุมซ้ายบนเสมอ
+                const startRow = targetRow;
                 for (let y = 0; y < aoe.height; y++) {
                     for (let x = 0; x < aoe.width; x++) {
-                        const currentPlotIndex = targetIndex + x + (y * cols);
-                        // ป้องกันการล้นแถว
-                        if ((targetIndex % cols) + x < cols) {
-                           plots.push(currentPlotIndex);
+                        const currentX = startCol + x;
+                        // ตรวจสอบว่าไม่ล้นขอบขวา
+                        if (currentX < cols) {
+                            const plotIndex = (startRow + y) * cols + currentX;
+                            plots.push(plotIndex);
                         }
                     }
                 }
             }
+            
             // กรองเอาเฉพาะช่องที่มีอยู่จริงในฟาร์ม
-            return [...new Set(plots)].filter(i => i < farmState.plots.length);
+            return [...new Set(plots)].filter(i => i >= 0 && i < totalPlots);
         }
 
         // ฟังก์ชัน water เวอร์ชันใหม่ (ทำงานแบบ AOE)
