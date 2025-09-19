@@ -550,30 +550,46 @@
             <div id="shop-view" class="hidden">
                 <div class="w-full max-w-lg mx-auto">
                     <h2 class="text-3xl font-bold text-green-800 mb-4 text-center">🏪 ร้านค้า</h2>
-                    
                     <div id="shop-items" class="space-y-4"></div>
                 </div>
             </div>
             
 			<div id="storage-view" class="hidden">
                 <div class="w-full max-w-lg mx-auto">
-                    <h2 class="text-3xl font-bold text-green-800 mb-4 text-center">📦 คลัง & กล่องส่งของ</h2>
-                    <div id="storage-container" class="mb-6">
-                        <h3 class="text-xl font-bold text-green-700 mb-2 text-center">คลังเก็บของ</h3>
-                        <div id="storage-items" class="min-h-[100px] max-h-[200px] overflow-y-auto space-y-2 p-2 bg-yellow-50 rounded-lg">
-                            <p class="text-center text-gray-500">ไม่มีของในคลัง</p>
+                <h2 class="text-3xl font-bold text-green-800 mb-4 text-center">📦 คลัง & กล่องส่งของ</h2>
+
+                <div class="flex items-center justify-center gap-2 mb-4 p-2 bg-yellow-100 rounded-lg">
+                    <label for="sort-by-select" class="font-semibold text-gray-700">เรียงตาม:</label>
+                    <select id="sort-by-select" class="flex-grow rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                            <option value="category">ประเภท</option>
+                            <option value="name">ชื่อ</option>
+                            <option value="quantity">จำนวน</option>
+                            <option value="price">ราคา</option>
+                            <option value="rarity">ความหายาก</option>
+                            <option value="quality">จำนวนดาว</option> </select>
+                    </select>
+                    <button id="sort-direction-btn" class="p-2 bg-white rounded-md shadow-sm border hover:bg-gray-50">
+                        <svg id="sort-asc-icon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9M3 12h9m-9 4h13M19 20V4m0 16l-4-4m4 4l4-4" /></svg>
+                        <svg id="sort-desc-icon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9M3 12h9m-9 4h13M19 4v16m0-16l-4 4m4-4l4 4" /></svg>
+                    </button>
+                </div>
+
+                <div id="storage-container" class="mb-6">
+                    <h3 class="text-xl font-bold text-green-700 mb-2 text-center">คลังเก็บของ</h3>
+                    <div id="storage-items" class="grid grid-cols-5 gap-2 p-2 bg-yellow-50 rounded-lg min-h-[100px]">
                         </div>
+                </div> 
+
+                <div id="sell-box" class="mb-6 bg-yellow-100 p-4 rounded-xl border-2 border-dashed border-yellow-300">
+                    <h3 class="text-xl font-bold text-yellow-800 mb-2 text-center">กล่องส่งของ 📬</h3>
+                    <div id="sell-box-items" class="min-h-[50px] space-y-2">
                     </div>
-                    <div id="sell-box" class="mb-6 bg-yellow-100 p-4 rounded-xl border-2 border-dashed border-yellow-300">
-                        <h3 class="text-xl font-bold text-yellow-800 mb-2 text-center">กล่องส่งของ 📬</h3>
-                        <div id="sell-box-items" class="min-h-[50px] space-y-2">
-                        </div>
-                        <div class="mt-4 text-center">
-                            <p class="font-semibold text-lg">ยอดขายที่รอรับ: <span id="sell-box-total" class="font-bold">0</span>💰</p>
-                            <p id="sell-countdown" class="text-sm text-gray-600 mt-2">กำลังคำนวณเวลา...</p>
-                        </div>
+                    <div class="mt-4 text-center">
+                        <p class="font-semibold text-lg">ยอดขายที่รอรับ: <span id="sell-box-total" class="font-bold">0</span>💰</p>
+                        <p id="sell-countdown" class="text-sm text-gray-600 mt-2">กำลังคำนวณเวลา...</p>
                     </div>
                 </div>
+            </div>
             </div>
 			
             <div id="market-view" class="hidden">
@@ -629,7 +645,7 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        const CLIENT_VERSION = "1.0.16"; // Updated version
+        const CLIENT_VERSION = "1.0.17"; // Updated version
 
         const FARM_GRID_SIZE = 24;
         const ANIMAL_PEN_SIZE = 8;
@@ -1051,6 +1067,27 @@
         };
 		
 		const GAME_DATA = {
+            'watering_cans': [
+                { id: 'watering_can_basic', name: 'บัวรดน้ำธรรมดา', cost: 0, materials: {}, aoe: { shape: 'single', size: 1 } },
+                { id: 'watering_can_copper', name: 'บัวรดน้ำทองแดง', cost: 2000, materials: { 'pig_meat': 5 }, aoe: { shape: 'line', size: 2 } },
+                { id: 'watering_can_silver', name: 'บัวรดน้ำเงิน', cost: 7500, materials: { 'truffle': 5 }, aoe: { shape: 'line', size: 4 } },
+                { id: 'watering_can_gold', name: 'บัวรดน้ำทอง', cost: 25000, materials: { 'crocodile_skin': 5 }, aoe: { shape: 'rect', width: 2, height: 4 } },
+                { id: 'watering_can_mystical', name: 'บัวรดน้ำลี้ลับ', cost: 100000, materials: { 'pearl': 5 }, aoe: { shape: 'rect', width: 3, height: 4 } }
+            ],
+            'scythes': [
+                { id: 'scythe_basic', name: 'เคียวธรรมดา', cost: 0, materials: {}, aoe: { shape: 'single', size: 1 } },
+                { id: 'scythe_copper', name: 'เคียวทองแดง', cost: 2000, materials: { 'pig_meat': 5 }, aoe: { shape: 'line', size: 2 } },
+                { id: 'scythe_silver', name: 'เคียวเงิน', cost: 7500, materials: { 'truffle': 5 }, aoe: { shape: 'line', size: 4 } },
+                { id: 'scythe_gold', name: 'เคียวทอง', cost: 25000, materials: { 'crocodile_skin': 5 }, aoe: { shape: 'rect', width: 2, height: 4 } },
+                { id: 'scythe_mystical', name: 'เคียวลี้ลับ', cost: 100000, materials: { 'pearl': 5 }, aoe: { shape: 'rect', width: 3, height: 4 } }
+            ],
+            'spreaders': [
+                { id: 'spreader_basic', name: 'มือเปล่า', cost: 0, materials: {}, aoe: { shape: 'single', size: 1 } },
+                { id: 'spreader_copper', name: 'เครื่องหว่านปุ๋ยทองแดง', cost: 2000, materials: { 'pig_meat': 5 }, aoe: { shape: 'line', size: 2 } },
+                { id: 'spreader_silver', name: 'เครื่องหว่านปุ๋ยเงิน', cost: 7500, materials: { 'truffle': 5 }, aoe: { shape: 'line', size: 4 } },
+                { id: 'spreader_gold', name: 'เครื่องหว่านปุ๋ยทอง', cost: 25000, materials: { 'crocodile_skin': 5 }, aoe: { shape: 'rect', width: 2, height: 4 } },
+                { id: 'spreader_mystical', name: 'เครื่องหว่านปุ๋ยลี้ลับ', cost: 100000, materials: { 'pearl': 5 }, aoe: { shape: 'rect', width: 3, height: 4 } }
+            ],
             'house_upgrades': [
                 { name: 'เต็นท์', cost: 500, imageUrl: 'beadroom1.png' },
                 { name: 'กระท่อมไม้', cost: 2500, imageUrl: 'beadroom2.png' },
@@ -1454,6 +1491,8 @@
         let userId = null;
         let farmState = null;
         let playerState = null;
+        let currentSortBy = 'category';
+        let currentSortDirection = 'asc';
         const playerNameEl = document.getElementById('player-name');
         
         // --- START PARK LOGIC ---
@@ -2112,9 +2151,150 @@
             }
         }
 
+        function upgradeTool(toolType) {
+            // 1. หาข้อมูลระดับปัจจุบันและระดับถัดไป
+            const currentToolId = farmState.sharedTools[toolType];
+            const toolDataArray = GAME_DATA[toolType + 's'];
+            const currentLevelIndex = toolDataArray.findIndex(t => t.id === currentToolId);
+
+            if (currentLevelIndex >= toolDataArray.length - 1) {
+                alert("อัปเกรดสูงสุดแล้ว");
+                return;
+            }
+
+            const nextToolData = toolDataArray[currentLevelIndex + 1];
+            
+            // 2. ตรวจสอบเงิน
+            if (playerState.money < nextToolData.cost) {
+                alert("เงินไม่พอ!");
+                return;
+            }
+
+            // 3. ตรวจสอบวัตถุดิบ
+            const playerStorageCounts = playerState.storageBin.reduce((acc, item) => {
+                acc[item.id] = (acc[item.id] || 0) + 1;
+                return acc;
+            }, {});
+
+            for (const [materialId, requiredCount] of Object.entries(nextToolData.materials)) {
+                if ((playerStorageCounts[materialId] || 0) < requiredCount) {
+                    alert(`วัตถุดิบไม่พอ! ต้องการ ${GAME_DATA[materialId].name} x${requiredCount}`);
+                    return;
+                }
+            }
+
+            // 4. แสดงหน้าต่างยืนยัน
+            showConfirmationModal(`คุณต้องการอัปเกรดเป็น "${nextToolData.name}" หรือไม่? (จะใช้เงินและวัตถุดิบทันที)`, () => {
+                const newPlayerState = { ...playerState };
+                const newFarmState = { ...farmState };
+                
+                // 5. หักเงิน
+                newPlayerState.money -= nextToolData.cost;
+
+                // 6. ลบวัตถุดิบออกจากคลัง (Storage)
+                for (const [materialId, requiredCount] of Object.entries(nextToolData.materials)) {
+                    let countToRemove = requiredCount;
+                    // สร้าง Array ใหม่โดยการกรองของที่จะลบออก
+                    newPlayerState.storageBin = newPlayerState.storageBin.filter(item => {
+                        if (item.id === materialId && countToRemove > 0) {
+                            countToRemove--;
+                            return false; // ไม่เก็บไอเท็มนี้ไว้ (เท่ากับลบออก)
+                        }
+                        return true; // เก็บไอเท็มอื่นๆ ไว้ตามเดิม
+                    });
+                }
+                
+                // 7. อัปเกรดระดับเครื่องมือในฟาร์ม
+                newFarmState.sharedTools[toolType] = nextToolData.id;
+
+                updatePlayerState(newPlayerState);
+                updateFarmState(newFarmState);
+
+                showInfoModal('✨', 'อัปเกรดสำเร็จ!', `คุณได้รับ ${nextToolData.name} แล้ว!`);
+            });
+        }
+
+        // ฟังก์ชันใหม่สำหรับแสดงผลส่วนอัปเกรดเครื่องมือ (เวอร์ชันสมบูรณ์)
+        function renderToolUpgrades() {
+            // ฟังก์ชันนี้จะรับผิดชอบแค่การ "เติม" ข้อมูลลงใน grid ที่สร้างไว้แล้ว
+            const container = document.getElementById('tool-upgrade-items');
+            if (!container || !playerState || !farmState) return;
+            container.innerHTML = ''; // <--- แก้ไขชื่อตัวแปรจาก gridEl เป็น container
+
+            const playerStorageCounts = playerState.storageBin.reduce((acc, item) => {
+                acc[item.id] = (acc[item.id] || 0) + 1;
+                return acc;
+            }, {});
+
+            const toolTypes = ['watering_cans', 'scythes', 'spreaders'];
+
+            toolTypes.forEach(toolTypeKey => {
+                const toolType = toolTypeKey.endsWith('s') ? toolTypeKey.slice(0, -1) : toolTypeKey;
+                
+                if (!farmState.sharedTools || !farmState.sharedTools[toolType]) {
+                    console.error(`Error: farmState.sharedTools.${toolType} is missing!`);
+                    return;
+                }
+
+                const currentToolId = farmState.sharedTools[toolType];
+                const toolDataArray = GAME_DATA[toolTypeKey];
+                const currentLevelIndex = toolDataArray.findIndex(t => t.id === currentToolId);
+
+                const toolEl = document.createElement('div');
+                toolEl.className = 'bg-white/80 p-3 rounded-xl shadow-md flex flex-col items-center gap-2 text-center';
+                
+                let contentHTML = '';
+
+                if (currentLevelIndex === -1 || currentLevelIndex >= toolDataArray.length - 1) {
+                    const currentTool = toolDataArray[toolDataArray.length - 1];
+                    contentHTML = `
+                        <div class="font-semibold text-sm h-10 flex items-center">${currentTool.name}</div>
+                        <img src="${currentTool.id.replace(/_basic/g, '')}.png" class="w-12 h-12 object-contain" alt="${currentTool.name}">
+                        <button class="bg-gray-400 text-gray-600 font-bold py-1 px-4 rounded-full w-full cursor-not-allowed" disabled>สูงสุดแล้ว</button>
+                    `;
+                } else {
+                    const nextTool = toolDataArray[currentLevelIndex + 1];
+                    let canUpgrade = playerState.money >= nextTool.cost;
+
+                    let materialsHTML = `<p>ราคา: ${nextTool.cost}💰</p>`;
+                    if (Object.keys(nextTool.materials).length > 0) {
+                        Object.entries(nextTool.materials).forEach(([id, count]) => {
+                            const ownedCount = playerStorageCounts[id] || 0;
+                            if (ownedCount < count) canUpgrade = false;
+                            materialsHTML += `<p class="${ownedCount >= count ? 'text-green-600' : 'text-red-600'}">${GAME_DATA[id].name} (${ownedCount}/${count})</p>`;
+                        });
+                    }
+                    
+                    contentHTML = `
+                        <div class="font-semibold text-sm h-10 flex items-center">อัปเกรดเป็น ${nextTool.name}</div>
+                        <img src="${nextTool.id.replace(/_basic/g, '')}.png" class="w-12 h-12 object-contain" alt="${nextTool.name}">
+                        <div class="text-xs h-12">${materialsHTML}</div>
+                        <button class="upgrade-tool-btn ${canUpgrade ? 'bg-yellow-400 hover:bg-yellow-500 text-yellow-900' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}" data-tool-type="${toolType}" ${!canUpgrade ? 'disabled' : ''}>
+                            อัปเกรด
+                        </button>
+                    `;
+                }
+                toolEl.innerHTML = contentHTML;
+                container.appendChild(toolEl);
+            });
+        }
+
         function renderShop() {
-            const shopItems = document.getElementById('shop-items');
-            shopItems.innerHTML = '';
+            const shopItemsContainer = document.getElementById('shop-items');
+            shopItemsContainer.innerHTML = ''; // ล้างร้านค้าทั้งหมดก่อน
+            
+            // --- 1. สร้างส่วนอัปเกรดเครื่องมือ ---
+            const toolSection = document.createElement('div');
+            toolSection.id = 'tool-upgrade-section';
+            toolSection.innerHTML = `
+                <h3 class="text-xl font-bold text-green-700 mb-2">อัปเกรดเครื่องมือ</h3>
+                <div id="tool-upgrade-items" class="grid grid-cols-2 md:grid-cols-3 gap-2 mb-4">
+                    </div>
+            `;
+            shopItemsContainer.appendChild(toolSection);
+            renderToolUpgrades(); // << เรียกใช้ฟังก์ชันเพื่อเติมข้อมูล
+
+            // --- 2. สร้างส่วนขายของอื่นๆ (เหมือนเดิม) ---
             ['seed', 'item', 'animal_deed', 'kitchen_tool', 'factory_deed'].forEach(category => {
                 const itemsInCategory = Object.entries(GAME_DATA).filter(([_, data]) => data.type === category);
                 if (itemsInCategory.length === 0) return;
@@ -2161,7 +2341,7 @@
                     grid.appendChild(itemEl);
                 });
                 categoryEl.appendChild(grid);
-                shopItems.appendChild(categoryEl);
+                shopItemsContainer.appendChild(categoryEl);
             });
         }
 
@@ -2282,51 +2462,111 @@
 				}
 			}
 		}        
+        
+        function sortStorageItems(items) {
+            const rarityOrder = { 'Common': 1, 'Uncommon': 2, 'Rare': 3, 'Legendary': 4, 'Mystical': 5 };
+
+            const getMarketPrice = (item) => {
+                const itemData = GAME_DATA[item.id];
+                if (!itemData || !itemData.sellPrice) return 0;
+                const basePrice = itemData.sellPrice[item.quality];
+                const normalPrice = itemData.sellPrice[0];
+                const marketBase = farmState.marketPrices[item.id] || normalPrice;
+                return Math.round(marketBase * (basePrice / normalPrice));
+            };
+            
+            items.sort((a, b) => {
+                const dataA = GAME_DATA[a.id];
+                const dataB = GAME_DATA[b.id];
+                let comparison = 0;
+
+                switch (currentSortBy) {
+                    case 'category':
+                        const typeA = dataA.category || dataA.type;
+                        const typeB = dataB.category || dataB.type;
+                        comparison = typeA.localeCompare(typeB);
+                        if (comparison === 0) comparison = dataA.name.localeCompare(dataB.name);
+                        break;
+                    case 'name':
+                        comparison = dataA.name.localeCompare(dataB.name);
+                        break;
+                    case 'quantity':
+                        comparison = b.count - a.count;
+                        break;
+                    case 'price':
+                        comparison = getMarketPrice(b) - getMarketPrice(a);
+                        break;
+                    case 'rarity':
+                        const rarityA = rarityOrder[dataA.rarity] || 0;
+                        const rarityB = rarityOrder[dataB.rarity] || 0;
+                        comparison = rarityB - rarityA;
+                        if (comparison === 0) {
+                            comparison = b.quality - a.quality;
+                            if (comparison === 0) {
+                                comparison = dataA.name.localeCompare(dataB.name);
+                            }
+                        }
+                        break;
+                    // ▼▼▼ เพิ่ม case ใหม่สำหรับเรียงตามดาว ▼▼▼
+                    case 'quality':
+                        comparison = b.quality - a.quality; // เรียงจากดาวมากไปน้อย
+                        if (comparison === 0) {
+                           comparison = dataA.name.localeCompare(dataB.name); // ถ้าดาวเท่ากัน ให้เรียงตามชื่อ
+                        }
+                        break;
+                    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+                    default:
+                        comparison = 0;
+                }
+                
+                return comparison;
+            });
+
+            if (currentSortDirection === 'desc' && ['name', 'category'].includes(currentSortBy)) {
+                items.reverse();
+            }
+             // ▼▼▼ เพิ่ม 'quality' เข้าไปในเงื่อนไขนี้ ▼▼▼
+             if (currentSortDirection === 'asc' && ['quantity', 'price', 'rarity', 'quality'].includes(currentSortBy)) {
+                items.reverse();
+            }
+
+            return items;
+        }
+        
         function renderStorage() {
             const container = document.getElementById('storage-items');
             if (!playerState || !playerState.storageBin || playerState.storageBin.length === 0) {
                 container.innerHTML = `<p class="text-center text-gray-500 col-span-5">ไม่มีของในคลัง</p>`;
-                container.className = 'grid grid-cols-5 gap-2 p-2 bg-yellow-50 rounded-lg min-h-[100px]'; // ตั้งค่า grid แม้จะว่าง
+                container.className = 'grid grid-cols-5 gap-2 p-2 bg-yellow-50 rounded-lg min-h-[100px]';
                 return;
             }
 
             container.innerHTML = '';
-            container.className = 'grid grid-cols-5 gap-2 p-2 bg-yellow-50 rounded-lg min-h-[100px]'; // ใช้ CSS Grid 5 คอลัมน์
+            container.className = 'grid grid-cols-5 gap-2 p-2 bg-yellow-50 rounded-lg min-h-[100px]';
 
             const groupedStorage = playerState.storageBin.reduce((acc, item) => {
                 const key = `${item.id}_q${item.quality}`;
-                if (!acc[key]) {
-                    acc[key] = { ...item, count: 0 };
-                }
+                if (!acc[key]) { acc[key] = { ...item, count: 0 }; }
                 acc[key].count++;
                 return acc;
             }, {});
 
-            Object.values(groupedStorage).forEach(item => {
+            // ▼▼▼ เรียกใช้ฟังก์ชันจัดเรียงใหม่ของเรา ▼▼▼
+            const sortedItems = sortStorageItems(Object.values(groupedStorage));
+
+            sortedItems.forEach(item => { // <--- วนลูปจาก sortedItems แทน
                 const itemData = GAME_DATA[item.id];
                 if (!itemData) return;
 
                 const slotEl = document.createElement('div');
                 slotEl.className = 'aspect-square bg-white/80 rounded-lg shadow-md cursor-pointer relative flex items-center justify-center p-1 hover:bg-yellow-100 transition';
-                
-                // ตั้งค่าให้กดแล้วเปิดหน้าต่างรายละเอียด
                 slotEl.onclick = () => showStorageItemDetailsModal(item.id, item.quality);
-
-                const iconHTML = itemData.imageUrl 
-                    ? `<img src="${itemData.imageUrl}" class="w-full h-full object-contain">`
-                    : `<span class="text-3xl">${itemData.icon}</span>`;
                 
-                const qualityHTML = item.quality > 0
-                    ? `<div class="absolute bottom-0 left-1/2 -translate-x-1/2 text-xs quality-star">${'★'.repeat(item.quality)}</div>`
-                    : '';
-
+                const iconHTML = itemData.imageUrl ? `<img src="${itemData.imageUrl}" class="w-full h-full object-contain">` : `<span class="text-3xl">${itemData.icon}</span>`;
+                const qualityHTML = item.quality > 0 ? `<div class="absolute bottom-0 left-1/2 -translate-x-1/2 text-xs quality-star">${'★'.repeat(item.quality)}</div>` : '';
                 const countHTML = `<div class="absolute top-0 right-0 bg-gray-800 text-white text-xs font-bold px-1.5 py-0.5 rounded-full shadow-sm">${item.count}</div>`;
 
-                slotEl.innerHTML = `
-                    ${iconHTML}
-                    ${qualityHTML}
-                    ${countHTML}
-                `;
+                slotEl.innerHTML = `${iconHTML}${qualityHTML}${countHTML}`;
                 container.appendChild(slotEl);
             });
         }
@@ -3291,28 +3531,153 @@
             updateQuestProgress('plant');
         }
 
-        function water(plotIndex) {
-             if (!deductEnergy(2)) return;
+                // ฟังก์ชันผู้ช่วยใหม่สำหรับคำนวณพื้นที่ AOE
+        function getAoePlots(targetIndex, toolType) {
+            const toolId = farmState.sharedTools[toolType];
+            const toolDataArray = GAME_DATA[toolType + 's'];
+            const toolData = toolDataArray.find(t => t.id === toolId);
+            const aoe = toolData.aoe;
+            const plots = [];
+            const cols = 6; // จำนวนคอลัมน์ของฟาร์ม
 
-             const newFarmState = { ...farmState };
-             const plot = newFarmState.plots[plotIndex];
-             if (plot.wateredBy && plot.wateredBy.some(p => p.uid === userId)) return; 
-             plot.wateredBy.push({ uid: userId, nickname: playerState.nickname });
-             document.querySelector(`#farm-grid > div:nth-child(${plotIndex + 1})`).classList.add('watered');
-             updateFarmState(newFarmState);
-             updateQuestProgress('water');
+            if (aoe.shape === 'single') {
+                plots.push(targetIndex);
+            } 
+            else if (aoe.shape === 'line') {
+                const startCol = targetIndex % cols;
+                for (let i = 0; i < aoe.size; i++) {
+                    if (startCol + i < cols) { // ป้องกันการล้นแถว
+                        plots.push(targetIndex + i);
+                    }
+                }
+            }
+            else if (aoe.shape === 'rect') {
+                for (let y = 0; y < aoe.height; y++) {
+                    for (let x = 0; x < aoe.width; x++) {
+                        const currentPlotIndex = targetIndex + x + (y * cols);
+                        // ป้องกันการล้นแถว
+                        if ((targetIndex % cols) + x < cols) {
+                           plots.push(currentPlotIndex);
+                        }
+                    }
+                }
+            }
+            // กรองเอาเฉพาะช่องที่มีอยู่จริงในฟาร์ม
+            return plots.filter(i => i < farmState.plots.length);
         }
 
+        // ฟังก์ชัน water เวอร์ชันใหม่
+        function water(plotIndex) {
+            const plotsToWater = getAoePlots(plotIndex, 'watering_can');
+            const energyCost = 2 * plotsToWater.length;
+            if (!deductEnergy(energyCost)) return;
+
+            const newFarmState = { ...farmState };
+            let wateredCount = 0;
+            plotsToWater.forEach(index => {
+                const plot = newFarmState.plots[index];
+                if (plot && plot.plantId && !plot.wateredBy?.some(p => p.uid === userId)) {
+                    plot.wateredBy.push({ uid: userId, nickname: playerState.nickname });
+                    document.querySelector(`#farm-grid > div:nth-child(${index + 1})`).classList.add('watered');
+                    wateredCount++;
+                }
+            });
+
+            if (wateredCount > 0) {
+                updateFarmState(newFarmState);
+                updateQuestProgress('water', wateredCount);
+            }
+        }
+
+        // ฟังก์ชัน fertilize เวอร์ชันใหม่
         function fertilize(plotIndex, fertilizerId) {
+            const plotsToFertilize = getAoePlots(plotIndex, 'spreader');
+            const fertilizerInInventory = playerState.inventory[fertilizerId] || 0;
+
+            if (fertilizerInInventory < plotsToFertilize.length) {
+                alert("ปุ๋ยไม่พอ!");
+                return;
+            }
+
             const newFarmState = { ...farmState };
             const newPlayerState = { ...playerState };
             const fertilizerData = GAME_DATA[fertilizerId];
-            newFarmState.plots[plotIndex].fertilizerLevel += fertilizerData.qualityBonus;
-            newPlayerState.inventory[fertilizerId]--;
-            document.querySelector(`#farm-grid > div:nth-child(${plotIndex + 1})`).classList.add('fertilized');
-            updateFarmState(newFarmState);
-            updatePlayerState(newPlayerState);
-            updateQuestProgress('fertilize');
+            let fertilizedCount = 0;
+            
+            plotsToFertilize.forEach(index => {
+                const plot = newFarmState.plots[index];
+                if (plot) {
+                    plot.fertilizerLevel = (plot.fertilizerLevel || 0) + fertilizerData.qualityBonus;
+                    document.querySelector(`#farm-grid > div:nth-child(${index + 1})`).classList.add('fertilized');
+                    fertilizedCount++;
+                }
+            });
+
+            if (fertilizedCount > 0) {
+                newPlayerState.inventory[fertilizerId] -= fertilizedCount;
+                updateFarmState(newFarmState);
+                updatePlayerState(newPlayerState);
+                updateQuestProgress('fertilize', fertilizedCount);
+            }
+        }
+
+        // ฟังก์ชัน harvest เวอร์ชันใหม่
+        function harvest(plotIndex) {
+            const plotsToHarvest = getAoePlots(plotIndex, 'scythe');
+            const energyCost = 1 * plotsToHarvest.length;
+            if (!deductEnergy(energyCost)) return;
+
+            const newFarmState = { ...farmState };
+            const newPlayerState = { ...playerState };
+            let harvestedItems = [];
+
+            plotsToHarvest.forEach(index => {
+                const plot = newFarmState.plots[index];
+                const plantData = GAME_DATA[plot?.plantId];
+                
+                if (plot && plantData && !plot.harvestedBy?.some(p => p.uid === userId)) {
+                    const weatherMultiplier = WEATHER_DATA[farmState.currentWeather]?.cropMultiplier || 1;
+                    const elapsedSeconds = (Date.now() - plot.plantTime) / 1000;
+                    const growthMultiplier = 1 + ((plot.wateredBy?.length || 0) * 0.5);
+                    const effectiveGrowth = elapsedSeconds * growthMultiplier;
+                    const adjustedGrowTime = plantData.growTime * weatherMultiplier;
+                    
+                    if (effectiveGrowth >= adjustedGrowTime) {
+                        let quality = 0;
+                        if (Math.random() < (plot.fertilizerLevel || 0)) quality = 1;
+                        if (Math.random() < (plot.fertilizerLevel || 0) - 1) quality = 2;
+                        
+                        harvestedItems.push({ id: plantData.produceId, quality: quality });
+
+                        if (!plot.harvestedBy) plot.harvestedBy = [];
+                        plot.harvestedBy.push({ uid: userId, nickname: playerState.nickname });
+
+                        const involvedUids = new Set([plot.plantedBy?.uid, ...(plot.wateredBy?.map(p => p.uid).filter(uid => uid) || [])]);
+                        const harvestedUids = new Set(plot.harvestedBy?.map(p => p.uid) || []);
+                        
+                        let allHarvested = true;
+                        for (const uid of involvedUids) {
+                            if (!harvestedUids.has(uid)) {
+                                allHarvested = false;
+                                break;
+                            }
+                        }
+                        if (allHarvested) {
+                            newFarmState.plots[index] = { plantId: null };
+                        }
+                    }
+                }
+            });
+
+            if (harvestedItems.length > 0) {
+                newPlayerState.storageBin.push(...harvestedItems);
+                updatePlayerState(newPlayerState);
+                updateFarmState(newFarmState);
+                updateQuestProgress('harvest', harvestedItems.length);
+                harvestedItems.forEach(item => {
+                    updateQuestProgress('harvest_specific', { itemId: item.id, quality: item.quality });
+                });
+            }
         }
         
         function clearPlot(plotIndex) {
@@ -3325,43 +3690,6 @@
                 newFarmState.plots[plotIndex] = { plantId: null };
                 updateFarmState(newFarmState);
             });
-        }
-
-        function harvest(plotIndex) {
-            const newFarmState = { ...farmState };
-            const plot = newFarmState.plots[plotIndex];
-
-            if (!plot || !plot.plantId || (plot.harvestedBy && plot.harvestedBy.some(p => p.uid === userId))) {
-                console.log("ไม่สามารถเก็บเกี่ยวได้ (อาจจะเก็บไปแล้ว)");
-                return; 
-            }
-
-            if (!deductEnergy(1)) return;
-            
-            const newPlayerState = { ...playerState };
-            const cropData = GAME_DATA[plot.plantId];
-            let quality = 0;
-            if (Math.random() < plot.fertilizerLevel) quality = 1;
-            if (Math.random() < plot.fertilizerLevel - 1) quality = 2;
-            newPlayerState.storageBin.push({ id: cropData.produceId, quality: quality });
-            if (!plot.harvestedBy) plot.harvestedBy = [];
-            plot.harvestedBy.push({ uid: userId, nickname: playerState.nickname });
-            const involvedUids = new Set([plot.plantedBy?.uid, ...(plot.wateredBy?.map(p => p.uid).filter(uid => uid) || [])]);
-            const harvestedUids = new Set(plot.harvestedBy?.map(p => p.uid) || []);
-            let allHarvested = true;
-            for (const uid of involvedUids) {
-                if (!harvestedUids.has(uid)) {
-                    allHarvested = false;
-                    break;
-                }
-            }
-            if (allHarvested) {
-                newFarmState.plots[plotIndex] = { plantId: null };
-            }
-            updatePlayerState(newPlayerState);
-            updateFarmState(newFarmState);
-            updateQuestProgress('harvest');
-            updateQuestProgress('harvest_specific', { itemId: cropData.produceId, quality: quality });
         }
         
         function placeAnimal(slotIndex, deedId, quality = 0) {
@@ -4348,7 +4676,24 @@
             onSnapshot(farmDocRef, (docSnap) => {
                 if (docSnap.exists()) {
                     farmState = docSnap.data();
-					if (!farmState.currentWeather) {
+                    
+                    // ▼▼▼ แก้ไขตรรกะการตรวจสอบ sharedTools ให้รัดกุมขึ้น ▼▼▼
+                    if (!farmState.sharedTools) {
+                        farmState.sharedTools = {}; // สร้าง object ว่างๆ ก่อน
+                    }
+                    // ตรวจสอบและสร้างข้อมูลเริ่มต้นให้แต่ละเครื่องมือ ถ้ายังไม่มี
+                    if (!farmState.sharedTools.watering_can) {
+                        farmState.sharedTools.watering_can = 'watering_can_basic';
+                    }
+                    if (!farmState.sharedTools.scythe) {
+                        farmState.sharedTools.scythe = 'scythe_basic';
+                    }
+                    if (!farmState.sharedTools.spreader) {
+                        farmState.sharedTools.spreader = 'spreader_basic';
+                    }
+                    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+                    
+                    if (!farmState.currentWeather) {
                         farmState.currentWeather = 'sunny';
 					}
                     if (!farmState.quests) farmState.quests = { daily: [], weekly: [], lastDailyReset: 0, lastWeeklyReset: 0 };
@@ -4359,7 +4704,7 @@
                     if (!farmState.salesVolume) farmState.salesVolume = {};
                     if (!farmState.breedingStations) {
                         farmState.breedingStations = [{ parents: [], job: null }];
-                    } // <--- เพิ่มปีกกาปิด } ที่นี่
+                    }
                 }
             }, handleFirestoreError);
         }
@@ -4383,6 +4728,11 @@
                         sharedRodLevel: 0,
                         sharedPondLevel: 0,
 						currentWeather: 'sunny',
+                        sharedTools: { // ▼▼▼ เพิ่มส่วนนี้เข้าไป ▼▼▼
+                            watering_can: 'watering_can_basic',
+                            scythe: 'scythe_basic',
+                            spreader: 'spreader_basic'
+                        },
                         breedingStations:[{ parents: [], job: null }]
                     };
                     await setDoc(farmDocRef, initialFarmState);
@@ -4641,6 +4991,35 @@
                 };
             }
             
+            // --- ระบบจัดเรียงคลัง ---
+            const sortBySelect = document.getElementById('sort-by-select');
+            const sortDirectionBtn = document.getElementById('sort-direction-btn');
+            const ascIcon = document.getElementById('sort-asc-icon');
+            const descIcon = document.getElementById('sort-desc-icon');
+
+            if (sortBySelect) {
+                sortBySelect.onchange = (e) => {
+                    currentSortBy = e.target.value;
+                    renderStorage(); // วาดคลังใหม่ตามเงื่อนไข
+                };
+            }
+            if (sortDirectionBtn) {
+                sortDirectionBtn.onclick = () => {
+                    currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+                    // สลับไอคอนปุ่ม
+                    ascIcon.classList.toggle('hidden');
+                    descIcon.classList.toggle('hidden');
+                    renderStorage(); // วาดคลังใหม่ตามทิศทาง
+                };
+            }
+            // --- เพิ่ม Event Listener สำหรับปุ่ม Tool Upgrades ---
+            const shopItemsContainer = document.getElementById('shop-items');
+            if(shopItemsContainer) shopItemsContainer.addEventListener('click', (e) => {
+                const upgradeButton = e.target.closest('.upgrade-tool-btn');
+                if (upgradeButton && !upgradeButton.disabled) {
+                    upgradeTool(upgradeButton.dataset.toolType);
+                }
+            });
             // Character Creator
             setupCharacterCreatorControls();
         }
