@@ -3532,10 +3532,13 @@
         }
 
                 // ฟังก์ชันผู้ช่วยใหม่สำหรับคำนวณพื้นที่ AOE
+        // ฟังก์ชันผู้ช่วยใหม่สำหรับคำนวณพื้นที่ AOE (เวอร์ชันสมบูรณ์)
         function getAoePlots(targetIndex, toolType) {
             const toolId = farmState.sharedTools[toolType];
             const toolDataArray = GAME_DATA[toolType + 's'];
             const toolData = toolDataArray.find(t => t.id === toolId);
+            if (!toolData) return [targetIndex]; // Fallback to single plot if tool not found
+
             const aoe = toolData.aoe;
             const plots = [];
             const cols = 6; // จำนวนคอลัมน์ของฟาร์ม
@@ -3552,6 +3555,7 @@
                 }
             }
             else if (aoe.shape === 'rect') {
+                // สมมติว่าการเล็งเป้าจะเริ่มจากมุมซ้ายบนของพื้นที่
                 for (let y = 0; y < aoe.height; y++) {
                     for (let x = 0; x < aoe.width; x++) {
                         const currentPlotIndex = targetIndex + x + (y * cols);
@@ -3563,10 +3567,10 @@
                 }
             }
             // กรองเอาเฉพาะช่องที่มีอยู่จริงในฟาร์ม
-            return plots.filter(i => i < farmState.plots.length);
+            return [...new Set(plots)].filter(i => i < farmState.plots.length);
         }
 
-        // ฟังก์ชัน water เวอร์ชันใหม่
+        // ฟังก์ชัน water เวอร์ชันใหม่ (ทำงานแบบ AOE)
         function water(plotIndex) {
             const plotsToWater = getAoePlots(plotIndex, 'watering_can');
             const energyCost = 2 * plotsToWater.length;
@@ -3577,6 +3581,7 @@
             plotsToWater.forEach(index => {
                 const plot = newFarmState.plots[index];
                 if (plot && plot.plantId && !plot.wateredBy?.some(p => p.uid === userId)) {
+                    if (!plot.wateredBy) plot.wateredBy = [];
                     plot.wateredBy.push({ uid: userId, nickname: playerState.nickname });
                     document.querySelector(`#farm-grid > div:nth-child(${index + 1})`).classList.add('watered');
                     wateredCount++;
@@ -3589,83 +3594,95 @@
             }
         }
 
-        // ฟังก์ชัน fertilize เวอร์ชันใหม่
+        // ฟังก์ชัน fertilize เวอร์ชันใหม่ (ทำงานแบบ AOE)
         function fertilize(plotIndex, fertilizerId) {
             const plotsToFertilize = getAoePlots(plotIndex, 'spreader');
             const fertilizerInInventory = playerState.inventory[fertilizerId] || 0;
+            let actualPlotsToFertilize = [];
 
-            if (fertilizerInInventory < plotsToFertilize.length) {
-                alert("ปุ๋ยไม่พอ!");
+            // ตรวจสอบก่อนว่าแปลงไหนสามารถใส่ปุ๋ยได้จริงๆ
+            plotsToFertilize.forEach(index => {
+                const plot = farmState.plots[index];
+                if (plot && !plot.plantId) { // ใส่ปุ๋ยได้เฉพาะแปลงว่าง
+                    actualPlotsToFertilize.push(index);
+                }
+            });
+
+            if (fertilizerInInventory < actualPlotsToFertilize.length) {
+                alert("ปุ๋ยไม่พอสำหรับพื้นที่ที่เลือก!");
                 return;
             }
 
             const newFarmState = { ...farmState };
             const newPlayerState = { ...playerState };
             const fertilizerData = GAME_DATA[fertilizerId];
-            let fertilizedCount = 0;
             
-            plotsToFertilize.forEach(index => {
+            actualPlotsToFertilize.forEach(index => {
                 const plot = newFarmState.plots[index];
-                if (plot) {
-                    plot.fertilizerLevel = (plot.fertilizerLevel || 0) + fertilizerData.qualityBonus;
-                    document.querySelector(`#farm-grid > div:nth-child(${index + 1})`).classList.add('fertilized');
-                    fertilizedCount++;
-                }
+                plot.fertilizerLevel = (plot.fertilizerLevel || 0) + fertilizerData.qualityBonus;
+                document.querySelector(`#farm-grid > div:nth-child(${index + 1})`).classList.add('fertilized');
             });
 
-            if (fertilizedCount > 0) {
-                newPlayerState.inventory[fertilizerId] -= fertilizedCount;
+            if (actualPlotsToFertilize.length > 0) {
+                newPlayerState.inventory[fertilizerId] -= actualPlotsToFertilize.length;
                 updateFarmState(newFarmState);
                 updatePlayerState(newPlayerState);
-                updateQuestProgress('fertilize', fertilizedCount);
+                updateQuestProgress('fertilize', actualPlotsToFertilize.length);
             }
         }
 
-        // ฟังก์ชัน harvest เวอร์ชันใหม่
+        // ฟังก์ชัน harvest เวอร์ชันใหม่ (ทำงานแบบ AOE)
         function harvest(plotIndex) {
             const plotsToHarvest = getAoePlots(plotIndex, 'scythe');
-            const energyCost = 1 * plotsToHarvest.length;
-            if (!deductEnergy(energyCost)) return;
+            let actualPlotsToHarvest = [];
 
-            const newFarmState = { ...farmState };
-            const newPlayerState = { ...playerState };
-            let harvestedItems = [];
-
+            // ตรวจสอบก่อนว่าแปลงไหนพร้อมเก็บเกี่ยวจริงๆ
             plotsToHarvest.forEach(index => {
-                const plot = newFarmState.plots[index];
+                const plot = farmState.plots[index];
                 const plantData = GAME_DATA[plot?.plantId];
-                
                 if (plot && plantData && !plot.harvestedBy?.some(p => p.uid === userId)) {
                     const weatherMultiplier = WEATHER_DATA[farmState.currentWeather]?.cropMultiplier || 1;
                     const elapsedSeconds = (Date.now() - plot.plantTime) / 1000;
                     const growthMultiplier = 1 + ((plot.wateredBy?.length || 0) * 0.5);
                     const effectiveGrowth = elapsedSeconds * growthMultiplier;
                     const adjustedGrowTime = plantData.growTime * weatherMultiplier;
-                    
                     if (effectiveGrowth >= adjustedGrowTime) {
-                        let quality = 0;
-                        if (Math.random() < (plot.fertilizerLevel || 0)) quality = 1;
-                        if (Math.random() < (plot.fertilizerLevel || 0) - 1) quality = 2;
-                        
-                        harvestedItems.push({ id: plantData.produceId, quality: quality });
-
-                        if (!plot.harvestedBy) plot.harvestedBy = [];
-                        plot.harvestedBy.push({ uid: userId, nickname: playerState.nickname });
-
-                        const involvedUids = new Set([plot.plantedBy?.uid, ...(plot.wateredBy?.map(p => p.uid).filter(uid => uid) || [])]);
-                        const harvestedUids = new Set(plot.harvestedBy?.map(p => p.uid) || []);
-                        
-                        let allHarvested = true;
-                        for (const uid of involvedUids) {
-                            if (!harvestedUids.has(uid)) {
-                                allHarvested = false;
-                                break;
-                            }
-                        }
-                        if (allHarvested) {
-                            newFarmState.plots[index] = { plantId: null };
-                        }
+                        actualPlotsToHarvest.push(index);
                     }
+                }
+            });
+            
+            if(actualPlotsToHarvest.length === 0) return;
+            
+            const energyCost = 1 * actualPlotsToHarvest.length;
+            if (!deductEnergy(energyCost)) return;
+
+            const newFarmState = { ...farmState };
+            const newPlayerState = { ...playerState };
+            let harvestedItems = [];
+
+            actualPlotsToHarvest.forEach(index => {
+                const plot = newFarmState.plots[index];
+                const cropData = GAME_DATA[plot.plantId];
+                
+                let quality = 0;
+                if (Math.random() < (plot.fertilizerLevel || 0)) quality = 1;
+                if (Math.random() < (plot.fertilizerLevel || 0) - 1) quality = 2;
+                
+                harvestedItems.push({ id: cropData.produceId, quality: quality });
+
+                if (!plot.harvestedBy) plot.harvestedBy = [];
+                plot.harvestedBy.push({ uid: userId, nickname: playerState.nickname });
+
+                const involvedUids = new Set([plot.plantedBy?.uid, ...(plot.wateredBy?.map(p => p.uid).filter(uid => uid) || [])]);
+                const harvestedUids = new Set(plot.harvestedBy?.map(p => p.uid) || []);
+                
+                let allHarvested = true;
+                for (const uid of involvedUids) {
+                    if (!harvestedUids.has(uid)) { allHarvested = false; break; }
+                }
+                if (allHarvested) {
+                    newFarmState.plots[index] = { plantId: null };
                 }
             });
 
