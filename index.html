@@ -2924,7 +2924,8 @@
                     pondContainer.appendChild(slotEl);
                 }
             }
-            foodCountEl.textContent = (playerState.inventory && playerState.inventory.fish_food) || 0;
+            const fishFoodCount = playerState.storageBin.filter(item => item.id === 'fish_food').length;
+            foodCountEl.textContent = fishFoodCount;
         }
 
         function hideFishFarmTooltip() {
@@ -3014,11 +3015,19 @@
         }
 
         function feedFish(slotIndex) {
-             const foodInInventory = (playerState.inventory && playerState.inventory.fish_food) || 0;
-             if(foodInInventory < 1) { alert("อาหารปลาหมด!"); return; }
-
              const newPlayerState = { ...playerState };
-             newPlayerState.inventory.fish_food--;
+             
+             // ค้นหาอาหารปลาในคลัง
+             const foodIndex = newPlayerState.storageBin.findIndex(item => item.id === 'fish_food');
+
+             // ถ้าไม่เจออาหารปลาในคลัง
+             if(foodIndex === -1) { 
+                alert("อาหารปลาหมด!"); 
+                return; 
+             }
+
+             // ลบอาหารปลา 1 ชิ้นออกจากคลัง
+             newPlayerState.storageBin.splice(foodIndex, 1);
              updatePlayerState(newPlayerState);
 
              const newFarmState = { ...farmState };
