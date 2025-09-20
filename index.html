@@ -4896,13 +4896,11 @@
                 fishEl.textContent = fishData.icon || '🐠';
             }
 
-            // ▼▼▼ ส่วนแก้ไข: คำนวณขนาดบาร์ตามระดับเบ็ด ▼▼▼
             const rodLevel = farmState.sharedRodLevel || 0;
             const rodData = GAME_DATA.fishing_rods[rodLevel];
-            const baseBarHeight = 80; // ขนาดบาร์พื้นฐาน
-            const barHeight = baseBarHeight * (rodData.barSizeMultiplier || 1.0); // คูณด้วยค่า multiplier
+            const baseBarHeight = 80;
+            const barHeight = baseBarHeight * (rodData.barSizeMultiplier || 1.0);
             barEl.style.height = `${barHeight}px`;
-            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
             const trackHeight = track.clientHeight;
             let barPos = trackHeight / 2;
@@ -4928,7 +4926,7 @@
                     else if (behavior.pattern === 'smooth' && Math.abs(fishTargetPos - fishPos) < 5) {
                         fishTargetPos = Math.random() * (trackHeight - 20);
                     } else if (behavior.pattern === 'sink') {
-                        fishTargetPos = trackHeight;
+                        fishTargetPos = trackHeight - 20; // <-- จุดที่แก้ไข
                     }
                     fishPos += (fishTargetPos - fishPos) * 0.1 * (behavior.speed / 2);
                 }
