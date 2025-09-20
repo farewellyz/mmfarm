@@ -3275,8 +3275,11 @@
                     } else {
                          const hasWatered = plot.wateredBy?.some(p => p.uid === userId);
                          actionsEl.appendChild(createButton('💧 รดน้ำ (-2⚡)', () => water(index), hasWatered));
-                         const fertilizers = Object.keys(playerState.inventory).filter(id => GAME_DATA[id]?.type === 'item');
-                         actionsEl.appendChild(createButton('💩 ใส่ปุ๋ย', () => showSubMenu('fertilize', index, fertilizers), fertilizers.length === 0));
+                         const fertilizersInStorage = playerState.storageBin
+                            .filter(item => GAME_DATA[item.id]?.type === 'item' && GAME_DATA[item.id]?.qualityBonus)
+                            .map(item => item.id);
+                         const uniqueFertilizers = [...new Set(fertilizersInStorage)];
+                         actionsEl.appendChild(createButton('💩 ใส่ปุ๋ย', () => showSubMenu('fertilize', index, uniqueFertilizers), uniqueFertilizers.length === 0));
                     }
                     actionsEl.appendChild(createButton('❌ เคลียแปลง (-5⚡)', () => clearPlot(index), false, 'bg-red-500 hover:bg-red-600 text-white'));
                 }
@@ -5633,7 +5636,7 @@
                         newFarmState.ownedKitchenTools.push(itemId);
                         updateFarmState(newFarmState);
                     }
-                } else if (itemData.type === 'animal_deed' || itemData.type === 'factory_deed' || itemData.type === 'seed') {
+                } else if (itemData.type === 'animal_deed' || itemData.type === 'factory_deed' || itemData.type === 'seed' || itemData.type === 'item') {
                     if (!newPlayerState.storageBin) newPlayerState.storageBin = [];
                     for (let i = 0; i < quantity; i++) {
                         newPlayerState.storageBin.push({ id: itemId, quality: 0 });
