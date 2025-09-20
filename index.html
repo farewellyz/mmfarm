@@ -1962,6 +1962,25 @@
                 plotEl.className = 'plot aspect-square rounded-lg shadow-inner cursor-pointer flex items-center justify-center text-3xl relative';
                 plotEl.style.backgroundColor = 'rgba(139, 69, 19, 0.4)';
                 
+                // START: โค้ดสำหรับแสดงไอคอนปุ๋ย
+                if (plot.fertilizerLevel && plot.fertilizerLevel > 0) {
+                    const fertilizerIndicator = document.createElement('div');
+                    // จัดตำแหน่งไว้ที่มุมบนซ้าย
+                    fertilizerIndicator.className = 'absolute top-1 left-1 flex gap-0.5 z-10';
+                    
+                    // คำนวณจำนวนไอคอนจากค่าปุ๋ย (ปุ๋ยธรรมดามีค่า 0.3)
+                    const numIcons = Math.round(plot.fertilizerLevel / 0.3);
+
+                    let iconsHTML = '';
+                    for (let i = 0; i < numIcons; i++) {
+                        // เพิ่มเงาให้ข้อความไอคอนมองเห็นชัดขึ้น
+                        iconsHTML += '<span class="text-xs" style="text-shadow: 0 1px 2px rgba(0,0,0,0.5);">💩</span>';
+                    }
+                    fertilizerIndicator.innerHTML = iconsHTML;
+                    plotEl.appendChild(fertilizerIndicator);
+                }
+                // END: โค้ดสำหรับแสดงไอคอนปุ๋ย
+
                 if (plot.plantId) {
                     const plantData = GAME_DATA[plot.plantId];
                     if (!plantData) {
@@ -1976,7 +1995,6 @@
                             progress = Math.min(effectiveGrowth / adjustedGrowTime, 1);
                         }
 
-                        // --- ส่วนที่เพิ่มเข้ามาสำหรับแสดงไอคอนรดน้ำ ---
                         const isNotGrown = progress < 1;
                         const notWateredByMe = !plot.wateredBy?.some(p => p.uid === userId);
 
@@ -1986,7 +2004,6 @@
                             waterIcon.textContent = '💧';
                             plotEl.appendChild(waterIcon);
                         }
-                        // --- จบส่วนที่เพิ่ม ---
 
                         plotEl.style.backgroundImage = `linear-gradient(to top, rgba(96, 165, 250, 0.5) 0%, rgba(96, 165, 250, 0.5) ${progress*100}%, transparent ${progress*100}%)`;
                         const content = document.createElement('div');
@@ -4003,24 +4020,22 @@
             const newFarmState = { ...farmState };
             const newPlayerState = { ...playerState };
 
-            // ค้นหาและลบเมล็ดพืช 1 ชิ้นออกจากคลัง
             const seedIndexInStorage = newPlayerState.storageBin.findIndex(item => item.id === seedId);
-
-            // ตรวจสอบว่าเจอเมล็ดในคลังหรือไม่
             if (seedIndexInStorage === -1) {
                 console.error(`Attempted to plant ${seedId}, but it was not found in storageBin.`);
                 alert(`หาเมล็ด ${GAME_DATA[seedId].name} ไม่เจอในคลัง!`);
-                return; // หยุดการทำงานถ้าไม่เจอ
+                return;
             }
-
-            // ลบเมล็ดออกจากคลัง
             newPlayerState.storageBin.splice(seedIndexInStorage, 1);
+
+            // เพิ่ม: ดึงค่าปุ๋ยเดิมของแปลงมาใช้
+            const currentFertilizerLevel = newFarmState.plots[plotIndex]?.fertilizerLevel || 0;
 
             const seedData = GAME_DATA[seedId];
             newFarmState.plots[plotIndex] = { 
                 plantId: seedData.plantId, 
                 plantTime: Date.now(), 
-                fertilizerLevel: 0, 
+                fertilizerLevel: currentFertilizerLevel, // <-- ส่งต่อค่าปุ๋ยเดิมที่ดึงมา
                 wateredBy: [],
                 plantedBy: { uid: userId, nickname: playerState.nickname },
                 harvestedBy: []
