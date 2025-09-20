@@ -2790,28 +2790,56 @@
         let fishFarmAnimationState = {};
         function animateFishFarm() {
             if (!farmState || !farmState.fishFarm) return;
-            
+
+            const pondContainer = document.getElementById('fish-farm-pond');
+            if (!pondContainer) return;
+            const pondRect = pondContainer.getBoundingClientRect();
+
             farmState.fishFarm.slots.forEach((fish, index) => {
                 if (!fish) return;
                 
                 const fishEl = document.getElementById(`fish-slot-${index}`);
                 if (!fishEl) return;
-                
-                // ใช้ fishFarmAnimationState ในการเก็บและคำนวณตำแหน่ง
+
+                // --- START: โค้ดส่วนที่แก้ไข ---
+                const fishWidth = fishEl.offsetWidth;
+                const fishHeight = fishEl.offsetHeight;
+
                 if (fishFarmAnimationState[index] === undefined) {
                     fishFarmAnimationState[index] = {
-                        x: Math.random() * 80 + 10, y: Math.random() * 70 + 15,
-                        vx: (Math.random() - 0.5) * 0.2, vy: (Math.random() - 0.5) * 0.1
+                        x: Math.random() * (pondRect.width - fishWidth),
+                        y: Math.random() * (pondRect.height - fishHeight),
+                        vx: (Math.random() - 0.5) * 0.4, // ปรับความเร็วให้ช้าลงเล็กน้อย
+                        vy: (Math.random() - 0.5) * 0.2
                     };
                 }
-                let anim = fishFarmAnimationState[index];
-                anim.x += anim.vx; anim.y += anim.vy;
-                if (anim.x > 90 || anim.x < 10) anim.vx *= -1;
-                if (anim.y > 85 || anim.y < 15) anim.vy *= -1;
 
-                fishEl.style.left = `${anim.x}%`;
-                fishEl.style.top = `${anim.y}%`;
-                if(anim.vx > 0) fishEl.style.transform = 'scaleX(1)';
+                let anim = fishFarmAnimationState[index];
+                anim.x += anim.vx;
+                anim.y += anim.vy;
+
+                // ตรวจสอบขอบเขตแบบ Pixel ที่แม่นยำ
+                if (anim.x < 0) {
+                    anim.x = 0;
+                    anim.vx *= -1;
+                } else if (anim.x > pondRect.width - fishWidth) {
+                    anim.x = pondRect.width - fishWidth;
+                    anim.vx *= -1;
+                }
+
+                if (anim.y < 0) {
+                    anim.y = 0;
+                    anim.vy *= -1;
+                } else if (anim.y > pondRect.height - fishHeight) {
+                    anim.y = pondRect.height - fishHeight;
+                    anim.vy *= -1;
+                }
+
+                fishEl.style.left = `${anim.x}px`;
+                fishEl.style.top = `${anim.y}px`;
+                // --- END: โค้ดส่วนที่แก้ไข ---
+
+                if (anim.vx > 0) fishEl.style.transform = 'scaleX(1)';
                 else fishEl.style.transform = 'scaleX(-1)';
             });
             fishFarmAnimationId = requestAnimationFrame(animateFishFarm);
