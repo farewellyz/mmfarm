@@ -740,6 +740,7 @@
         const ANIMAL_PEN_SIZE = 8;
         const FACTORY_GRID_SIZE = 8;
         const ADMIN_UID = "p7Ujrm9dBZcL6bK5EHYEsrJOCvl2";
+        const MAX_FERTILIZER_LEVEL = 1.5;
 
         // --- MASTER GAME DATA ---
         async function initAdminPanel(currentUserId, currentPlayerState) {
@@ -4321,39 +4322,50 @@
         // ฟังก์ชัน fertilize เวอร์ชันแก้ไข
         function fertilize(plotIndex, fertilizerId) {
             const potentialPlots = getAoePlots(plotIndex, 'spreader');
-            
+            const fertilizerData = GAME_DATA[fertilizerId];
+
+            // --- ตรรกะใหม่: คัดกรองหาแปลงที่มีพืชปลูกอยู่ และยังใส่ปุ๋ยเพิ่มได้ ---
             const plotsToFertilize = potentialPlots.filter(index => {
                 const plot = farmState.plots[index];
-                return plot && !plot.plantId;
+                return plot && plot.plantId && (plot.fertilizerLevel || 0) < MAX_FERTILIZER_LEVEL;
             });
 
-            if (plotsToFertilize.length === 0) return;
+            // --- ระบบแจ้งเตือนใหม่ ---
+            if (plotsToFertilize.length === 0) {
+                const targetPlot = farmState.plots[plotIndex];
+                if (!targetPlot || !targetPlot.plantId) {
+                    alert("ต้องปลูกพืชก่อนถึงจะใส่ปุ๋ยได้ครับ");
+                } else if (targetPlot.fertilizerLevel >= MAX_FERTILIZER_LEVEL) {
+                    alert("แปลงนี้ใส่ปุ๋ยจนเต็มแล้ว!");
+                }
+                return;
+            }
 
+            // --- ตรวจสอบและหักปุ๋ยในคลัง (เหมือนเดิม) ---
             const newPlayerState = { ...playerState };
-
-            // ตรวจสอบจำนวนปุ๋ยในคลัง (storageBin)
             const availableFertilizerCount = newPlayerState.storageBin.filter(item => item.id === fertilizerId).length;
             if (availableFertilizerCount < plotsToFertilize.length) {
                 alert("ปุ๋ยไม่พอสำหรับพื้นที่ที่เลือก!");
                 return;
             }
 
-            // หักปุ๋ยออกจากคลัง (storageBin)
             let countToRemove = plotsToFertilize.length;
             newPlayerState.storageBin = newPlayerState.storageBin.filter(item => {
                 if (item.id === fertilizerId && countToRemove > 0) {
                     countToRemove--;
-                    return false; // ลบไอเท็มนี้ออก
+                    return false;
                 }
-                return true; // เก็บไอเท็มอื่นไว้
+                return true;
             });
 
+            // --- เพิ่มปุ๋ยลงในแปลง (มีเพดานสูงสุด) ---
             const newFarmState = { ...farmState };
-            const fertilizerData = GAME_DATA[fertilizerId];
-            
             plotsToFertilize.forEach(index => {
                 const plot = newFarmState.plots[index];
-                plot.fertilizerLevel = (plot.fertilizerLevel || 0) + fertilizerData.qualityBonus;
+                const newLevel = (plot.fertilizerLevel || 0) + fertilizerData.qualityBonus;
+                // ใช้ Math.min เพื่อไม่ให้ระดับปุ๋ยเกินค่าสูงสุดที่ตั้งไว้
+                plot.fertilizerLevel = Math.min(MAX_FERTILIZER_LEVEL, newLevel);
+                
                 const plotEl = document.querySelector(`#farm-grid > div:nth-child(${index + 1})`);
                 if(plotEl) plotEl.classList.add('fertilized');
             });
