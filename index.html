@@ -1199,6 +1199,7 @@
                 'truffle_soup_recipe': { resultId: 'truffle_soup_food', ingredients: [{ id: 'truffle' }], tool: 'kitchen_pot' },
                 'jam_toast_recipe': { resultId: 'jam_toast_food', ingredients: [{ id: 'bread_food' }, { category: 'jam' }], tool: 'kitchen_oven' },
                 'egg_tart_recipe': { resultId: 'egg_tart_food', ingredients: [{ id: 'pastry_dough' }, { id: 'milk' }, { id: 'egg' }], tool: 'kitchen_oven' },
+                'ocean_feast_recipe': { resultId: 'ocean_feast_food', ingredients: [{ id: 'carp' }, { id: 'sardine' }, { id: 'tuna' },{ id: 'salmon' }, { id: 'eel' }, { id: 'pufferfish' },{ id: 'clownfish' }, { id: 'seahorse' }, { id: 'jellyfish' },{ id: 'grouper' }, { id: 'moray_eel' }, { id: 'alaskan_king_crab' }], tool: 'kitchen_pot' },
             },
             'fried_egg_food': { name: 'ไข่ดาว', icon: '🍳', type: 'produce', sellPrice: [25, 35, 45], energyRestore: 15, imageUrl: 'fried_egg_food.png' },
             'sashimi_food': { name: 'ซาชิมิ', icon: '🍣', type: 'produce', sellPrice: [50, 75, 95], energyRestore: 25, imageUrl: 'sashimi_food.png' },
@@ -1242,7 +1243,8 @@
             'corn_soup_food': { name: 'ซุปข้าวโพด', icon: '🥣', type: 'produce', sellPrice: [100, 120, 150], energyRestore: 30, imageUrl: 'corn_soup.png' },
             'truffle_soup_food': { name: 'ซุปทรัฟเฟิล', icon: '🥣', type: 'produce', sellPrice: [600, 700, 800], energyRestore: 80, imageUrl: 'truffle_soup.png' },
             'jam_toast_food': { name: 'ขนมปังหน้าแยม', icon: '🍞', type: 'produce', sellPrice: [650, 800, 950], energyRestore: 70, imageUrl: 'jam_toast.png' },
-            'egg_tart_food': { name: 'ทาร์ตไข่', icon: '🥧', type: 'produce', sellPrice: [200, 240, 280], energyRestore: 45, imageUrl: 'egg_tart.png' },	
+            'egg_tart_food': { name: 'ทาร์ตไข่', icon: '🥧', type: 'produce', sellPrice: [200, 240, 280], energyRestore: 45, imageUrl: 'egg_tart.png' },
+            'ocean_feast_food': { name: 'ซุปมหาสมุทร', icon: '🍲', type: 'produce', sellPrice: [0, 0, 0], energyRestore: 200, imageUrl: 'ocean_feast_food.png', buff: {id: 'fishing_luck',duration: 300, description: 'เพิ่มโอกาสตกได้ปลาหายาก 10% เป็นเวลา 5 นาที'}},	
             // --- NEW KITCHEN TOOL ---
             'kitchen_knife': { name: 'มีดทำครัว', type: 'kitchen_tool', cost: 1000, icon: '🔪', imageUrl: 'knife.png' },
             'kitchen_pan': { name: 'กระทะ', type: 'kitchen_tool', cost: 1500, icon: '🍳', imageUrl: 'pan.png' },
@@ -4591,18 +4593,42 @@
         }
 
         function eatFromStorage(itemId, quality) {
-            const newPlayerState = { ...playerState };
-            const itemIndex = newPlayerState.storageBin.findIndex(item => item.id === itemId && item.quality === quality);
-            if (itemIndex > -1) {
-                const itemData = GAME_DATA[itemId];
-                if (!itemData.energyRestore || itemData.energyRestore === 0) return;
-                newPlayerState.storageBin.splice(itemIndex, 1);
-                const MAX_ENERGY = getMaxEnergy();
-                newPlayerState.energy = Math.min(MAX_ENERGY, (newPlayerState.energy || 0) + itemData.energyRestore);
-                updatePlayerState(newPlayerState);
-                updateQuestProgress('eat');
-            }
+    const newPlayerState = { ...playerState };
+    const itemIndex = newPlayerState.storageBin.findIndex(item => item.id === itemId && item.quality === quality);
+
+    if (itemIndex > -1) {
+        const itemData = GAME_DATA[itemId];
+        // หักไอเท็มออกจากคลัง
+        newPlayerState.storageBin.splice(itemIndex, 1);
+
+        // เพิ่มพลังงาน
+        if (itemData.energyRestore > 0) {
+            const MAX_ENERGY = getMaxEnergy();
+            newPlayerState.energy = Math.min(MAX_ENERGY, (newPlayerState.energy || 0) + itemData.energyRestore);
         }
+
+        // --- START: โค้ดสำหรับจัดการบัพ ---
+        if (itemData.buff) {
+            if (!newPlayerState.buffs) {
+                newPlayerState.buffs = [];
+            }
+            // ลบบัพประเภทเดียวกันที่มีอยู่ก่อนหน้า
+            newPlayerState.buffs = newPlayerState.buffs.filter(b => b.id !== itemData.buff.id);
+            // เพิ่มบัพใหม่พร้อมเวลาหมดอายุ
+            newPlayerState.buffs.push({
+                ...itemData.buff,
+                expirationTime: Date.now() + (itemData.buff.duration * 1000)
+            });
+            showInfoModal(itemData.icon, 'ได้รับบัพ!', itemData.buff.description);
+        }
+        // --- END: โค้ดสำหรับจัดการบัพ ---
+
+        updatePlayerState(newPlayerState);
+        updateQuestProgress('eat');
+        // ซ่อน modal หลังจากกินเสร็จ
+        hideStorageItemDetailsModal();
+    }
+}
 		
 		function moveFromStorageToInventory(itemId, quality) {
             const newPlayerState = { ...playerState };
@@ -4896,6 +4922,22 @@
         function fish() {
             if (!deductEnergy(8)) return;
 
+            // --- START: ตรวจสอบบัพตกปลา ---
+            let fishingBonus = 0;
+            if (playerState.buffs) {
+                const now = Date.now();
+                // คัดกรองบัพที่หมดอายุแล้วออกไป
+                const activeBuffs = playerState.buffs.filter(b => b.expirationTime > now);
+                if (activeBuffs.length < playerState.buffs.length) {
+                    updatePlayerState({ ...playerState, buffs: activeBuffs });
+                }
+                const activeFishingBuff = activeBuffs.find(b => b.id === 'fishing_luck');
+                if (activeFishingBuff) {
+                    fishingBonus = 0.10; // 10%
+                }
+            }
+            // --- END: ตรวจสอบบัพตกปลา ---
+
             const rodLevel = farmState.sharedRodLevel || 0;
             const probabilities = [[0.8, 0.15, 0.05], [0.6, 0.3, 0.1], [0.4, 0.4, 0.2], [0.2, 0.5, 0.3], [0.1, 0.4, 0.5]];
             const fishTypes = {
@@ -4905,14 +4947,25 @@
                 'Legendary': Object.keys(GAME_DATA).filter(id => GAME_DATA[id].rarity === 'Legendary')
             };
             const rand = Math.random();
-            if (rodLevel > 2 && rand > 0.95) { 
+
+            // โอกาสเจอ Legendary เดิมคือ 5% (rand > 0.95), เมื่อมีบัพจะเพิ่มเป็น 15% (rand > 0.85)
+            const legendaryThreshold = 0.95 - fishingBonus; 
+            if (rodLevel > 2 && rand > legendaryThreshold) { 
                 const possibleFish = fishTypes['Legendary'];
                 const caughtFishId = possibleFish[Math.floor(Math.random() * possibleFish.length)];
                 startFishingMinigame(caughtFishId);
                 return;
             }
 
-            let caughtRarity = rand < probabilities[rodLevel][0] ? 'Common' : (rand < probabilities[rodLevel][0] + probabilities[rodLevel][1] ? 'Uncommon' : 'Rare');
+            // ปรับโอกาสโดยดึงจาก Common ไปเพิ่มให้ Rare
+            const currentProbs = [...probabilities[rodLevel]];
+            if (fishingBonus > 0) {
+                const amountToShift = Math.min(currentProbs[0], fishingBonus); // ดึงค่าจาก Common ไม่ให้ติดลบ
+                currentProbs[0] -= amountToShift; // ลดโอกาสเจอ Common
+                currentProbs[2] += amountToShift; // เพิ่มโอกาสเจอ Rare
+            }
+
+            let caughtRarity = rand < currentProbs[0] ? 'Common' : (rand < currentProbs[0] + currentProbs[1] ? 'Uncommon' : 'Rare');
             const possibleFish = fishTypes[caughtRarity];
             const caughtFishId = possibleFish[Math.floor(Math.random() * possibleFish.length)];
             startFishingMinigame(caughtFishId);
