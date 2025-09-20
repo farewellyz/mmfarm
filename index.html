@@ -4397,8 +4397,7 @@
                     const freshFarmState = farmDoc.data();
                     let hasChanges = false;
                     
-                    // START: โค้ดที่แก้ไข
-                    const questUpdatesToApply = []; // 1. สร้างที่เก็บข้อมูลเควสชั่วคราว
+                    const questUpdatesToApply = [];
 
                     for (const factory of freshFarmState.factories) {
                         if (!factory.factoryId || !factory.queue || factory.queue.length === 0 || !factory.queue[0].startTime) continue;
@@ -4422,11 +4421,12 @@
                                 const qualities = finishedJob.ingredientQualities || [];
                                 if (qualities.length > 0) {
                                     const sum = qualities.reduce((a, b) => a + b, 0);
-                                    averageQuality = Math.floor(sum / qualities.length);
+                                    // แก้ไขจุดนี้: เพิ่ม 'let' เพื่อประกาศตัวแปร
+                                    let averageQuality = Math.floor(sum / qualities.length);
+                                    outputQuality = averageQuality; // กำหนดค่าให้กับ outputQuality
                                 }
                             }
                             
-                            // 2. แทนที่จะเรียกฟังก์ชันอัปเดตเควสทันที ให้เก็บข้อมูลไว้ก่อน
                             questUpdatesToApply.push({ 
                                 itemId: recipe.output.id, 
                                 quality: outputQuality, 
@@ -4447,7 +4447,6 @@
                         }
                     }
 
-                    // 3. นำข้อมูลเควสที่เก็บไว้มาอัปเดต state ทีเดียวหลังจบลูป
                     if (questUpdatesToApply.length > 0) {
                         questUpdatesToApply.forEach(update => {
                             updateQuestProgress(freshFarmState, 'craft_specific', update);
@@ -4455,16 +4454,13 @@
                     }
                     
                     if (hasChanges) {
-                        // 4. บันทึกทุกอย่าง (ทั้ง factories และ quests) พร้อมกันในครั้งเดียว
                         transaction.update(farmDocRef, { 
                             factories: freshFarmState.factories,
                             quests: freshFarmState.quests
                         });
                     }
-                    // END: โค้ดที่แก้ไข
                 });
             } catch (e) {
-                // แก้ไขเล็กน้อย: ไม่ต้องแสดง error นี้ใน console เพราะเป็นเรื่องปกติของ transaction
                 if (e.code !== 'failed-precondition') {
                     console.error("Factory processing to output bin failed: ", e);
                 }
