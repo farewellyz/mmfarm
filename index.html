@@ -4382,8 +4382,8 @@
 
         // ฟังก์ชันใหม่สำหรับประมวลผลของไปวางที่ชั้นวาง (OutputBin)
         async function processFactoryQueuesToOutputBin() {
-            if (isProcessingFactoryQueue || !farmState || !farmState.factories) return; // << เพิ่มตัวล็อค
-            isProcessingFactoryQueue = true; // << ล็อคการทำงาน
+            if (isProcessingFactoryQueue || !farmState || !farmState.factories) return;
+            isProcessingFactoryQueue = true;
 
             try {
                 const now = Date.now();
@@ -4394,6 +4394,9 @@
 
                     const freshFarmState = farmDoc.data();
                     let hasChanges = false;
+                    
+                    // START: โค้ดที่แก้ไข
+                    const questUpdatesToApply = []; // 1. สร้างที่เก็บข้อมูลเควสชั่วคราว
 
                     for (const factory of freshFarmState.factories) {
                         if (!factory.factoryId || !factory.queue || factory.queue.length === 0 || !factory.queue[0].startTime) continue;
@@ -4408,7 +4411,7 @@
                         if (now >= completionTime) {
                             hasChanges = true;
                             const finishedJob = factory.queue.shift(); 
-                            console.log("Processing Job:", finishedJob);
+                            
                             let outputQuality = 0;
                             if (factory.factoryId === 'meat_processor') {
                                 const rand = Math.random();
@@ -4417,10 +4420,17 @@
                                 const qualities = finishedJob.ingredientQualities || [];
                                 if (qualities.length > 0) {
                                     const sum = qualities.reduce((a, b) => a + b, 0);
-                                    outputQuality = Math.floor(sum / qualities.length);
+                                    averageQuality = Math.floor(sum / qualities.length);
                                 }
                             }
-                            updateQuestProgress('craft_specific', { itemId: recipe.output.id, quality: outputQuality, amount: recipe.output.count || 1 });
+                            
+                            // 2. แทนที่จะเรียกฟังก์ชันอัปเดตเควสทันที ให้เก็บข้อมูลไว้ก่อน
+                            questUpdatesToApply.push({ 
+                                itemId: recipe.output.id, 
+                                quality: outputQuality, 
+                                amount: recipe.output.count || 1 
+                            });
+
                             const outputCount = recipe.output.count || 1;
                             for (let i = 0; i < outputCount; i++) {
                                 factory.outputBin.push({
@@ -4435,14 +4445,29 @@
                         }
                     }
 
-                    if (hasChanges) {
-                        transaction.update(farmDocRef, { factories: freshFarmState.factories });
+                    // 3. นำข้อมูลเควสที่เก็บไว้มาอัปเดต state ทีเดียวหลังจบลูป
+                    if (questUpdatesToApply.length > 0) {
+                        questUpdatesToApply.forEach(update => {
+                            updateQuestProgress(freshFarmState, 'craft_specific', update);
+                        });
                     }
+                    
+                    if (hasChanges) {
+                        // 4. บันทึกทุกอย่าง (ทั้ง factories และ quests) พร้อมกันในครั้งเดียว
+                        transaction.update(farmDocRef, { 
+                            factories: freshFarmState.factories,
+                            quests: freshFarmState.quests
+                        });
+                    }
+                    // END: โค้ดที่แก้ไข
                 });
             } catch (e) {
-                console.error("Factory processing to output bin failed: ", e);
+                // แก้ไขเล็กน้อย: ไม่ต้องแสดง error นี้ใน console เพราะเป็นเรื่องปกติของ transaction
+                if (e.code !== 'failed-precondition') {
+                    console.error("Factory processing to output bin failed: ", e);
+                }
             } finally {
-                isProcessingFactoryQueue = false; // << ปลดล็อคเสมอ ไม่ว่าจะสำเร็จหรือล้มเหลว
+                isProcessingFactoryQueue = false;
             }
         }
 
@@ -5148,34 +5173,28 @@
             }
         }
 
-        async function updateQuestProgress(action, details = {}) {
-            if (!farmState || !farmState.quests) return;
+        // แก้ไข: ให้ฟังก์ชันรับ farmState เข้ามาโดยตรงแทนการใช้ตัวแปร global
+        function updateQuestProgress(currentFarmState, action, details = {}) {
+            if (!currentFarmState || !currentFarmState.quests) return;
 
-            // ตั้งค่าพื้นฐาน
             const amount = details.amount || 1;
             const itemId = details.itemId || null;
             const quality = details.quality !== undefined ? details.quality : -1;
 
-            const newFarmState = { ...farmState };
-            let questsUpdated = false;
-
             ['daily', 'weekly'].forEach(type => {
-                if (!newFarmState.quests[type]) return;
+                if (!currentFarmState.quests[type]) return;
 
-                newFarmState.quests[type].forEach(quest => {
+                currentFarmState.quests[type].forEach(quest => {
                     const questData = QUEST_DATA[type].find(q => q.id === quest.id);
                     if (!questData || quest.progress >= questData.target) return;
 
                     if (questData.action === action) {
                         let isMatch = false;
 
-                        // โหมดใหม่: ตรวจสอบเควสแบบเจาะจง
                         if (action === 'craft_specific') {
-                            // กรณีพิเศษ: เควสแบบหมวดหมู่ เช่น 'any_jam'
                             if (questData.itemId === 'any_jam' && GAME_DATA[itemId]?.category === 'jam' && quality >= (questData.minQuality || 0)) {
                                 isMatch = true;
                             } 
-                            // กรณีปกติ: เจาะจงไอเท็ม
                             else if (questData.itemId === itemId && quality >= (questData.minQuality || 0)) {
                                 isMatch = true;
                             }
@@ -5186,24 +5205,21 @@
                             }
                         }
                         else if (action === 'fish_specific') {
-                            if (questData.itemId === itemId) { // การตกปลาไม่มี quality
+                            if (questData.itemId === itemId) {
                                 isMatch = true;
                             }
                         }
-                        // โหมดเก่า: เควสทั่วไป
                         else {
                             isMatch = true;
                         }
 
                         if (isMatch) {
                             quest.progress = Math.min(quest.progress + amount, questData.target);
-                            questsUpdated = true;
                         }
                     }
                 });
             });
-
-            if (questsUpdated) await updateFarmState(newFarmState);
+            // ลบการเรียก await updateFarmState(newFarmState) ออกจากฟังก์ชันนี้
         }
         
         let gameLoopInterval = null;
