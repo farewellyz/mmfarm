@@ -503,7 +503,7 @@
                     </div>
                  </div>
             </div>
-             <div id="fishing-view" class="hidden">
+            <div id="fishing-view" class="hidden">
                 <h2 class="text-3xl font-bold text-green-800 mb-4 text-center">บ่อปลา 🎣</h2>
                 <div class="flex flex-col md:flex-row gap-4 items-center">
                     <div id="pond-display" class="w-full md:w-3/5 aspect-video rounded-lg shadow-inner"></div>
@@ -524,14 +524,38 @@
                         </div>
                         
                         <div class="flex items-center gap-2">
-                            <button id="fish-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-8 rounded-full disabled:bg-gray-400">ตกปลา (-8⚡)</button>
-                            <button id="fish-dex-btn" class="bg-gray-500 hover:bg-gray-600 text-white font-bold p-3 rounded-full" title="สารานุกรมปลา">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v11.494m-5.22-6.064h10.44M18 12a6 6 0 11-12 0 6 6 0 0112 0z" /></svg>
-                            </button>
-                        </div>
+                            <div class="flex flex-col items-center gap-3 w-full mt-4">
+                            <button id="fish-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-8 rounded-full disabled:bg-gray-400 w-full">ตกปลา (-8⚡)</button>
+                            
+                            <div class="flex items-center gap-2 w-full">
+                                <button id="goto-fish-farm-btn" class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-4 rounded-full flex-grow">ไปบ่อเลี้ยงปลา 🏞️</button>
+                                <button id="fish-dex-btn" class="bg-gray-500 hover:bg-gray-600 text-white font-bold p-3 rounded-full" title="สารานุกรมปลา">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v11.494m-5.22-6.064h10.44M18 12a6 6 0 11-12 0 6 6 0 0112 0z" /></svg>
+                                </button>
+                            </div>
+                            </div>
+                        </div>      
                     </div>
                 </div>
             </div>
+            <div id="fish-farm-view" class="hidden">
+                            <div class="w-full max-w-2xl mx-auto text-center">
+                                <h2 class="text-3xl font-bold text-blue-800 mb-4">บ่อเลี้ยงปลา 🏞️</h2>
+                                
+                                <div id="fish-farm-upgrades" class="flex justify-center gap-4 mb-4 p-3 bg-white/70 rounded-lg">
+                                    </div>
+
+                                <div id="fish-farm-pond" class="relative w-full aspect-video rounded-lg shadow-inner grid grid-cols-4 gap-2 p-2" style="background-image: url('bg_undersea.png'); background-size: cover; background-position: center;">
+                                    <div id="fish-farm-tooltip" class="hidden absolute z-10 bg-white p-3 rounded-lg shadow-lg text-left text-sm">
+                                    </div>
+                                </div>
+
+                                <div class="mt-4 flex flex-col items-center gap-3">
+                                    <p class="text-sm text-gray-600">อาหารปลาในคลัง: <span id="fish-food-count" class="font-bold">0</span> ชิ้น</p>
+                                    <button id="back-to-fishing-btn" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded-full">กลับไปบ่อตกปลา</button>
+                                </div>
+                            </div>
+                        </div>
             <div id="quests-view" class="hidden">
                 <div class="w-full max-w-lg mx-auto">
                     <h2 class="text-3xl font-bold text-green-800 mb-4 text-center">📜 เควสของฟาร์ม</h2>
@@ -1067,6 +1091,19 @@
         };
 		
 		const GAME_DATA = {
+            'fish_farm_upgrades': {
+                'food': [
+                    { name: 'อาหารปกติ', cost: 0, growthMultiplier: 1.0 },
+                    { name: 'อาหารผสมวิตามิน', cost: 5000, growthMultiplier: 0.85 },
+                    { name: 'อาหารสูตรพิเศษ', cost: 20000, growthMultiplier: 0.70 }
+                ],
+                'pond': [
+                    { name: 'บ่อขนาดเล็ก', cost: 0, capacity: 4 },
+                    { name: 'บ่อขนาดกลาง', cost: 15000, capacity: 6 },
+                    { name: 'บ่อขนาดใหญ่', cost: 50000, capacity: 8 }
+                ]
+            },
+            'fish_food': { name: 'อาหารปลา', type: 'item', cost: 20, icon: '🐟', imageUrl: 'fish_food.png' },
             'watering_cans': [
                 { id: 'watering_can_basic', name: 'บัวรดน้ำธรรมดา', cost: 0, materials: {}, aoe: { shape: 'single', size: 1 } },
                 { id: 'watering_can_copper', name: 'บัวรดน้ำทองแดง', cost: 2000, materials: { 'pig_meat': 5 }, aoe: { shape: 'line', size: 2 } },
@@ -1204,60 +1241,79 @@
             'kitchen_pot': { name: 'หม้อ', type: 'kitchen_tool', cost: 2000, icon: '🍲', imageUrl: 'pot.png' },
             'kitchen_oven': { name: 'เตาอบ', type: 'kitchen_tool', cost: 5000, icon: '🔥', imageUrl: 'oven.png' },
             'carp': { name: 'ปลาคาร์ป', icon: '🐟', rarity: 'Common', sellPrice: [15, 20, 25], type: 'produce', energyRestore: 3, imageUrl: 'carp.png', category: 'fish', breedingTime: 86400,
+                growthTime: 86400, // 24 ชั่วโมง
                 minigameBehavior: { speed: 1.2, pattern: 'smooth', restChance: 0.03 }
             },
             'sardine': { name: 'ปลาซาร์ดีน', icon: '🐠', rarity: 'Common', sellPrice: [20, 25, 30], type: 'produce', energyRestore: 4, imageUrl: 'sardine.png', category: 'fish', breedingTime: 86400,
+                growthTime: 86400, // 24 ชั่วโมง
                 minigameBehavior: { speed: 1.3, pattern: 'smooth', restChance: 0.03 }
             },
             'tuna': { name: 'ปลาทูน่า', icon: '🐟', rarity: 'Uncommon', sellPrice: [35, 50, 65], type: 'produce', energyRestore: 15, imageUrl: 'tuna.png', category: 'fish', breedingTime: 172800,
+                growthTime: 129600, // 36 ชั่วโมง
                 minigameBehavior: { speed: 1.8, pattern: 'smooth', restChance: 0.02 }
             },
             'salmon': { name: 'ปลาแซลมอน', icon: '🐠', rarity: 'Uncommon', sellPrice: [45, 60, 80], type: 'produce', energyRestore: 18, imageUrl: 'salmon.png', category: 'fish', breedingTime: 172800,
+                growthTime: 129600, // 36 ชั่วโมง
                 minigameBehavior: { speed: 1.9, pattern: 'smooth', restChance: 0.02 }
             },
             'eel': { name: 'ปลาไหล', icon: '鰻', rarity: 'Rare', sellPrice: [150, 200, 250], type: 'produce', energyRestore: 30, imageUrl: 'eel.png', category: 'fish', breedingTime: 259200,
+                growthTime: 172800, // 48 ชั่วโมง
                 minigameBehavior: { speed: 2.5, pattern: 'dart', restChance: 0.02 }
             },
             'pufferfish': { name: 'ปลาปักเป้า', icon: '🐡', rarity: 'Rare', sellPrice: [200, 250, 300], type: 'produce', energyRestore: 35, imageUrl: 'pufferfish.png', category: 'fish', breedingTime: 259200,
+                growthTime: 172800, // 48 ชั่วโมง
                 minigameBehavior: { speed: 2.6, pattern: 'dart', restChance: 0.015 }
             },
             'clownfish': { name: 'ปลาการ์ตูน', icon: '🤡', rarity: 'Uncommon', sellPrice: [40, 50, 65], type: 'produce', energyRestore: 12, imageUrl: 'clownfish.png', category: 'fish', breedingTime: 172800,
+                growthTime: 129600, // 36 ชั่วโมง
                 minigameBehavior: { speed: 1.7, pattern: 'smooth', restChance: 0.025 }
             },
             'seahorse': { name: 'ม้าน้ำ', icon: '🐴', rarity: 'Uncommon', sellPrice: [45, 55, 70], type: 'produce', energyRestore: 10, imageUrl: 'seahorse.png', category: 'fish', breedingTime: 172800,
+                growthTime: 129600, // 36 ชั่วโมง
                 minigameBehavior: { speed: 1.5, pattern: 'smooth', restChance: 0.04 }
             },
             'jellyfish': { name: 'แมงกะพรุน', icon: '🍥', rarity: 'Uncommon', sellPrice: [50, 60, 75], type: 'produce', energyRestore: 8, imageUrl: 'jellyfish.png', category: 'fish', breedingTime: 172800,
+                growthTime: 129600, // 36 ชั่วโมง
                 minigameBehavior: { speed: 1.4, pattern: 'smooth', restChance: 0.05 }
             },
             'grouper': { name: 'ปลาเก๋า', icon: '🐟', rarity: 'Rare', sellPrice: [250, 300, 350], type: 'produce', energyRestore: 25, imageUrl: 'grouper.png', category: 'fish', breedingTime: 259200,
+                growthTime: 172800, // 48 ชั่วโมง
                 minigameBehavior: { speed: 2.4, pattern: 'dart', restChance: 0.02 }
             },
             'moray_eel': { name: 'ปลาไหลมอเรย์', icon: '🐍', rarity: 'Rare', sellPrice: [270, 320, 370], type: 'produce', energyRestore: 28, imageUrl: 'moray_eel.png', category: 'fish', breedingTime: 259200,
+                growthTime: 172800, // 48 ชั่วโมง
                 minigameBehavior: { speed: 2.7, pattern: 'dart', restChance: 0.01 }
             },
             'alaskan_king_crab': { name: 'ปูอลาสก้า', icon: '🦀', rarity: 'Rare', sellPrice: [320, 370, 420], type: 'produce', energyRestore: 30, imageUrl: 'alaskan_king_crab.png', category: 'fish', breedingTime: 259200,
+                growthTime: 172800, // 48 ชั่วโมง
                 minigameBehavior: { speed: 2.2, pattern: 'dart', restChance: 0.03 }
             },
             'shrimp': { name: 'กุ้ง', icon: '🦐', rarity: 'Legendary', sellPrice: [500, 600, 750], type: 'produce', energyRestore: 25, imageUrl: 'shrimp.png', category: 'fish', breedingTime: 432000,
+                growthTime: 259200, // 72 ชั่วโมง
                 minigameBehavior: { speed: 3.0, pattern: 'dart', restChance: 0.01 }
             },
             'stingray': { name: 'ปลากระเบน', icon: '🌊', rarity: 'Legendary', sellPrice: [600, 800, 1000], type: 'produce', energyRestore: 35, imageUrl: 'stingray.png', category: 'fish', breedingTime: 432000,
+                growthTime: 259200, // 72 ชั่วโมง
                 minigameBehavior: { speed: 2.8, pattern: 'smooth', restChance: 0.01 }
             },
             'shark': { name: 'ปลาฉลาม', icon: '🦈', rarity: 'Legendary', sellPrice: [800, 1000, 1200], type: 'produce', energyRestore: 40, imageUrl: 'shark.png', category: 'fish', breedingTime: 432000,
+                growthTime: 259200, // 72 ชั่วโมง
                 minigameBehavior: { speed: 3.2, pattern: 'dart', restChance: 0.005 }
             },
             'bluefin_tuna': { name: 'ปลาทูน่าครีบน้ำเงิน', icon: '🐟', rarity: 'Legendary', sellPrice: [1000, 1200, 1400], type: 'produce', energyRestore: 50, imageUrl: 'bluefin_tuna.png', category: 'fish', breedingTime: 432000,
+                growthTime: 259200, // 72 ชั่วโมง
                 minigameBehavior: { speed: 3.5, pattern: 'dart', restChance: 0.0 }
             },
             'sturgeon': { name: 'ปลาสเตอร์เจียน', icon: '🦴', rarity: 'Legendary', sellPrice: [1200, 1400, 1600], type: 'produce', energyRestore: 45, imageUrl: 'sturgeon.png', category: 'fish', breedingTime: 432000,
+                growthTime: 259200, // 72 ชั่วโมง
                 minigameBehavior: { speed: 2.9, pattern: 'smooth', restChance: 0.01 }
             },
             'oarfish': { name: 'ปลาพญานาค', icon: '✨', rarity: 'Legendary', sellPrice: [1500, 1800, 2100], type: 'produce', energyRestore: 60, imageUrl: 'oarfish.png', category: 'fish', breedingTime: 432000,
+                growthTime: 259200, // 72 ชั่วโมง
                 minigameBehavior: { speed: 3.3, pattern: 'smooth', restChance: 0.0 }
             },
             'sea_dragon': { name: 'มังกรสมุทร', icon: '🐉', rarity: 'Mystical', sellPrice: [10000, 12000, 15000], type: 'produce', energyRestore: 100, imageUrl: 'sea_dragon.png', category: 'fish',
+                growthTime: 432000, // 120 ชั่วโมง
                 minigameBehavior: { speed: 4.0, pattern: 'dart', restChance: 0.0 }
             },
             'treasure_chest': { name: 'หีบสมบัติ', icon: '📦', rarity: 'Legendary', sellPrice: [2500, 2500, 2500], type: 'produce', energyRestore: 0, imageUrl: 'treasure_chest.png', category: 'fish',
@@ -1747,6 +1803,7 @@
             renderMarket();
             renderParkActions();
             renderBreedingView();
+            renderFishFarm();
         }
         
         function renderMarket() {
@@ -2619,6 +2676,262 @@
                 });
             }
         }
+        let fishFarmAnimationId = null
+        let fishFarmAnimationState = {};
+        function animateFishFarm() {
+            if (!farmState || !farmState.fishFarm) return;
+            
+            farmState.fishFarm.slots.forEach((fish, index) => {
+                if (!fish) return;
+                
+                const fishEl = document.getElementById(`fish-slot-${index}`);
+                if (!fishEl) return;
+                
+                // ใช้ fishFarmAnimationState ในการเก็บและคำนวณตำแหน่ง
+                if (fishFarmAnimationState[index] === undefined) {
+                    fishFarmAnimationState[index] = {
+                        x: Math.random() * 80 + 10, y: Math.random() * 70 + 15,
+                        vx: (Math.random() - 0.5) * 0.2, vy: (Math.random() - 0.5) * 0.1
+                    };
+                }
+                let anim = fishFarmAnimationState[index];
+                anim.x += anim.vx; anim.y += anim.vy;
+                if (anim.x > 90 || anim.x < 10) anim.vx *= -1;
+                if (anim.y > 85 || anim.y < 15) anim.vy *= -1;
+
+                fishEl.style.left = `${anim.x}%`;
+                fishEl.style.top = `${anim.y}%`;
+                if(anim.vx > 0) fishEl.style.transform = 'scaleX(1)';
+                else fishEl.style.transform = 'scaleX(-1)';
+            });
+            fishFarmAnimationId = requestAnimationFrame(animateFishFarm);
+        }
+
+        function startFishFarmAnimation() {
+            if (fishFarmAnimationId) cancelAnimationFrame(fishFarmAnimationId);
+            fishFarmAnimationState = {}; // รีเซ็ต state ทุกครั้งที่เปิดหน้านี้
+            animateFishFarm();
+        }
+
+        function stopFishFarmAnimation() {
+            if (fishFarmAnimationId) cancelAnimationFrame(fishFarmAnimationId);
+            fishFarmAnimationId = null;
+        }
+
+        function renderFishFarm() {
+            if (!farmState || !farmState.fishFarm || !playerState) return;
+            const pondContainer = document.getElementById('fish-farm-pond');
+            const upgradesContainer = document.getElementById('fish-farm-upgrades');
+            const foodCountEl = document.getElementById('fish-food-count');
+            
+            const tooltip = document.getElementById('fish-farm-tooltip');
+            pondContainer.innerHTML = ''; 
+            if(tooltip) pondContainer.appendChild(tooltip);
+            
+            upgradesContainer.innerHTML = '';
+
+            // --- Render Upgrades ---
+            const foodLevel = farmState.fishFarm.foodLevel;
+            const foodUpgradeEl = document.createElement('div');
+            foodUpgradeEl.className = 'flex items-center gap-2';
+            if (foodLevel >= GAME_DATA.fish_farm_upgrades.food.length - 1) {
+                foodUpgradeEl.innerHTML = `<div><p class="font-bold">อาหารปลา</p><p class="text-xs">คุณภาพสูงสุดแล้ว</p></div>`;
+            } else {
+                const nextFood = GAME_DATA.fish_farm_upgrades.food[foodLevel + 1];
+                foodUpgradeEl.innerHTML = `<div><p class="font-bold">อัปเกรดอาหาร</p><p class="text-xs">${nextFood.name}</p></div><button class="upgrade-fish-farm-btn bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-bold py-1 px-3 rounded-full text-xs" data-type="food" ${playerState.money < nextFood.cost ? 'disabled' : ''}>${nextFood.cost}💰</button>`;
+            }
+            upgradesContainer.appendChild(foodUpgradeEl);
+
+            const pondLevel = farmState.fishFarm.pondLevel;
+            const pondUpgradeEl = document.createElement('div');
+            pondUpgradeEl.className = 'flex items-center gap-2';
+             if (pondLevel >= GAME_DATA.fish_farm_upgrades.pond.length - 1) {
+                pondUpgradeEl.innerHTML = `<div><p class="font-bold">ขนาดบ่อ</p><p class="text-xs">ใหญ่สุดแล้ว</p></div>`;
+            } else {
+                const nextPond = GAME_DATA.fish_farm_upgrades.pond[pondLevel + 1];
+                pondUpgradeEl.innerHTML = `<div><p class="font-bold">ขยายบ่อ</p><p class="text-xs">เพิ่มเป็น ${nextPond.capacity} ช่อง</p></div><button class="upgrade-fish-farm-btn bg-blue-400 hover:bg-blue-500 text-blue-900 font-bold py-1 px-3 rounded-full text-xs" data-type="pond" ${playerState.money < nextPond.cost ? 'disabled' : ''}>${nextPond.cost}💰</button>`;
+            }
+            upgradesContainer.appendChild(pondUpgradeEl);
+
+            // --- Render Fish and Slots ---
+            const pondConfig = GAME_DATA.fish_farm_upgrades.pond[pondLevel];
+            const capacity = pondConfig.capacity;
+            const gridColsClass = capacity <= 4 ? 'grid-cols-4' : (capacity <= 6 ? 'grid-cols-3' : 'grid-cols-4');
+            const gridRowsClass = capacity <= 4 ? '' : (capacity <= 6 ? 'grid-rows-2' : 'grid-rows-2');
+            pondContainer.className = `relative w-full aspect-video rounded-lg shadow-inner bg-blue-200 grid ${gridColsClass} ${gridRowsClass} gap-2 p-2`;
+
+            for(let i = 0; i < capacity; i++) {
+                const slotData = farmState.fishFarm.slots[i];
+                if (slotData) {
+                    const fishData = GAME_DATA[slotData.fishId];
+                    const fishEl = document.createElement('div');
+                    fishEl.id = `fish-slot-${i}`;
+                    fishEl.className = 'absolute w-20 h-20 cursor-pointer transition-transform hover:scale-110';
+                    const foodConfig = GAME_DATA.fish_farm_upgrades.food[farmState.fishFarm.foodLevel];
+                    const timeNeeded = (fishData.growthTime || 86400) * 1000 * foodConfig.growthMultiplier;
+                    const progress = Math.min((Date.now() - slotData.startTime) / timeNeeded, 1);
+                    const isHungry = (Date.now() - (slotData.lastFedTime || 0)) > (12 * 3600 * 1000);
+                    let iconsHTML = `<div class="absolute -top-4 left-1/2 -translate-x-1/2 flex gap-1">`;
+                    if (progress >= 1 && slotData.quality < 2) iconsHTML += `<span class="text-2xl animate-bounce">⭐</span>`;
+                    if (isHungry) iconsHTML += `<span class="text-2xl">🍚</span>`;
+                    iconsHTML += `</div>`;
+                    fishEl.innerHTML = `${iconsHTML}<div class="w-full h-full bg-contain bg-no-repeat bg-center" style="background-image: url('${fishData.imageUrl}')"></div><div class="absolute -bottom-3 left-0 right-0 h-2 bg-gray-300 rounded-full mx-2"><div class="h-full bg-green-500 rounded-full" style="width: ${progress*100}%"></div></div>`;
+                    fishEl.onclick = (e) => { e.stopPropagation(); manageFishInFarm(i, fishEl); };
+                    pondContainer.appendChild(fishEl);
+                } else {
+                    const slotEl = document.createElement('div');
+                    slotEl.className = 'bg-blue-300/50 rounded-lg border-2 border-dashed border-blue-400 flex items-center justify-center cursor-pointer hover:bg-blue-300/80 transition';
+                    slotEl.innerHTML = `<span class="text-3xl text-blue-500">+</span>`;
+                    slotEl.onclick = () => stockFishFarm(i);
+                    pondContainer.appendChild(slotEl);
+                }
+            }
+            foodCountEl.textContent = (playerState.inventory && playerState.inventory.fish_food) || 0;
+        }
+
+        function hideFishFarmTooltip() {
+            document.getElementById('fish-farm-tooltip').classList.add('hidden');
+        }
+
+        // ===== โค้ดสำหรับบ่อเลี้ยงปลา (Fish Farm) ทั้งหมด =====
+
+        function upgradeFishFarm(upgradeType) {
+            const farm = farmState.fishFarm;
+            const upgradeConfig = GAME_DATA.fish_farm_upgrades[upgradeType];
+            const currentLevel = farm[upgradeType === 'food' ? 'foodLevel' : 'pondLevel'];
+            
+            if (currentLevel >= upgradeConfig.length - 1) {
+                alert("อัปเกรดสูงสุดแล้ว");
+                return;
+            }
+
+            const nextLevelData = upgradeConfig[currentLevel + 1];
+            if (playerState.money < nextLevelData.cost) {
+                alert("เงินไม่พอ!");
+                return;
+            }
+
+            showConfirmationModal(`คุณต้องการอัปเกรด ${upgradeType === 'food' ? 'อาหารปลา' : 'ขนาดบ่อ'} หรือไม่?`, () => {
+                const newPlayerState = { ...playerState };
+                const newFarmState = { ...farmState };
+                
+                newPlayerState.money -= nextLevelData.cost;
+                newFarmState.fishFarm[upgradeType === 'food' ? 'foodLevel' : 'pondLevel']++;
+
+                updatePlayerState(newPlayerState);
+                updateFarmState(newFarmState);
+            });
+        }
+        
+        function manageFishInFarm(slotIndex, fishElement) {
+            const slotData = farmState.fishFarm.slots[slotIndex];
+            if (!slotData) return;
+            
+            const tooltip = document.getElementById('fish-farm-tooltip');
+            const fishData = GAME_DATA[slotData.fishId];
+            const foodConfig = GAME_DATA.fish_farm_upgrades.food[farmState.fishFarm.foodLevel];
+            const timeNeeded = (fishData.growthTime || 86400) * 1000 * foodConfig.growthMultiplier;
+            const isReadyToUpgrade = (Date.now() - slotData.startTime) >= timeNeeded;
+            const remainingTime = formatTime(Math.max(0, (slotData.startTime + timeNeeded - Date.now())/1000));
+
+            let tooltipHTML = `<p class="font-bold">${fishData.name} ${'★'.repeat(slotData.quality)}</p>`;
+            
+            if (isReadyToUpgrade && slotData.quality < 2) {
+                tooltipHTML += `<p class="text-green-600">พร้อมอัปเกรดดาว!</p>`;
+                const upgradeBtn = document.createElement('button');
+                upgradeBtn.className = 'bg-yellow-400 text-sm p-1 rounded mt-1 w-full';
+                upgradeBtn.textContent = '⭐ อัปเกรด';
+                upgradeBtn.onclick = () => { upgradeFishQuality(slotIndex); hideFishFarmTooltip(); };
+                tooltip.innerHTML = tooltipHTML;
+                tooltip.appendChild(upgradeBtn);
+            } else if (slotData.quality >= 2) {
+                 tooltipHTML += `<p class="text-blue-600">โตเต็มที่แล้ว</p>`;
+                 tooltip.innerHTML = tooltipHTML;
+            } else {
+                 tooltipHTML += `<p class="text-xs">โตใน: ${remainingTime}</p>`;
+                 tooltip.innerHTML = tooltipHTML;
+            }
+            
+            const harvestBtn = document.createElement('button');
+            harvestBtn.className = 'bg-red-500 text-white text-sm p-1 rounded mt-1 w-full';
+            harvestBtn.textContent = 'นำกลับเข้าคลัง';
+            harvestBtn.onclick = () => { harvestFish(slotIndex); hideFishFarmTooltip(); };
+            tooltip.appendChild(harvestBtn);
+            
+            const rect = fishElement.getBoundingClientRect();
+            const containerRect = document.getElementById('fish-farm-pond').getBoundingClientRect();
+            tooltip.style.left = `${rect.left - containerRect.left + rect.width / 2}px`;
+            tooltip.style.top = `${rect.top - containerRect.top - tooltip.offsetHeight - 10}px`;
+            tooltip.style.transform = 'translateX(-50%)';
+            tooltip.classList.remove('hidden');
+        }
+
+        function upgradeFishQuality(slotIndex) {
+            const newFarmState = { ...farmState };
+            const slot = newFarmState.fishFarm.slots[slotIndex];
+            slot.quality++;
+            slot.startTime = Date.now();
+            slot.lastFedTime = Date.now(); // ให้อาหารอัตโนมัติเมื่ออัปเกรด
+            updateFarmState(newFarmState);
+        }
+
+        function feedFish(slotIndex) {
+             const foodInInventory = (playerState.inventory && playerState.inventory.fish_food) || 0;
+             if(foodInInventory < 1) { alert("อาหารปลาหมด!"); return; }
+
+             const newPlayerState = { ...playerState };
+             newPlayerState.inventory.fish_food--;
+             updatePlayerState(newPlayerState);
+
+             const newFarmState = { ...farmState };
+             newFarmState.fishFarm.slots[slotIndex].lastFedTime = Date.now();
+             updateFarmState(newFarmState);
+        }
+
+        function harvestFish(slotIndex) {
+            const newFarmState = { ...farmState };
+            const slotData = newFarmState.fishFarm.slots.splice(slotIndex, 1)[0];
+            if (!slotData) return;
+            
+            delete fishFarmAnimationState[slotIndex]; // ล้างข้อมูล animation ของปลาที่เอาออก
+
+            const newPlayerState = { ...playerState };
+            newPlayerState.storageBin.push({ id: slotData.fishId, quality: slotData.quality });
+            updatePlayerState(newPlayerState);
+            updateFarmState(newFarmState);
+        }
+
+        function stockFishFarm(slotIndex) {
+            const fishInStorage = playerState.storageBin
+                .filter(item => GAME_DATA[item.id]?.category === 'fish' && GAME_DATA[item.id].rarity !== 'Mystical' && item.quality < 2)
+                .reduce((acc, item) => {
+                    const key = `${item.id}_q${item.quality}`;
+                    if (!acc[key]) acc[key] = { ...item, count: 0 };
+                    acc[key].count++;
+                    return acc;
+                }, {});
+
+            showSubMenu('custom', 'เลือกปลาจากคลังมาเลี้ยง', Object.values(fishInStorage), (selectedItem) => {
+                const newPlayerState = { ...playerState };
+                const itemIndex = newPlayerState.storageBin.findIndex(i => i.id === selectedItem.id && i.quality === selectedItem.quality);
+                const itemToMove = newPlayerState.storageBin.splice(itemIndex, 1)[0];
+                
+                const newFarmState = { ...farmState };
+                if (!Array.isArray(newFarmState.fishFarm.slots)) newFarmState.fishFarm.slots = [];
+                
+                newFarmState.fishFarm.slots[slotIndex] = {
+                    fishId: itemToMove.id,
+                    quality: itemToMove.quality,
+                    startTime: Date.now(),
+                    lastFedTime: Date.now()
+                };
+                
+                delete fishFarmAnimationState[slotIndex]; // ล้างข้อมูล animation เก่า (ถ้ามี)
+                
+                updatePlayerState(newPlayerState);
+                updateFarmState(newFarmState);
+            });
+        }
 
         function renderFishing() {
             if (!playerState || !farmState) return;
@@ -3287,7 +3600,45 @@
                 };
                 actionsContainer.appendChild(moveButton);
             }
-            
+            if(itemData.category === 'fish' && itemData.rarity !== 'Mystical' && quality < 2) {
+                const farmButton = document.createElement('button');
+                farmButton.textContent = '🏞️ นำไปเลี้ยง';
+                farmButton.className = 'bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-2 px-4 rounded-lg';
+                farmButton.onclick = () => {
+                    // หาช่องว่างในบ่อปลา
+                    const capacity = GAME_DATA.fish_farm_upgrades.pond[farmState.fishFarm.pondLevel].capacity;
+                    const filledSlots = farmState.fishFarm.slots.filter(s => s).length;
+                    if (filledSlots >= capacity) {
+                        alert("บ่อเลี้ยงปลาเต็มแล้ว!");
+                        return;
+                    }
+                    // หา index ของช่องว่างช่องแรก
+                    let emptySlotIndex = -1;
+                    for(let i=0; i<capacity; i++) {
+                        if(!farmState.fishFarm.slots[i]) {
+                            emptySlotIndex = i;
+                            break;
+                        }
+                    }
+
+                    const newPlayerState = { ...playerState };
+                    const itemIndex = newPlayerState.storageBin.findIndex(i => i.id === itemId && i.quality === quality);
+                    const itemToMove = newPlayerState.storageBin.splice(itemIndex, 1)[0];
+
+                    const newFarmState = { ...farmState };
+                    newFarmState.fishFarm.slots[emptySlotIndex] = {
+                        fishId: itemToMove.id,
+                        quality: itemToMove.quality,
+                        startTime: Date.now(),
+                        lastFedTime: Date.now()
+                    };
+                    updatePlayerState(newPlayerState);
+                    updateFarmState(newFarmState);
+                    hideStorageItemDetailsModal();
+                };
+                actionsContainer.appendChild(farmButton);
+            }
+
             // แสดง Modal
             modal.classList.remove('hidden');
         }
@@ -3318,12 +3669,12 @@
             setTimeout(() => modal.classList.add('hidden'), 200);
         }
 
-        function showSubMenu(actionType, index, itemIds) {
+        function showSubMenu(actionType, index, itemIds, onSelect) {
             const modal = document.getElementById('submenu-modal');
             const titleEl = document.getElementById('submenu-modal-title');
             const itemsEl = document.getElementById('submenu-modal-items');
             itemsEl.innerHTML = '';
-            
+
             const titles = {
                 plant: 'เลือกเมล็ดที่จะปลูก',
                 fertilize: 'เลือกปุ๋ย',
@@ -3331,52 +3682,40 @@
                 placeFactory: 'เลือกโรงงานที่จะสร้าง',
                 useFactory: 'เลือกสูตรการผลิต'
             };
-            titleEl.textContent = titles[actionType] || 'เลือกรายการ';
 
-            // --- Logic ใหม่สำหรับ placeAnimal ---
-            if (actionType === 'placeAnimal') {
-                const groupedDeeds = playerState.storageBin
-                    .filter(item => GAME_DATA[item.id]?.type === 'animal_deed')
-                    .reduce((acc, deed) => {
-                        const key = `${deed.id}_q${deed.quality}`;
-                        if (!acc[key]) {
-                            acc[key] = { ...deed, count: 0 };
-                        }
-                        acc[key].count++;
-                        return acc;
-                    }, {});
+            // แก้ไข: ตรวจสอบและตั้งค่า Title ให้ถูกต้อง
+            if (actionType === 'custom') {
+                titleEl.textContent = index; // index ในที่นี้คือ title ที่ส่งมา
+            } else {
+                titleEl.textContent = titles[actionType] || 'เลือกรายการ';
+            }
 
-                if (Object.keys(groupedDeeds).length === 0) {
-                     itemsEl.innerHTML = `<p class="text-center col-span-3 text-gray-500">ไม่มีกรรมสิทธิ์สัตว์ในคลัง</p>`;
-                }
-
-                Object.values(groupedDeeds).forEach(deedGroup => {
-                    const deedData = GAME_DATA[deedGroup.id];
+            if (itemIds.some(item => item.count)) {
+                itemIds.forEach(itemGroup => {
+                    const itemData = GAME_DATA[itemGroup.id];
                     const itemButton = document.createElement('button');
                     itemButton.className = 'p-2 bg-gray-100 rounded-lg hover:bg-green-100 flex flex-col items-center justify-center gap-1';
+                    const iconHTML = itemData.imageUrl ? `<img src="${itemData.imageUrl}" class="w-10 h-10 object-contain">` : `<div class="text-3xl">${itemData.icon}</div>`;
                     itemButton.innerHTML = `
-                        <img src="${deedData.imageUrl}" class="w-10 h-10 object-contain">
-                        <div class="text-xs">${deedData.name} ${'★'.repeat(deedGroup.quality || 0)}</div>
-                        <div class="text-xs font-bold">x${deedGroup.count}</div>
+                        ${iconHTML}
+                        <div class="text-xs">${itemData.name} ${'★'.repeat(itemGroup.quality || 0)}</div>
+                        <div class="text-xs font-bold">x${itemGroup.count}</div>
                     `;
                     itemButton.onclick = () => {
-                        placeAnimal(index, deedGroup.id, deedGroup.quality);
+                        if (onSelect) onSelect(itemGroup);
                         hideSubMenu();
                     };
                     itemsEl.appendChild(itemButton);
                 });
-
             } else {
-                // --- Logic เดิมสำหรับ action อื่นๆ ทั้งหมด ---
+                // ... โค้ดส่วน else ไม่มีการเปลี่ยนแปลง ...
                 itemIds.forEach(itemId => {
                     let itemData, clickAction, name, iconHTML;
-                    
                     if (actionType === 'useFactory') {
                         const factoryData = GAME_DATA[farmState.factories[index].factoryId];
                         const recipe = factoryData.recipes.find(r => r.id === itemId);
                         const outputData = GAME_DATA[recipe.resultId];
                         let ingredientsText = recipe.inputs.map(inp => `${GAME_DATA[inp.id].name} x${inp.count}`).join(', ');
-                        
                         itemData = recipe;
                         name = `${recipe.name}<br><small class="font-normal text-gray-500">${ingredientsText}</small>`;
                         iconHTML = `<img src="${outputData.imageUrl}" class="w-10 h-10 object-contain">`;
@@ -3384,19 +3723,15 @@
                     } else {
                         itemData = GAME_DATA[itemId];
                         name = itemData.name;
-                        iconHTML = itemData.imageUrl 
-                            ? `<img src="${itemData.imageUrl}" class="w-10 h-10 object-contain">`
-                            : `<div class="text-3xl">${itemData.icon}</div>`;
-
+                        iconHTML = itemData.imageUrl ? `<img src="${itemData.imageUrl}" class="w-10 h-10 object-contain">` : `<div class="text-3xl">${itemData.icon}</div>`;
                         const actions = {
                             plant: () => plant(index, itemId),
                             fertilize: () => fertilize(index, itemId),
-                            // placeAnimal ถูกย้ายไป Logic ข้างบนแล้ว
+                            placeAnimal: () => placeAnimal(index, itemId),
                             placeFactory: () => placeFactory(index, itemId),
                         };
                         clickAction = actions[actionType];
                     }
-
                     const itemButton = document.createElement('button');
                     itemButton.className = 'p-2 bg-gray-100 rounded-lg hover:bg-green-100 flex flex-col items-center justify-center gap-1';
                     itemButton.innerHTML = `${iconHTML}<div class="text-xs">${name}</div>`;
@@ -3583,45 +3918,50 @@
             return [...new Set(plots)].filter(i => i >= 0 && i < totalPlots);
         }
 
-        // ฟังก์ชัน water เวอร์ชันใหม่ (ทำงานแบบ AOE)
+        // ฟังก์ชัน water เวอร์ชันแก้ไข
         function water(plotIndex) {
-            const plotsToWater = getAoePlots(plotIndex, 'watering_can');
+            const potentialPlots = getAoePlots(plotIndex, 'watering_can');
+            
+            // 1. หาแปลงที่สามารถรดน้ำได้จริงๆ ก่อน
+            const plotsToWater = potentialPlots.filter(index => {
+                const plot = farmState.plots[index];
+                return plot && plot.plantId && !plot.wateredBy?.some(p => p.uid === userId);
+            });
+
+            if (plotsToWater.length === 0) return; // ถ้าไม่มีแปลงให้รด ก็ไม่ต้องทำอะไรเลย
+
+            // 2. หักพลังงานตามจำนวนแปลงที่รดได้จริง
             const energyCost = 2 * plotsToWater.length;
             if (!deductEnergy(energyCost)) return;
 
+            // 3. ทำการรดน้ำ
             const newFarmState = { ...farmState };
-            let wateredCount = 0;
             plotsToWater.forEach(index => {
                 const plot = newFarmState.plots[index];
-                if (plot && plot.plantId && !plot.wateredBy?.some(p => p.uid === userId)) {
-                    if (!plot.wateredBy) plot.wateredBy = [];
-                    plot.wateredBy.push({ uid: userId, nickname: playerState.nickname });
-                    document.querySelector(`#farm-grid > div:nth-child(${index + 1})`).classList.add('watered');
-                    wateredCount++;
-                }
+                if (!plot.wateredBy) plot.wateredBy = [];
+                plot.wateredBy.push({ uid: userId, nickname: playerState.nickname });
+                document.querySelector(`#farm-grid > div:nth-child(${index + 1})`).classList.add('watered');
             });
 
-            if (wateredCount > 0) {
-                updateFarmState(newFarmState);
-                updateQuestProgress('water', wateredCount);
-            }
+            updateFarmState(newFarmState);
+            updateQuestProgress('water', plotsToWater.length);
         }
 
-        // ฟังก์ชัน fertilize เวอร์ชันใหม่ (ทำงานแบบ AOE)
+        // ฟังก์ชัน fertilize เวอร์ชันแก้ไข
         function fertilize(plotIndex, fertilizerId) {
-            const plotsToFertilize = getAoePlots(plotIndex, 'spreader');
-            const fertilizerInInventory = playerState.inventory[fertilizerId] || 0;
-            let actualPlotsToFertilize = [];
-
-            // ตรวจสอบก่อนว่าแปลงไหนสามารถใส่ปุ๋ยได้จริงๆ
-            plotsToFertilize.forEach(index => {
+            const potentialPlots = getAoePlots(plotIndex, 'spreader');
+            
+            // 1. หาแปลงที่สามารถใส่ปุ๋ยได้จริงๆ ก่อน (ต้องเป็นแปลงว่าง)
+            const plotsToFertilize = potentialPlots.filter(index => {
                 const plot = farmState.plots[index];
-                if (plot && !plot.plantId) { // ใส่ปุ๋ยได้เฉพาะแปลงว่าง
-                    actualPlotsToFertilize.push(index);
-                }
+                return plot && !plot.plantId;
             });
 
-            if (fertilizerInInventory < actualPlotsToFertilize.length) {
+            if (plotsToFertilize.length === 0) return;
+
+            // 2. ตรวจสอบและหักปุ๋ยตามจำนวนที่ใช้จริง
+            const fertilizerInInventory = playerState.inventory[fertilizerId] || 0;
+            if (fertilizerInInventory < plotsToFertilize.length) {
                 alert("ปุ๋ยไม่พอสำหรับพื้นที่ที่เลือก!");
                 return;
             }
@@ -3630,58 +3970,55 @@
             const newPlayerState = { ...playerState };
             const fertilizerData = GAME_DATA[fertilizerId];
             
-            actualPlotsToFertilize.forEach(index => {
+            // 3. ทำการใส่ปุ๋ย
+            plotsToFertilize.forEach(index => {
                 const plot = newFarmState.plots[index];
                 plot.fertilizerLevel = (plot.fertilizerLevel || 0) + fertilizerData.qualityBonus;
                 document.querySelector(`#farm-grid > div:nth-child(${index + 1})`).classList.add('fertilized');
             });
 
-            if (actualPlotsToFertilize.length > 0) {
-                newPlayerState.inventory[fertilizerId] -= actualPlotsToFertilize.length;
-                updateFarmState(newFarmState);
-                updatePlayerState(newPlayerState);
-                updateQuestProgress('fertilize', actualPlotsToFertilize.length);
-            }
+            newPlayerState.inventory[fertilizerId] -= plotsToFertilize.length;
+            updateFarmState(newFarmState);
+            updatePlayerState(newPlayerState);
+            updateQuestProgress('fertilize', plotsToFertilize.length);
         }
 
-        // ฟังก์ชัน harvest เวอร์ชันใหม่ (ทำงานแบบ AOE)
+        // ฟังก์ชัน harvest เวอร์ชันแก้ไข
         function harvest(plotIndex) {
-            const plotsToHarvest = getAoePlots(plotIndex, 'scythe');
-            let actualPlotsToHarvest = [];
-
-            // ตรวจสอบก่อนว่าแปลงไหนพร้อมเก็บเกี่ยวจริงๆ
-            plotsToHarvest.forEach(index => {
+            const potentialPlots = getAoePlots(plotIndex, 'scythe');
+            
+            // 1. หาแปลงที่พร้อมเก็บเกี่ยวจริงๆ ก่อน
+            const plotsToHarvest = potentialPlots.filter(index => {
                 const plot = farmState.plots[index];
                 const plantData = GAME_DATA[plot?.plantId];
-                if (plot && plantData && !plot.harvestedBy?.some(p => p.uid === userId)) {
-                    const weatherMultiplier = WEATHER_DATA[farmState.currentWeather]?.cropMultiplier || 1;
-                    const elapsedSeconds = (Date.now() - plot.plantTime) / 1000;
-                    const growthMultiplier = 1 + ((plot.wateredBy?.length || 0) * 0.5);
-                    const effectiveGrowth = elapsedSeconds * growthMultiplier;
-                    const adjustedGrowTime = plantData.growTime * weatherMultiplier;
-                    if (effectiveGrowth >= adjustedGrowTime) {
-                        actualPlotsToHarvest.push(index);
-                    }
-                }
+                if (!plot || !plantData || plot.harvestedBy?.some(p => p.uid === userId)) return false;
+
+                const weatherMultiplier = WEATHER_DATA[farmState.currentWeather]?.cropMultiplier || 1;
+                const elapsedSeconds = (Date.now() - plot.plantTime) / 1000;
+                const growthMultiplier = 1 + ((plot.wateredBy?.length || 0) * 0.5);
+                const effectiveGrowth = elapsedSeconds * growthMultiplier;
+                const adjustedGrowTime = plantData.growTime * weatherMultiplier;
+                return effectiveGrowth >= adjustedGrowTime;
             });
             
-            if(actualPlotsToHarvest.length === 0) return;
+            if(plotsToHarvest.length === 0) return;
             
-            const energyCost = 1 * actualPlotsToHarvest.length;
+            // 2. หักพลังงานตามจำนวนที่เก็บเกี่ยวได้จริง
+            const energyCost = 1 * plotsToHarvest.length;
             if (!deductEnergy(energyCost)) return;
 
             const newFarmState = { ...farmState };
             const newPlayerState = { ...playerState };
             let harvestedItems = [];
 
-            actualPlotsToHarvest.forEach(index => {
+            // 3. ทำการเก็บเกี่ยว
+            plotsToHarvest.forEach(index => {
                 const plot = newFarmState.plots[index];
                 const cropData = GAME_DATA[plot.plantId];
                 
                 let quality = 0;
                 if (Math.random() < (plot.fertilizerLevel || 0)) quality = 1;
                 if (Math.random() < (plot.fertilizerLevel || 0) - 1) quality = 2;
-                
                 harvestedItems.push({ id: cropData.produceId, quality: quality });
 
                 if (!plot.harvestedBy) plot.harvestedBy = [];
@@ -4730,6 +5067,9 @@
                     if (!farmState.breedingStations) {
                         farmState.breedingStations = [{ parents: [], job: null }];
                     }
+                    if (!farmState.fishFarm) {
+                        farmState.fishFarm = { foodLevel: 0, pondLevel: 0, slots: [] };
+                    }
                 }
             }, handleFirestoreError);
         }
@@ -4758,7 +5098,12 @@
                             scythe: 'scythe_basic',
                             spreader: 'spreader_basic'
                         },
-                        breedingStations:[{ parents: [], job: null }]
+                        breedingStations:[{ parents: [], job: null }],
+                        fishFarm: {
+                            foodLevel: 0,
+                            pondLevel: 0,
+                            slots: []
+                        }
                     };
                     await setDoc(farmDocRef, initialFarmState);
                 }
@@ -4992,7 +5337,10 @@
                 else openParentSelector(2);
             };
             // --- ไม่มีการกำหนด onclick ให้ start-breeding-btn และ cancel-breeding-btn ที่นี่อีกต่อไป ---
-
+            document.getElementById('fish-farm-upgrades').addEventListener('click', e => {
+                const btn = e.target.closest('.upgrade-fish-farm-btn');
+                if (btn && !btn.disabled) upgradeFishFarm(btn.dataset.type);
+            });
             // Admin & Reset Buttons
             const adminResetBtn = document.getElementById('admin-reset-btn');
             const adminSellBtn = document.getElementById('admin-force-sell-btn');
@@ -5060,6 +5408,34 @@
                 const upgradeButton = e.target.closest('.upgrade-tool-btn');
                 if (upgradeButton && !upgradeButton.disabled) {
                     upgradeTool(upgradeButton.dataset.toolType);
+                }
+            });
+            const gotoFishFarmBtn = document.getElementById('goto-fish-farm-btn');
+            const backToFishingBtn = document.getElementById('back-to-fishing-btn');
+            const fishingView = document.getElementById('fishing-view');
+            const fishFarmView = document.getElementById('fish-farm-view');
+
+            if (gotoFishFarmBtn) {
+                gotoFishFarmBtn.onclick = () => {
+                    fishingView.classList.add('hidden');
+                    fishFarmView.classList.remove('hidden');
+                    startFishFarmAnimation(); // << เริ่ม Animation
+                };
+            }
+
+            if (backToFishingBtn) {
+                backToFishingBtn.onclick = () => {
+                    fishFarmView.classList.add('hidden');
+                    fishingView.classList.remove('hidden');
+                    stopFishFarmAnimation(); // << หยุด Animation
+                    hideFishFarmTooltip(); // << ซ่อน Tooltip
+                };
+            }
+            
+            // เพิ่ม Event Listener เพื่อซ่อน Tooltip เมื่อคลิกที่บ่อ
+            document.getElementById('fish-farm-pond').addEventListener('click', (e) => {
+                if(e.target.id === 'fish-farm-pond') {
+                    hideFishFarmTooltip();
                 }
             });
             // Character Creator
