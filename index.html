@@ -3127,31 +3127,55 @@
             const timeNeeded = (fishData.growthTime || 86400) * 1000 * foodConfig.growthMultiplier;
             const isReadyToUpgrade = (Date.now() - slotData.startTime) >= timeNeeded;
             const remainingTime = formatTime(Math.max(0, (slotData.startTime + timeNeeded - Date.now())/1000));
-
-            let tooltipHTML = `<p class="font-bold">${fishData.name} ${'★'.repeat(slotData.quality)}</p>`;
             
+            // --- START: โค้ดที่แก้ไขและจัดระเบียบใหม่ ---
+            const isHungry = (Date.now() - (slotData.lastFedTime || 0)) > (12 * 3600 * 1000);
+
+            // 1. ล้างข้อมูลเก่าและสร้าง Title
+            tooltip.innerHTML = '';
+            let infoHTML = `<p class="font-bold">${fishData.name} ${'★'.repeat(slotData.quality)}</p>`;
             if (isReadyToUpgrade && slotData.quality < 2) {
-                tooltipHTML += `<p class="text-green-600">พร้อมอัปเกรดดาว!</p>`;
+                infoHTML += `<p class="text-green-600">พร้อมอัปเกรดดาว!</p>`;
+            } else if (slotData.quality >= 2) {
+                 infoHTML += `<p class="text-blue-600">โตเต็มที่แล้ว</p>`;
+            } else {
+                 infoHTML += `<p class="text-xs">โตใน: ${remainingTime}</p>`;
+            }
+            tooltip.innerHTML = infoHTML;
+
+            // 2. สร้างและเพิ่มปุ่ม "ให้อาหาร" ถ้าปลาหิว
+            if (isHungry) {
+                const hasFood = playerState.storageBin.some(item => item.id === 'fish_food');
+                const feedBtn = document.createElement('button');
+                feedBtn.className = `w-full text-sm p-1 rounded mt-1 ${!hasFood ? 'bg-gray-400 text-white cursor-not-allowed' : 'bg-green-500 hover:bg-green-600 text-white'}`;
+                feedBtn.textContent = 'ให้อาหาร';
+                if (hasFood) {
+                    feedBtn.onclick = () => { feedFish(slotIndex); hideFishFarmTooltip(); };
+                } else {
+                    feedBtn.disabled = true;
+                    feedBtn.title = "ไม่มีอาหารปลาในคลัง";
+                }
+                tooltip.appendChild(feedBtn);
+            }
+
+            // 3. สร้างและเพิ่มปุ่ม "อัปเกรด"
+            if (isReadyToUpgrade && slotData.quality < 2) {
                 const upgradeBtn = document.createElement('button');
                 upgradeBtn.className = 'bg-yellow-400 text-sm p-1 rounded mt-1 w-full';
                 upgradeBtn.textContent = '⭐ อัปเกรด';
                 upgradeBtn.onclick = () => { upgradeFishQuality(slotIndex); hideFishFarmTooltip(); };
-                tooltip.innerHTML = tooltipHTML;
                 tooltip.appendChild(upgradeBtn);
-            } else if (slotData.quality >= 2) {
-                 tooltipHTML += `<p class="text-blue-600">โตเต็มที่แล้ว</p>`;
-                 tooltip.innerHTML = tooltipHTML;
-            } else {
-                 tooltipHTML += `<p class="text-xs">โตใน: ${remainingTime}</p>`;
-                 tooltip.innerHTML = tooltipHTML;
             }
             
+            // 4. สร้างและเพิ่มปุ่ม "นำกลับเข้าคลัง"
             const harvestBtn = document.createElement('button');
             harvestBtn.className = 'bg-red-500 text-white text-sm p-1 rounded mt-1 w-full';
             harvestBtn.textContent = 'นำกลับเข้าคลัง';
             harvestBtn.onclick = () => { harvestFish(slotIndex); hideFishFarmTooltip(); };
             tooltip.appendChild(harvestBtn);
+            // --- END: โค้ดที่แก้ไข ---
             
+            // จัดตำแหน่งและแสดง Tooltip (เหมือนเดิม)
             const rect = fishElement.getBoundingClientRect();
             const containerRect = document.getElementById('fish-farm-pond').getBoundingClientRect();
             tooltip.style.left = `${rect.left - containerRect.left + rect.width / 2}px`;
