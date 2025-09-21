@@ -1636,6 +1636,7 @@
 
         };
         let userId = null;
+        let isInitialLoadComplete = false;
         let farmState = null;
         let playerState = null;
         let isProcessingFactoryQueue = false;
@@ -5570,14 +5571,42 @@
 
         function initPlayerListeners(uid) {
             const playerDocRef = doc(db, "players", uid);
-            onSnapshot(playerDocRef, (docSnap) => {
+            onSnapshot(playerDocRef, async (docSnap) => { // ทำให้ callback เป็น async
+                // บล็อกนี้จะทำงานทุกครั้งที่ข้อมูลผู้เล่นมีการเปลี่ยนแปลง
                 if (docSnap.exists()) {
-                    playerState = docSnap.data();
-                    if (!playerState.produceBin) playerState.produceBin = [];
-                    if (!playerState.storageBin) playerState.storageBin = [];
-                    if (typeof playerState.houseLevel === 'undefined') playerState.houseLevel = 0;
-                    if (typeof playerState.fishingRodLevel === 'undefined') playerState.fishingRodLevel = 0;
-                    if (typeof playerState.energy === 'undefined') playerState.energy = 100;
+                    playerState = docSnap.data(); // playerState จะเป็นข้อมูลล่าสุดเสมอ
+
+                    // บล็อก if นี้จะทำงานแค่ "ครั้งเดียว" ตอนที่โหลดเกมเสร็จใหม่ๆ
+                    if (!isInitialLoadComplete) {
+                        isInitialLoadComplete = true; // ป้องกันไม่ให้โค้ดส่วนนี้ทำงานซ้ำอีก
+
+                        // 1. เริ่มต้นระบบเกมหลักทั้งหมด
+                        await startGame(uid, playerState);
+
+                        // 2. ตรวจสอบการรีเซ็ตประจำวันโดยใช้ข้อมูลที่สดใหม่ที่สุด
+                        const resetResult = await checkForTimeResets(playerState);
+                        if (resetResult.wasReset) {
+                            // ดึงข้อมูลฟาร์มล่าสุดมาแสดงใน Summary Modal
+                            const farmDocRef = doc(db, "publicFarmData", "farmState");
+                            const farmDocSnap = await getDoc(farmDocRef);
+                            if (farmDocSnap.exists()) {
+                                showSummaryModal(resetResult.earningsData, farmDocSnap.data());
+                            }
+                        }
+
+                        // 3. เริ่มนับถอยหลังสู่เที่ยงคืนถัดไป
+                        if (!resetSchedulerStarted) {
+                            scheduleNextMidnightReset();
+                            resetSchedulerStarted = true;
+                        }
+                    }
+                } else {
+                    // กรณีเป็นผู้เล่นใหม่ และยังไม่มีข้อมูล
+                    if (!isInitialLoadComplete) {
+                        isInitialLoadComplete = true;
+                        document.getElementById('loading-screen').classList.add('loading-hidden');
+                        showNameModal(true);
+                    }
                 }
             }, handleFirestoreError);
         }
@@ -5695,23 +5724,26 @@
 
         function scheduleNextMidnightReset() {
             const now = new Date();
-            const tomorrow = new Date(now);
-            tomorrow.setDate(tomorrow.getDate() + 1);
-            tomorrow.setHours(0, 0, 0, 0);
+            const resetTime = new Date(now);
 
-            const msUntilMidnight = tomorrow.getTime() - now.getTime();
-            console.log(`Next reset scheduled in ${formatTime(msUntilMidnight / 1000)}`);
+            // --- START: เปลี่ยนเวลาเป้าหมายเป็น 00:32 น. ---
+            resetTime.setHours(0, 32, 0, 0); 
+            // --- END: เปลี่ยนเวลาเป้าหมาย ---
 
-            // --- START: แก้ไขโค้ดในส่วน setTimeout ---
-            setTimeout(async () => { // ทำให้ callback เป็น async
-                console.log("Midnight reset triggered!");
+            // ถ้าเวลา 00:32 ของวันนี้ผ่านไปแล้ว ให้ตั้งเวลาเป็น 00:32 ของวันพรุ่งนี้แทน
+            if (now.getTime() > resetTime.getTime()) {
+                resetTime.setDate(resetTime.getDate() + 1);
+            }
+
+            const msUntilReset = resetTime.getTime() - now.getTime();
+            console.log(`Next reset scheduled in ${formatTime(msUntilReset / 1000)}`);
+
+            setTimeout(async () => {
+                console.log("Scheduled reset triggered at 00:32!");
                 
-                // เรียกใช้และรอผลลัพธ์จากการรีเซ็ต
                 const resetResult = await checkForTimeResets(playerState);
                 
-                // ตรวจสอบผลลัพธ์ และถ้ามีการรีเซ็ตเกิดขึ้นจริง ให้แสดง Modal
                 if (resetResult.wasReset) {
-                    // ดึงข้อมูลฟาร์มล่าสุด (ที่มีสภาพอากาศใหม่) เพื่อนำมาแสดง
                     const farmDocRef = doc(db, "publicFarmData", "farmState");
                     const farmDocSnap = await getDoc(farmDocRef);
                     if (farmDocSnap.exists()) {
@@ -5719,10 +5751,9 @@
                     }
                 }
                 
-                // ตั้งเวลาสำหรับเที่ยงคืนถัดไป
+                // ตั้งเวลาใหม่สำหรับรอบถัดไป
                 scheduleNextMidnightReset();
-            }, msUntilMidnight);
-            // --- END: แก้ไขโค้ดในส่วน setTimeout ---
+            }, msUntilReset);
         }
 
         function setupControls() {
@@ -6115,58 +6146,26 @@
             setupControls();
             initParkSystem();
             try {
-                 await setPersistence(auth, browserLocalPersistence);
-                 onAuthStateChanged(auth, async (user) => {
+                await setPersistence(auth, browserLocalPersistence);
+                onAuthStateChanged(auth, async (user) => {
                     if (user) {
                         userId = user.uid;
                         initializeVersionChecker();
-                        
-                        const playerDocRef = doc(db, "players", userId);
-                        const farmDocRef = doc(db, "publicFarmData", "farmState"); // <--- เพิ่มตัวแปรอ้างอิง farmState
+                        await ensureFarmDataExists();
 
-                        try {
-                            await ensureFarmDataExists();
-                            const playerDocSnap = await getDoc(playerDocRef);
-                            
-                            if (playerDocSnap.exists()) {
-                            const initialPlayerState = playerDocSnap.data();
-                            // เริ่มเกมและตั้งค่า listener ต่างๆ ก่อน
-                            await startGame(userId, initialPlayerState); 
-
-                            // เช็คการรีเซ็ตแค่ครั้งแรกที่โหลดหน้าเว็บ
-                            if (!resetSchedulerStarted) {
-                            // เรียกฟังก์ชันรีเซ็ต และ "เก็บผลลัพธ์" ไว้ในตัวแปร resetResult
-                            const resetResult = await checkForTimeResets(initialPlayerState);
-                            
-                            // ตรวจสอบผลลัพธ์: ถ้ามีการรีเซ็ตเกิดขึ้นจริง (wasReset === true)
-                            if (resetResult.wasReset) {
-                                // ให้ไปดึงข้อมูลฟาร์มล่าสุด (ที่มีสภาพอากาศใหม่) มาแสดง
-                                const farmDocRef = doc(db, "publicFarmData", "farmState");
-                                const farmDocSnap = await getDoc(farmDocRef);
-                                if (farmDocSnap.exists()) {
-                                    showSummaryModal(resetResult.earningsData, farmDocSnap.data());
-                                }
-                            }
-                            
-                            // เริ่มนับถอยหลังสู่เที่ยงคืนถัดไป
-                            scheduleNextMidnightReset();
-                            resetSchedulerStarted = true;
-                        }
-                                // --- จบส่วนที่แก้ไข ---
-
-                            } else {
-                                document.getElementById('loading-screen').classList.add('loading-hidden');
-                                showNameModal(true);
-                            }
-
-                        } catch (error) { handleFirestoreError(error); }
-                    } else { await signInAnonymously(auth); }
+                        // เราจะเรียกแค่ 2 ฟังก์ชันนี้เท่านั้น
+                        // ที่เหลือจะถูกจัดการใน initPlayerListeners
+                        initFarmListeners();
+                        initPlayerListeners(userId); 
+                    } else {
+                        await signInAnonymously(auth);
+                    }
                 });
             } catch (error) { 
                 console.error("Authentication failed:", error); 
                 document.body.innerHTML = `<div class="p-4 text-center text-red-700 bg-red-100">เกิดข้อผิดพลาดในการเชื่อมต่อ: ไม่สามารถยืนยันตัวตนได้ กรุณาตรวจสอบ Firebase Config ของคุณ</div>`;
             }
         });
-    </script>
+            </script>
 </body>
 </html>
