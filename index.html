@@ -5702,11 +5702,27 @@
             const msUntilMidnight = tomorrow.getTime() - now.getTime();
             console.log(`Next reset scheduled in ${formatTime(msUntilMidnight / 1000)}`);
 
-            setTimeout(() => {
+            // --- START: แก้ไขโค้ดในส่วน setTimeout ---
+            setTimeout(async () => { // ทำให้ callback เป็น async
                 console.log("Midnight reset triggered!");
-                checkForTimeResets(playerState);
+                
+                // เรียกใช้และรอผลลัพธ์จากการรีเซ็ต
+                const resetResult = await checkForTimeResets(playerState);
+                
+                // ตรวจสอบผลลัพธ์ และถ้ามีการรีเซ็ตเกิดขึ้นจริง ให้แสดง Modal
+                if (resetResult.wasReset) {
+                    // ดึงข้อมูลฟาร์มล่าสุด (ที่มีสภาพอากาศใหม่) เพื่อนำมาแสดง
+                    const farmDocRef = doc(db, "publicFarmData", "farmState");
+                    const farmDocSnap = await getDoc(farmDocRef);
+                    if (farmDocSnap.exists()) {
+                        showSummaryModal(resetResult.earningsData, farmDocSnap.data());
+                    }
+                }
+                
+                // ตั้งเวลาสำหรับเที่ยงคืนถัดไป
                 scheduleNextMidnightReset();
             }, msUntilMidnight);
+            // --- END: แก้ไขโค้ดในส่วน setTimeout ---
         }
 
         function setupControls() {
