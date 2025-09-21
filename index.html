@@ -5726,9 +5726,7 @@
             const now = new Date();
             const resetTime = new Date(now);
 
-            // --- START: เปลี่ยนเวลาเป้าหมายเป็น 00:32 น. ---
-            resetTime.setHours(0, 32, 0, 0); 
-            // --- END: เปลี่ยนเวลาเป้าหมาย ---
+            resetTime.setHours(0, 0, 0, 0); 
 
             // ถ้าเวลา 00:32 ของวันนี้ผ่านไปแล้ว ให้ตั้งเวลาเป็น 00:32 ของวันพรุ่งนี้แทน
             if (now.getTime() > resetTime.getTime()) {
