@@ -1105,9 +1105,8 @@
 
         function executeCraft(recipeId, quantity, consumedItems, craftType) {
             const newPlayerState = { ...playerState };
-            
+
             consumedItems.forEach(consumedItem => {
-                // --- ส่วนที่แก้ไข: แก้ไขชื่อตัวแปรให้ถูกต้อง ---
                 const indexToRemove = newPlayerState.storageBin.findIndex(storageItem => 
                     storageItem.id === consumedItem.id && storageItem.quality === consumedItem.quality
                 );
@@ -1118,7 +1117,7 @@
 
             const newFarmState = { ...farmState };
             const ingredientQualities = consumedItems.map(item => item.quality);
-            
+
             const newJob = {
                 recipeId: recipeId,
                 ingredientQualities: ingredientQualities
@@ -1131,14 +1130,16 @@
 
                 if (!newFarmState.kitchen) newFarmState.kitchen = { queue: [] };
                 newFarmState.kitchen.queue.push(newJob);
-                updateQuestProgress('cook', quantity);
+
+                // --- แก้ไขการเรียกใช้ฟังก์ชันตรงนี้ ---
+                updateQuestProgress(newFarmState, 'cook', { amount: quantity });
 
             } else if (craftType === 'process') {
                 const factoryIndex = selectionSession.factoryIndex;
                 const factory = newFarmState.factories[factoryIndex];
-                
+
                 newJob.processedBy = { uid: userId, nickname: playerState.nickname };
-                
+
                 if (!factory.queue) factory.queue = [];
                 if (factory.queue.length === 0) {
                     newJob.startTime = Date.now();
@@ -1443,67 +1444,67 @@
                 growthTime: 86400, // 24 ชั่วโมง
                 minigameBehavior: { speed: 1.3, pattern: 'smooth', restChance: 0.03 }
             },
-            'tuna': { name: 'ปลาทูน่า', icon: '🐟', rarity: 'Uncommon', sellPrice: [35, 50, 65], type: 'produce', energyRestore: 15, imageUrl: 'tuna.png', category: 'fish', breedingTime: 172800,
+            'tuna': { name: 'ปลาทูน่า', icon: '🐟', rarity: 'Uncommon', sellPrice: [35, 50, 65], type: 'produce', energyRestore: 15, imageUrl: 'tuna.png', category: 'fish', breedingTime: 86400,
                 growthTime: 129600, // 36 ชั่วโมง
                 minigameBehavior: { speed: 1.8, pattern: 'smooth', restChance: 0.02 }
             },
-            'salmon': { name: 'ปลาแซลมอน', icon: '🐠', rarity: 'Uncommon', sellPrice: [45, 60, 80], type: 'produce', energyRestore: 18, imageUrl: 'salmon.png', category: 'fish', breedingTime: 172800,
+            'salmon': { name: 'ปลาแซลมอน', icon: '🐠', rarity: 'Uncommon', sellPrice: [45, 60, 80], type: 'produce', energyRestore: 18, imageUrl: 'salmon.png', category: 'fish', breedingTime: 86400,
                 growthTime: 129600, // 36 ชั่วโมง
                 minigameBehavior: { speed: 1.9, pattern: 'smooth', restChance: 0.02 }
             },
-            'eel': { name: 'ปลาไหล', icon: '鰻', rarity: 'Rare', sellPrice: [150, 200, 250], type: 'produce', energyRestore: 30, imageUrl: 'eel.png', category: 'fish', breedingTime: 259200,
+            'eel': { name: 'ปลาไหล', icon: '鰻', rarity: 'Rare', sellPrice: [150, 200, 250], type: 'produce', energyRestore: 30, imageUrl: 'eel.png', category: 'fish', breedingTime: 86400,
                 growthTime: 172800, // 48 ชั่วโมง
                 minigameBehavior: { speed: 2.5, pattern: 'dart', restChance: 0.02 }
             },
-            'pufferfish': { name: 'ปลาปักเป้า', icon: '🐡', rarity: 'Rare', sellPrice: [200, 250, 300], type: 'produce', energyRestore: 35, imageUrl: 'pufferfish.png', category: 'fish', breedingTime: 259200,
+            'pufferfish': { name: 'ปลาปักเป้า', icon: '🐡', rarity: 'Rare', sellPrice: [200, 250, 300], type: 'produce', energyRestore: 35, imageUrl: 'pufferfish.png', category: 'fish', breedingTime: 86400,
                 growthTime: 172800, // 48 ชั่วโมง
                 minigameBehavior: { speed: 2.6, pattern: 'dart', restChance: 0.015 }
             },
-            'clownfish': { name: 'ปลาการ์ตูน', icon: '🤡', rarity: 'Uncommon', sellPrice: [40, 50, 65], type: 'produce', energyRestore: 12, imageUrl: 'clownfish.png', category: 'fish', breedingTime: 172800,
+            'clownfish': { name: 'ปลาการ์ตูน', icon: '🤡', rarity: 'Uncommon', sellPrice: [40, 50, 65], type: 'produce', energyRestore: 12, imageUrl: 'clownfish.png', category: 'fish', breedingTime: 86400,
                 growthTime: 129600, // 36 ชั่วโมง
                 minigameBehavior: { speed: 1.7, pattern: 'smooth', restChance: 0.025 }
             },
-            'seahorse': { name: 'ม้าน้ำ', icon: '🐴', rarity: 'Uncommon', sellPrice: [45, 55, 70], type: 'produce', energyRestore: 10, imageUrl: 'seahorse.png', category: 'fish', breedingTime: 172800,
+            'seahorse': { name: 'ม้าน้ำ', icon: '🐴', rarity: 'Uncommon', sellPrice: [45, 55, 70], type: 'produce', energyRestore: 10, imageUrl: 'seahorse.png', category: 'fish', breedingTime: 86400,
                 growthTime: 129600, // 36 ชั่วโมง
                 minigameBehavior: { speed: 1.5, pattern: 'smooth', restChance: 0.04 }
             },
-            'jellyfish': { name: 'แมงกะพรุน', icon: '🍥', rarity: 'Uncommon', sellPrice: [50, 60, 75], type: 'produce', energyRestore: 8, imageUrl: 'jellyfish.png', category: 'fish', breedingTime: 172800,
+            'jellyfish': { name: 'แมงกะพรุน', icon: '🍥', rarity: 'Uncommon', sellPrice: [50, 60, 75], type: 'produce', energyRestore: 8, imageUrl: 'jellyfish.png', category: 'fish', breedingTime: 86400,
                 growthTime: 129600, // 36 ชั่วโมง
                 minigameBehavior: { speed: 1.4, pattern: 'smooth', restChance: 0.05 }
             },
-            'grouper': { name: 'ปลาเก๋า', icon: '🐟', rarity: 'Rare', sellPrice: [250, 300, 350], type: 'produce', energyRestore: 25, imageUrl: 'grouper.png', category: 'fish', breedingTime: 259200,
+            'grouper': { name: 'ปลาเก๋า', icon: '🐟', rarity: 'Rare', sellPrice: [250, 300, 350], type: 'produce', energyRestore: 25, imageUrl: 'grouper.png', category: 'fish', breedingTime: 86400,
                 growthTime: 172800, // 48 ชั่วโมง
                 minigameBehavior: { speed: 2.4, pattern: 'dart', restChance: 0.02 }
             },
-            'moray_eel': { name: 'ปลาไหลมอเรย์', icon: '🐍', rarity: 'Rare', sellPrice: [270, 320, 370], type: 'produce', energyRestore: 28, imageUrl: 'moray_eel.png', category: 'fish', breedingTime: 259200,
+            'moray_eel': { name: 'ปลาไหลมอเรย์', icon: '🐍', rarity: 'Rare', sellPrice: [270, 320, 370], type: 'produce', energyRestore: 28, imageUrl: 'moray_eel.png', category: 'fish', breedingTime: 86400,
                 growthTime: 172800, // 48 ชั่วโมง
                 minigameBehavior: { speed: 2.7, pattern: 'dart', restChance: 0.01 }
             },
-            'alaskan_king_crab': { name: 'ปูอลาสก้า', icon: '🦀', rarity: 'Rare', sellPrice: [320, 370, 420], type: 'produce', energyRestore: 30, imageUrl: 'alaskan_king_crab.png', category: 'fish', breedingTime: 259200,
+            'alaskan_king_crab': { name: 'ปูอลาสก้า', icon: '🦀', rarity: 'Rare', sellPrice: [320, 370, 420], type: 'produce', energyRestore: 30, imageUrl: 'alaskan_king_crab.png', category: 'fish', breedingTime: 86400,
                 growthTime: 172800, // 48 ชั่วโมง
                 minigameBehavior: { speed: 2.2, pattern: 'dart', restChance: 0.03 }
             },
-            'shrimp': { name: 'กุ้ง', icon: '🦐', rarity: 'Legendary', sellPrice: [500, 600, 750], type: 'produce', energyRestore: 25, imageUrl: 'shrimp.png', category: 'fish', breedingTime: 432000,
+            'shrimp': { name: 'กุ้ง', icon: '🦐', rarity: 'Legendary', sellPrice: [500, 600, 750], type: 'produce', energyRestore: 25, imageUrl: 'shrimp.png', category: 'fish', breedingTime: 86400,
                 growthTime: 259200, // 72 ชั่วโมง
                 minigameBehavior: { speed: 3.0, pattern: 'dart', restChance: 0.01 }
             },
-            'stingray': { name: 'ปลากระเบน', icon: '🌊', rarity: 'Legendary', sellPrice: [600, 800, 1000], type: 'produce', energyRestore: 35, imageUrl: 'stingray.png', category: 'fish', breedingTime: 432000,
+            'stingray': { name: 'ปลากระเบน', icon: '🌊', rarity: 'Legendary', sellPrice: [600, 800, 1000], type: 'produce', energyRestore: 35, imageUrl: 'stingray.png', category: 'fish', breedingTime: 86400,
                 growthTime: 259200, // 72 ชั่วโมง
                 minigameBehavior: { speed: 2.8, pattern: 'smooth', restChance: 0.01 }
             },
-            'shark': { name: 'ปลาฉลาม', icon: '🦈', rarity: 'Legendary', sellPrice: [800, 1000, 1200], type: 'produce', energyRestore: 40, imageUrl: 'shark.png', category: 'fish', breedingTime: 432000,
+            'shark': { name: 'ปลาฉลาม', icon: '🦈', rarity: 'Legendary', sellPrice: [800, 1000, 1200], type: 'produce', energyRestore: 40, imageUrl: 'shark.png', category: 'fish', breedingTime: 86400,
                 growthTime: 259200, // 72 ชั่วโมง
                 minigameBehavior: { speed: 3.2, pattern: 'dart', restChance: 0.005 }
             },
-            'bluefin_tuna': { name: 'ปลาทูน่าครีบน้ำเงิน', icon: '🐟', rarity: 'Legendary', sellPrice: [1000, 1200, 1400], type: 'produce', energyRestore: 50, imageUrl: 'bluefin_tuna.png', category: 'fish', breedingTime: 432000,
+            'bluefin_tuna': { name: 'ปลาทูน่าครีบน้ำเงิน', icon: '🐟', rarity: 'Legendary', sellPrice: [1000, 1200, 1400], type: 'produce', energyRestore: 50, imageUrl: 'bluefin_tuna.png', category: 'fish', breedingTime: 86400,
                 growthTime: 259200, // 72 ชั่วโมง
                 minigameBehavior: { speed: 3.5, pattern: 'dart', restChance: 0.0 }
             },
-            'sturgeon': { name: 'ปลาสเตอร์เจียน', icon: '🦴', rarity: 'Legendary', sellPrice: [1200, 1400, 1600], type: 'produce', energyRestore: 45, imageUrl: 'sturgeon.png', category: 'fish', breedingTime: 432000,
+            'sturgeon': { name: 'ปลาสเตอร์เจียน', icon: '🦴', rarity: 'Legendary', sellPrice: [1200, 1400, 1600], type: 'produce', energyRestore: 45, imageUrl: 'sturgeon.png', category: 'fish', breedingTime: 86400,
                 growthTime: 259200, // 72 ชั่วโมง
                 minigameBehavior: { speed: 2.9, pattern: 'smooth', restChance: 0.01 }
             },
-            'oarfish': { name: 'ปลาพญานาค', icon: '✨', rarity: 'Legendary', sellPrice: [1500, 1800, 2100], type: 'produce', energyRestore: 60, imageUrl: 'oarfish.png', category: 'fish', breedingTime: 432000,
+            'oarfish': { name: 'ปลาพญานาค', icon: '✨', rarity: 'Legendary', sellPrice: [1500, 1800, 2100], type: 'produce', energyRestore: 60, imageUrl: 'oarfish.png', category: 'fish', breedingTime: 86400,
                 growthTime: 259200, // 72 ชั่วโมง
                 minigameBehavior: { speed: 3.3, pattern: 'smooth', restChance: 0.0 }
             },
@@ -1553,7 +1554,7 @@
             'chicken':      { name: 'ไก่', type: 'animal_instance', produceTime: 600, produceId: 'egg', icon: '🐔', imageUrl: 'chicken.png', breedingTime: 86400 },
             'egg':          { name: 'ไข่', type: 'produce', sellPrice: [12, 18, 25], icon: '🥚', imageUrl: 'egg.png', energyRestore: 5, category: 'egg' },
             'cow_deed':     { name: 'กรรมสิทธิ์วัว', type: 'animal_deed', cost: 500, animalId: 'cow', icon: '🐄', imageUrl: 'cow.png' },
-            'cow':          { name: 'วัว', type: 'animal_instance', produceTime: 3600, produceId: 'milk', icon: '🐄', imageUrl: 'cow.png', breedingTime: 172800 },
+            'cow':          { name: 'วัว', type: 'animal_instance', produceTime: 3600, produceId: 'milk', icon: '🐄', imageUrl: 'cow.png', breedingTime: 86400 },
             'milk':         { name: 'นม', type: 'produce', sellPrice: [50, 70, 90], icon: '🥛', imageUrl: 'milk.png', energyRestore: 10, category: 'milk' },
             'duck_deed':    { name: 'กรรมสิทธิ์เป็ด', type: 'animal_deed', cost: 120, animalId: 'duck', icon: '🦆', imageUrl: 'duck.png' },
             'duck':         { name: 'เป็ด', type: 'animal_instance', produceTime: 900, produceId: 'duck_egg', icon: '🦆', imageUrl: 'duck.png', breedingTime: 86400 },
@@ -1562,15 +1563,23 @@
             'goose':        { name: 'ห่าน', type: 'animal_instance', produceTime: 1800, produceId: 'feather', icon: '🦢', imageUrl: 'swan.png', breedingTime: 86400 },
             'feather':      { name: 'ขนนก', type: 'produce', sellPrice: [25, 38, 55], icon: '🪶', imageUrl: 'feather.png', energyRestore: 0 },
             'turtle_deed':  { name: 'กรรมสิทธิ์เต่า', type: 'animal_deed', cost: 1000, animalId: 'turtle', icon: '🐢', imageUrl: 'turtle.png' },
-            'turtle':       { name: 'เต่า', type: 'animal_instance', produceTime: 86400, produceId: 'gem', icon: '🐢', imageUrl: 'turtle.png', breedingTime: 259200 },
+            'turtle':       { name: 'เต่า', type: 'animal_instance', produceTime: 86400, produceId: 'gem', icon: '🐢', imageUrl: 'turtle.png', breedingTime: 86400 },
             'gem':          { name: 'อัญมณี', type: 'produce', sellPrice: [200, 300, 500], icon: '💎', imageUrl: 'gem.png', energyRestore: 0 },
             'pig_deed': 	{ name: 'กรรมสิทธิ์หมู', type: 'animal_deed', cost: 400, animalId: 'pig', icon: '🐷', imageUrl: 'pig.png' },
-            'pig':      	{ name: 'หมู', type: 'animal_instance', produceTime: 14400, produceId: 'truffle', icon: '🐷', imageUrl: 'pig.png', breedingTime: 172800 },
+            'pig':      	{ name: 'หมู', type: 'animal_instance', produceTime: 14400, produceId: 'truffle', icon: '🐷', imageUrl: 'pig.png', breedingTime: 86400 },
             'truffle':      { name: 'ทรัฟเฟิล', type: 'produce', sellPrice: [500, 600, 700], icon: '🍄', imageUrl: 'truffle.png', energyRestore: 10, category: 'truffle' },
 			'chicken_meat': { name: 'เนื้อไก่', icon: '🍗', type: 'produce', sellPrice: [70, 75, 85], energyRestore: 15, imageUrl: 'chicken_meat.png' },
 			'beef': 		{ name: 'เนื้อวัว', icon: '🥩', type: 'produce', sellPrice: [170, 180, 190], energyRestore: 25, imageUrl: 'beef.png' },
 			'pig_meat': 	{ name: 'เนื้อหมู', icon: '🥩', type: 'produce', sellPrice: [150, 170, 180], energyRestore: 25, imageUrl: 'pig_meat.png' },
 			'duck_meat': 	{ name: 'เนื้อเป็ด', icon: '🍗', type: 'produce', sellPrice: [75, 80, 90], energyRestore: 15, imageUrl: 'duck_meat.png' },
+            'fish_roe':     { name: 'ไข่ปลา', icon: '🥚', type: 'produce', sellPrice: [80, 100, 120], energyRestore: 10, imageUrl: 'fish_roe.png', category: 'fish_product' },
+            'premium_fish_roe': { name: 'ไข่ปลาคัดพิเศษ', icon: '🥚', type: 'produce', sellPrice: [350, 435, 525], energyRestore: 25, imageUrl: 'premium_fish_roe.png', category: 'fish_product' },
+            'shrimp_roe':   { name: 'ไข่กุ้ง', icon: '🦐', type: 'produce', sellPrice: [400, 500, 600], energyRestore: 30, imageUrl: 'shrimp_roe.png', category: 'fish_product' },
+            'stingray_roe': { name: 'ไข่ปลากระเบน', icon: '🌊', type: 'produce', sellPrice: [480, 600, 720], energyRestore: 32, imageUrl: 'stingray_roe.png', category: 'fish_product' },
+            'shark_roe':    { name: 'ไข่ปลาฉลาม', icon: '🦈', type: 'produce', sellPrice: [640, 800, 960], energyRestore: 35, imageUrl: 'shark_roe.png', category: 'fish_product' },
+            'bluefin_tuna_roe': { name: 'ไข่ปลาทูน่าครีบน้ำเงิน', icon: '🐟', type: 'produce', sellPrice: [800, 1000, 1200], energyRestore: 40, imageUrl: 'bluefin_tuna_roe.png', category: 'fish_product' },
+            'sturgeon_roe': { name: 'ไข่ปลาสเตอร์เจียน', icon: '🦴', type: 'produce', sellPrice: [1000, 1250, 1500], energyRestore: 50, imageUrl: 'sturgeon_roe.png', category: 'fish_product' },
+            'oarfish_roe': { name: 'ไข่ปลาพญานาค', icon: '✨', type: 'produce', sellPrice: [1200, 1500, 1800], energyRestore: 60, imageUrl: 'oarfish_roe.png', category: 'fish_product' },
 			'winery_deed': 	{ name: 'แบบแปลนโรงหมักไวน์', type: 'factory_deed', cost: 15000, factoryId: 'winery', icon: '🍇', imageUrl: 'winery.png' },
             'cheese_press_deed': { name: 'แบบแปลนโรงทำชีส', type: 'factory_deed', cost: 10000, factoryId: 'cheese_press', icon: '🧀', imageUrl: 'cheese_press.png' },
             'preserves_jar_deed': { name: 'แบบแปลนโรงทำแยม', type: 'factory_deed', cost: 7500, factoryId: 'preserves_jar', icon: '🍓', imageUrl: 'preserves_jar.png' },
@@ -1652,15 +1661,15 @@
             'lime': { name: 'เมล็ดมะนาว', type: 'crop', growTime: 14500, produceId: 'lime_produce', icon: '🍋', imageUrl: 'lime.png' }, 
             'lime_produce': { name: 'มะนาว', type: 'produce', sellPrice: [30, 40, 55], icon: '🍋', imageUrl: 'lime.png', energyRestore: 5, category: 'fruit' },
             'crocodile_deed': { name: 'กรรมสิทธิ์จระเข้', type: 'animal_deed', cost: 25000, animalId: 'crocodile', icon: '🐊', imageUrl: 'crocodile.png' },
-            'crocodile': { name: 'จระเข้', type: 'animal_instance', produceTime: 172800, produceId: 'crocodile_skin', icon: '🐊', imageUrl: 'crocodile.png', breedingTime: 432000 }, 
+            'crocodile': { name: 'จระเข้', type: 'animal_instance', produceTime: 172800, produceId: 'crocodile_skin', icon: '🐊', imageUrl: 'crocodile.png', breedingTime: 86400 }, 
             'crocodile_skin': { name: 'หนังจระเข้', type: 'produce', sellPrice: [1200, 1500, 1800], icon: '👜', imageUrl: 'crocodile_skin.png', energyRestore: 0 },
 
             'sheep_deed': { name: 'กรรมสิทธิ์แกะ', type: 'animal_deed', cost: 8000, animalId: 'sheep', icon: '🐑', imageUrl: 'sheep.png' },
-            'sheep': { name: 'แกะ', type: 'animal_instance', produceTime: 86400, produceId: 'wool', icon: '🐑', imageUrl: 'sheep.png', breedingTime: 172800 }, 
+            'sheep': { name: 'แกะ', type: 'animal_instance', produceTime: 86400, produceId: 'wool', icon: '🐑', imageUrl: 'sheep.png', breedingTime: 86400 }, 
             'wool': { name: 'ขนแกะ', type: 'produce', sellPrice: [350, 450, 550], icon: '🧶', imageUrl: 'wool.png', energyRestore: 0 },
 
             'pearl_oyster_deed': { name: 'กรรมสิทธิ์หอยมุก', type: 'animal_deed', cost: 20000, animalId: 'pearl_oyster', icon: '🦪', imageUrl: 'pearl_oyster.png' },
-            'pearl_oyster': { name: 'หอยมุก', type: 'animal_instance', produceTime: 259200, produceId: 'pearl', icon: '🦪', imageUrl: 'pearl_oyster.png', breedingTime: 432000 }, 
+            'pearl_oyster': { name: 'หอยมุก', type: 'animal_instance', produceTime: 259200, produceId: 'pearl', icon: '🦪', imageUrl: 'pearl_oyster.png', breedingTime: 86400 }, 
             'pearl': { name: 'ไข่มุก', type: 'produce', sellPrice: [2500, 3000, 4000], icon: '⚪', imageUrl: 'pearl.png', energyRestore: 0 },
             
             'beehive_deed': { name: 'กรรมสิทธิ์รังผึ้ง', type: 'animal_deed', cost: 2500, animalId: 'beehive', icon: '🐝', imageUrl: 'beehive.png' },
@@ -3139,14 +3148,12 @@
             const pondContainer = document.getElementById('fish-farm-pond');
             const upgradesContainer = document.getElementById('fish-farm-upgrades');
             const foodCountEl = document.getElementById('fish-food-count');
-            
             const tooltip = document.getElementById('fish-farm-tooltip');
+            
             pondContainer.innerHTML = ''; 
             if(tooltip) pondContainer.appendChild(tooltip);
-            
             upgradesContainer.innerHTML = '';
 
-            // --- Render Upgrades ---
             const foodLevel = farmState.fishFarm.foodLevel;
             const foodUpgradeEl = document.createElement('div');
             foodUpgradeEl.className = 'flex items-center gap-2';
@@ -3161,7 +3168,7 @@
             const pondLevel = farmState.fishFarm.pondLevel;
             const pondUpgradeEl = document.createElement('div');
             pondUpgradeEl.className = 'flex items-center gap-2';
-             if (pondLevel >= GAME_DATA.fish_farm_upgrades.pond.length - 1) {
+            if (pondLevel >= GAME_DATA.fish_farm_upgrades.pond.length - 1) {
                 pondUpgradeEl.innerHTML = `<div><p class="font-bold">ขนาดบ่อ</p><p class="text-xs">ใหญ่สุดแล้ว</p></div>`;
             } else {
                 const nextPond = GAME_DATA.fish_farm_upgrades.pond[pondLevel + 1];
@@ -3169,7 +3176,6 @@
             }
             upgradesContainer.appendChild(pondUpgradeEl);
 
-            // --- Render Fish and Slots ---
             const pondConfig = GAME_DATA.fish_farm_upgrades.pond[pondLevel];
             const capacity = pondConfig.capacity;
             const gridColsClass = capacity <= 4 ? 'grid-cols-4' : (capacity <= 6 ? 'grid-cols-3' : 'grid-cols-4');
@@ -3186,11 +3192,14 @@
                     const foodConfig = GAME_DATA.fish_farm_upgrades.food[farmState.fishFarm.foodLevel];
                     const timeNeeded = (fishData.growthTime || 86400) * 1000 * foodConfig.growthMultiplier;
                     const progress = Math.min((Date.now() - slotData.startTime) / timeNeeded, 1);
+                    const isReadyToCollect = progress >= 1;
                     const isHungry = (Date.now() - (slotData.lastFedTime || 0)) > (12 * 3600 * 1000);
+                    
                     let iconsHTML = `<div class="absolute -top-4 left-1/2 -translate-x-1/2 flex gap-1">`;
-                    if (progress >= 1 && slotData.quality < 2) iconsHTML += `<span class="text-2xl animate-bounce">⭐</span>`;
+                    if (isReadyToCollect) iconsHTML += `<span class="text-2xl animate-bounce">🥚</span>`;
                     if (isHungry) iconsHTML += `<span class="text-2xl">🍚</span>`;
                     iconsHTML += `</div>`;
+                    
                     fishEl.innerHTML = `${iconsHTML}<div class="w-full h-full bg-contain bg-no-repeat bg-center" style="background-image: url('${fishData.imageUrl}')"></div><div class="absolute -bottom-3 left-0 right-0 h-2 bg-gray-300 rounded-full mx-2"><div class="h-full bg-green-500 rounded-full" style="width: ${progress*100}%"></div></div>`;
                     fishEl.onclick = (e) => { e.stopPropagation(); manageFishInFarm(i, fishEl); };
                     pondContainer.appendChild(fishEl);
@@ -3247,26 +3256,20 @@
             const tooltip = document.getElementById('fish-farm-tooltip');
             const fishData = GAME_DATA[slotData.fishId];
             const foodConfig = GAME_DATA.fish_farm_upgrades.food[farmState.fishFarm.foodLevel];
-            const timeNeeded = (fishData.growthTime || 86400) * 1000 * foodConfig.growthMultiplier;
-            const isReadyToUpgrade = (Date.now() - slotData.startTime) >= timeNeeded;
+            const timeNeeded = (fishData.growthTime || 86400) * 1000 * foodConfig.growthMultiplier; 
+            const isReadyToCollect = (Date.now() - slotData.startTime) >= timeNeeded;
             const remainingTime = formatTime(Math.max(0, (slotData.startTime + timeNeeded - Date.now())/1000));
-            
-            // --- START: โค้ดที่แก้ไขและจัดระเบียบใหม่ ---
             const isHungry = (Date.now() - (slotData.lastFedTime || 0)) > (12 * 3600 * 1000);
 
-            // 1. ล้างข้อมูลเก่าและสร้าง Title
             tooltip.innerHTML = '';
             let infoHTML = `<p class="font-bold">${fishData.name} ${'★'.repeat(slotData.quality)}</p>`;
-            if (isReadyToUpgrade && slotData.quality < 2) {
-                infoHTML += `<p class="text-green-600">พร้อมอัปเกรดดาว!</p>`;
-            } else if (slotData.quality >= 2) {
-                 infoHTML += `<p class="text-blue-600">โตเต็มที่แล้ว</p>`;
+            if (isReadyToCollect) {
+                infoHTML += `<p class="text-green-600">พร้อมให้เก็บไข่!</p>`;
             } else {
-                 infoHTML += `<p class="text-xs">โตใน: ${remainingTime}</p>`;
+                infoHTML += `<p class="text-xs">จะออกไข่ใน: ${remainingTime}</p>`;
             }
             tooltip.innerHTML = infoHTML;
 
-            // 2. สร้างและเพิ่มปุ่ม "ให้อาหาร" ถ้าปลาหิว
             if (isHungry) {
                 const hasFood = playerState.storageBin.some(item => item.id === 'fish_food');
                 const feedBtn = document.createElement('button');
@@ -3281,24 +3284,20 @@
                 tooltip.appendChild(feedBtn);
             }
 
-            // 3. สร้างและเพิ่มปุ่ม "อัปเกรด"
-            if (isReadyToUpgrade && slotData.quality < 2) {
-                const upgradeBtn = document.createElement('button');
-                upgradeBtn.className = 'bg-yellow-400 text-sm p-1 rounded mt-1 w-full';
-                upgradeBtn.textContent = '⭐ อัปเกรด';
-                upgradeBtn.onclick = () => { upgradeFishQuality(slotIndex); hideFishFarmTooltip(); };
-                tooltip.appendChild(upgradeBtn);
+            if (isReadyToCollect) {
+                const collectBtn = document.createElement('button');
+                collectBtn.className = 'bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-bold text-sm p-1 rounded mt-1 w-full';
+                collectBtn.textContent = '🥚 เก็บไข่';
+                collectBtn.onclick = () => { collectFishRoe(slotIndex); hideFishFarmTooltip(); };
+                tooltip.appendChild(collectBtn);
             }
             
-            // 4. สร้างและเพิ่มปุ่ม "นำกลับเข้าคลัง"
             const harvestBtn = document.createElement('button');
             harvestBtn.className = 'bg-red-500 text-white text-sm p-1 rounded mt-1 w-full';
             harvestBtn.textContent = 'นำกลับเข้าคลัง';
             harvestBtn.onclick = () => { harvestFish(slotIndex); hideFishFarmTooltip(); };
             tooltip.appendChild(harvestBtn);
-            // --- END: โค้ดที่แก้ไข ---
             
-            // จัดตำแหน่งและแสดง Tooltip (เหมือนเดิม)
             const rect = fishElement.getBoundingClientRect();
             const containerRect = document.getElementById('fish-farm-pond').getBoundingClientRect();
             tooltip.style.left = `${rect.left - containerRect.left + rect.width / 2}px`;
@@ -3307,12 +3306,32 @@
             tooltip.classList.remove('hidden');
         }
 
-        function upgradeFishQuality(slotIndex) {
+        function collectFishRoe(slotIndex) {
             const newFarmState = { ...farmState };
-            const slot = newFarmState.fishFarm.slots[slotIndex];
-            slot.quality++;
-            slot.startTime = Date.now();
-            slot.lastFedTime = Date.now(); // ให้อาหารอัตโนมัติเมื่ออัปเกรด
+            const newPlayerState = { ...playerState };
+            const slotData = newFarmState.fishFarm.slots[slotIndex];
+            const fishData = GAME_DATA[slotData.fishId];
+
+            let roeId = 'fish_roe'; // ค่าเริ่มต้น
+
+            if (fishData.rarity === 'Rare') {
+                roeId = 'premium_fish_roe';
+            } else if (fishData.rarity === 'Legendary') {
+                // สร้าง ID ไข่ปลาเฉพาะตัว เช่น 'shrimp' -> 'shrimp_roe'
+                roeId = `${slotData.fishId}_roe`;
+            }
+
+            // เพิ่ม "ไข่ปลา" ที่ถูกต้องเข้าคลัง
+            newPlayerState.storageBin.push({ 
+                id: roeId, 
+                quality: slotData.quality
+            });
+
+            // รีเซ็ตเวลาให้ปลาเริ่มออกไข่ฟองใหม่
+            slotData.startTime = Date.now();
+            slotData.lastFedTime = Date.now();
+
+            updatePlayerState(newPlayerState);
             updateFarmState(newFarmState);
         }
 
@@ -3979,10 +3998,23 @@
             
             if (!station.job || !station.job.result) return;
             
+            // 1. เพิ่มกรรมสิทธิ์ของ "ลูก" ที่เกิดใหม่เข้าคลัง
             newPlayerState.storageBin.push({
                 id: station.job.result.deedId,
                 quality: station.job.result.quality
             });
+
+            // --- START: เพิ่มโค้ดส่วนที่คืนพ่อแม่พันธุ์ ---
+            // 2. คืนกรรมสิทธิ์ของ "พ่อแม่พันธุ์" กลับเข้าคลัง
+            newPlayerState.storageBin.push({
+                id: station.job.deedId,
+                quality: station.job.parentQualities[0] // พ่อ/แม่ ตัวที่ 1
+            });
+            newPlayerState.storageBin.push({
+                id: station.job.deedId,
+                quality: station.job.parentQualities[1] // พ่อ/แม่ ตัวที่ 2
+            });
+            // --- END: เพิ่มโค้ดส่วนที่คืนพ่อแม่พันธุ์ ---
             
             station.parents = [];
             station.job = null;
@@ -4369,29 +4401,28 @@
 
             const seedIndexInStorage = newPlayerState.storageBin.findIndex(item => item.id === seedId);
             if (seedIndexInStorage === -1) {
-                console.error(`Attempted to plant ${seedId}, but it was not found in storageBin.`);
                 alert(`หาเมล็ด ${GAME_DATA[seedId].name} ไม่เจอในคลัง!`);
                 return;
             }
             newPlayerState.storageBin.splice(seedIndexInStorage, 1);
 
-            // เพิ่ม: ดึงค่าปุ๋ยเดิมของแปลงมาใช้
             const currentFertilizerLevel = newFarmState.plots[plotIndex]?.fertilizerLevel || 0;
-
             const seedData = GAME_DATA[seedId];
             newFarmState.plots[plotIndex] = { 
                 plantId: seedData.plantId, 
                 plantTime: Date.now(), 
-                fertilizerLevel: currentFertilizerLevel, // <-- ส่งต่อค่าปุ๋ยเดิมที่ดึงมา
+                fertilizerLevel: currentFertilizerLevel,
                 wateredBy: [],
                 plantedBy: { uid: userId, nickname: playerState.nickname },
                 harvestedBy: []
             };
             
+            // --- แก้ไขการเรียกใช้ฟังก์ชันตรงนี้ ---
+            updateQuestProgress(newFarmState, 'plant');
+            
             document.querySelector(`#farm-grid > div:nth-child(${plotIndex + 1})`).classList.add('pop-animation');
             updateFarmState(newFarmState);
             updatePlayerState(newPlayerState);
-            updateQuestProgress('plant');
         }
 
                 // ฟังก์ชันผู้ช่วยใหม่สำหรับคำนวณพื้นที่ AOE
@@ -4715,18 +4746,20 @@
             const newPlayerState = { ...playerState };
             const deedData = GAME_DATA[deedId];
             
-            // หาและลบ Deed จาก storageBin
             const deedIndex = newPlayerState.storageBin.findIndex(item => item.id === deedId);
             if (deedIndex > -1) {
                 newPlayerState.storageBin.splice(deedIndex, 1);
             } else {
-                return; // ไม่เจอ Deed ให้หยุดทำงาน
+                return;
             }
 
             newFarmState.factories[slotIndex] = { factoryId: deedData.factoryId, queue: [], outputBin: [] };
+            
+            // --- แก้ไขการเรียกใช้ฟังก์ชันตรงนี้ ---
+            updateQuestProgress(newFarmState, 'place_factory');
+
             updateFarmState(newFarmState);
             updatePlayerState(newPlayerState);
-            updateQuestProgress('place_factory');
         }
         
         function startProcessing(slotIndex, recipeId) {
@@ -4905,20 +4938,22 @@
                 newPlayerState.money -= nextLevelData.cost;
                 newFarmState.sharedHouseLevel = currentLevel + 1;
                 
+                // --- แก้ไขการเรียกใช้ฟังก์ชันตรงนี้ ---
+                updateQuestProgress(newFarmState, 'upgrade_house');
+                
                 updatePlayerState(newPlayerState);
                 updateFarmState(newFarmState);
-                updateQuestProgress('upgrade_house');
             }
         }
         
-        function sellFromStorage(itemId, quality, quantity) {
+        async function sellFromStorage(itemId, quality, quantity) {
             const newPlayerState = { ...playerState };
-            
+            const newFarmState = { ...farmState }; // ต้องดึง farmState มาเพื่ออัปเดตเควส
+
             const itemsToSell = [];
             const remainingStorage = [];
             let itemsFound = 0;
 
-            // วนลูปเพื่อหาของที่จะขายและแยกออกจากคลัง
             for (const item of newPlayerState.storageBin) {
                 if (item.id === itemId && item.quality === quality && itemsFound < quantity) {
                     itemsToSell.push(item);
@@ -4928,56 +4963,54 @@
                 }
             }
 
-            // ถ้าหาของได้ครบตามจำนวน
             if (itemsFound === quantity) {
                 newPlayerState.storageBin = remainingStorage;
+                if (!newPlayerState.produceBin) newPlayerState.produceBin = [];
                 newPlayerState.produceBin.push(...itemsToSell);
-                
-                updatePlayerState(newPlayerState);
-                updateQuestProgress('sell_item', quantity);
+
+                // --- อัปเดตการเรียกใช้ updateQuestProgress ให้ถูกต้อง ---
+                updateQuestProgress(newFarmState, 'sell_item', { amount: quantity });
                 if (quality === 2) {
-                    updateQuestProgress('sell_high_quality', quantity);
+                    updateQuestProgress(newFarmState, 'sell_high_quality', { amount: quantity });
                 }
+
+                await updatePlayerState(newPlayerState);
+                await updateFarmState(newFarmState); // บันทึก farmState ที่มีเควสอัปเดตแล้ว
             }
         }
 
-        function eatFromStorage(itemId, quality) {
-    const newPlayerState = { ...playerState };
-    const itemIndex = newPlayerState.storageBin.findIndex(item => item.id === itemId && item.quality === quality);
+        async function eatFromStorage(itemId, quality) {
+            const newPlayerState = { ...playerState };
+            const newFarmState = { ...farmState }; // ต้องดึง farmState มาด้วย
+            const itemIndex = newPlayerState.storageBin.findIndex(item => item.id === itemId && item.quality === quality);
 
-    if (itemIndex > -1) {
-        const itemData = GAME_DATA[itemId];
-        // หักไอเท็มออกจากคลัง
-        newPlayerState.storageBin.splice(itemIndex, 1);
+            if (itemIndex > -1) {
+                const itemData = GAME_DATA[itemId];
+                newPlayerState.storageBin.splice(itemIndex, 1);
 
-        // เพิ่มพลังงาน
-        if (itemData.energyRestore > 0) {
-            const MAX_ENERGY = getMaxEnergy();
-            newPlayerState.energy = Math.min(MAX_ENERGY, (newPlayerState.energy || 0) + itemData.energyRestore);
-        }
+                if (itemData.energyRestore > 0) {
+                    const MAX_ENERGY = getMaxEnergy();
+                    newPlayerState.energy = Math.min(MAX_ENERGY, (newPlayerState.energy || 0) + itemData.energyRestore);
+                }
 
-        // --- START: โค้ดสำหรับจัดการบัพ ---
-        if (itemData.buff) {
-            if (!newPlayerState.buffs) {
-                newPlayerState.buffs = [];
+                if (itemData.buff) {
+                    if (!newPlayerState.buffs) newPlayerState.buffs = [];
+                    newPlayerState.buffs = newPlayerState.buffs.filter(b => b.id !== itemData.buff.id);
+                    newPlayerState.buffs.push({
+                        ...itemData.buff,
+                        expirationTime: Date.now() + (itemData.buff.duration * 1000)
+                    });
+                    showInfoModal(itemData.icon, 'ได้รับบัพ!', itemData.buff.description);
+                }
+                
+                // --- แก้ไขการเรียกใช้ฟังก์ชันตรงนี้ ---
+                updateQuestProgress(newFarmState, 'eat');
+                
+                await updatePlayerState(newPlayerState);
+                await updateFarmState(newFarmState); // ต้องบันทึก farmState ด้วย
+                hideStorageItemDetailsModal();
             }
-            // ลบบัพประเภทเดียวกันที่มีอยู่ก่อนหน้า
-            newPlayerState.buffs = newPlayerState.buffs.filter(b => b.id !== itemData.buff.id);
-            // เพิ่มบัพใหม่พร้อมเวลาหมดอายุ
-            newPlayerState.buffs.push({
-                ...itemData.buff,
-                expirationTime: Date.now() + (itemData.buff.duration * 1000)
-            });
-            showInfoModal(itemData.icon, 'ได้รับบัพ!', itemData.buff.description);
         }
-        // --- END: โค้ดสำหรับจัดการบัพ ---
-
-        updatePlayerState(newPlayerState);
-        updateQuestProgress('eat');
-        // ซ่อน modal หลังจากกินเสร็จ
-        hideStorageItemDetailsModal();
-    }
-}
 		
 		function moveFromStorageToInventory(itemId, quality) {
             const newPlayerState = { ...playerState };
@@ -6216,38 +6249,37 @@
             setupCharacterCreatorControls();
         }
         
-        function buyItem(itemId, quantity = 1) {
+        async function buyItem(itemId, quantity = 1) {
             const itemData = GAME_DATA[itemId];
             const totalCost = itemData.cost * quantity;
 
             if (playerState.money >= totalCost) {
                 const newPlayerState = { ...playerState };
+                const newFarmState = { ...farmState }; // ต้องดึง farmState มาเพื่ออัปเดตเควส
+
                 newPlayerState.money -= totalCost;
-                
+
                 if (itemData.type === 'kitchen_tool') {
-                    const newFarmState = { ...farmState };
                     if (!newFarmState.ownedKitchenTools) newFarmState.ownedKitchenTools = [];
                     if (!newFarmState.ownedKitchenTools.includes(itemId)) {
                         newFarmState.ownedKitchenTools.push(itemId);
-                        updateFarmState(newFarmState);
                     }
                 } else if (itemData.type === 'animal_deed' || itemData.type === 'factory_deed' || itemData.type === 'seed' || itemData.type === 'item') {
                     if (!newPlayerState.storageBin) newPlayerState.storageBin = [];
                     for (let i = 0; i < quantity; i++) {
                         newPlayerState.storageBin.push({ id: itemId, quality: 0 });
                     }
-                } else {
-                   newPlayerState.inventory[itemId] = (newPlayerState.inventory[itemId] || 0) + quantity;
                 }
-                
-                updateQuestProgress('buy_item', quantity);
-                updateQuestProgress('spend_money', totalCost);
-                if (itemData.type === 'seed') updateQuestProgress('buy_seed', quantity);
-                if (itemData.type === 'item' && itemId.includes('fertilizer')) updateQuestProgress('buy_fertilizer', quantity);
-                if (itemData.type === 'animal_deed') updateQuestProgress('buy_animal', quantity);
-                if (itemData.type === 'kitchen_tool' || itemData.type === 'factory_deed') updateQuestProgress('buy_tool', quantity);
 
-                updatePlayerState(newPlayerState);
+                // --- อัปเดตการเรียกใช้ updateQuestProgress ให้ถูกต้อง ---
+                updateQuestProgress(newFarmState, 'spend_money', { amount: totalCost });
+                if (itemData.type === 'animal_deed') {
+                    updateQuestProgress(newFarmState, 'buy_animal', { amount: quantity });
+                }
+                // (สามารถเพิ่มเงื่อนไขสำหรับเควสซื้อของอื่นๆ ได้ที่นี่)
+
+                await updatePlayerState(newPlayerState);
+                await updateFarmState(newFarmState); // บันทึก farmState ที่มีเควสอัปเดตแล้ว
             } else {
                 alert("เงินไม่พอ!");
             }
