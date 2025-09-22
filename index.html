@@ -1321,6 +1321,26 @@
                 'jam_toast_recipe': { resultId: 'jam_toast_food', ingredients: [{ id: 'bread_food' }, { category: 'jam' }], tool: 'kitchen_oven' },
                 'egg_tart_recipe': { resultId: 'egg_tart_food', ingredients: [{ id: 'pastry_dough' }, { id: 'milk' }, { id: 'egg' }], tool: 'kitchen_oven' },
                 'ocean_feast_recipe': { resultId: 'ocean_feast_food', ingredients: [{ id: 'carp' }, { id: 'sardine' }, { id: 'tuna' },{ id: 'salmon' }, { id: 'eel' }, { id: 'pufferfish' },{ id: 'clownfish' }, { id: 'seahorse' }, { id: 'jellyfish' },{ id: 'grouper' }, { id: 'moray_eel' }, { id: 'alaskan_king_crab' }], tool: 'kitchen_pot' },
+                'glazed_carrots_recipe': { resultId: 'glazed_carrots_food', ingredients: [{ id: 'carrot_produce', count: 1 }, { id: 'honey', count: 1 }], tool: 'kitchen_pan' },
+                'stuffed_tomatoes_recipe': { resultId: 'stuffed_tomatoes_food', ingredients: [{ id: 'tomato_produce', count: 2 }, { id: 'cheese', count: 1 }, { id: 'pig_meat', count: 1 }], tool: 'kitchen_oven' },
+                'corn_fritters_recipe': { resultId: 'corn_fritters_food', ingredients: [{ id: 'corn_produce', count: 2 }, { id: 'egg', count: 1 }, { id: 'rice_flour', count: 1 }], tool: 'kitchen_pan' },
+                'chili_poppers_recipe': { resultId: 'chili_poppers_food', ingredients: [{ id: 'chili_produce', count: 3 }, { id: 'cheese', count: 1 }], tool: 'kitchen_oven' },
+                'strawberry_tart_recipe': { resultId: 'strawberry_tart_food', ingredients: [{ id: 'strawberry_produce', count: 2 }, { id: 'pastry_dough', count: 1 }, { id: 'egg', count: 1 }], tool: 'kitchen_oven' },
+                'grape_tart_recipe': { resultId: 'grape_tart_food', ingredients: [{ id: 'grape_produce', count: 2 }, { id: 'pastry_dough', count: 1 }], tool: 'kitchen_oven' },
+                'peach_cobbler_recipe': { resultId: 'peach_cobbler_food', ingredients: [{ id: 'peach_produce', count: 2 }, { id: 'pastry_dough', count: 1 }, { id: 'honey', count: 1 }], tool: 'kitchen_oven' },
+                'orange_chicken_recipe': { resultId: 'orange_chicken_food', ingredients: [{ id: 'orange_produce', count: 2 }, { id: 'chicken_meat', count: 1 }, { id: 'honey', count: 1 }], tool: 'kitchen_pan' },
+                'pineapple_fried_rice_recipe': { resultId: 'pineapple_fried_rice_food', ingredients: [{ id: 'pineapple_produce', count: 1 }, { id: 'husked_rice', count: 1 }, { id: 'shrimp', count: 1 }], tool: 'kitchen_pan' },
+                'apple_pie_recipe': { resultId: 'apple_pie_food', ingredients: [{ id: 'apple_produce', count: 3 }, { id: 'pastry_dough', count: 1 }], tool: 'kitchen_oven' },
+                'stir_fried_eel_recipe': { resultId: 'stir_fried_eel_food', ingredients: [{ id: 'eel', count: 1 }, { id: 'chili_produce', count: 2 }], tool: 'kitchen_pan' },
+                'grilled_king_crab_recipe': { resultId: 'grilled_king_crab_food', ingredients: [{ id: 'alaskan_king_crab', count: 1 }], tool: 'kitchen_oven' },
+                'seafood_pizza_recipe': { resultId: 'seafood_pizza_food', ingredients: [{ id: 'pastry_dough', count: 1 }, { id: 'cheese', count: 1 }, { id: 'tomato_produce', count: 1 }, { id: 'shrimp', count: 1 }], tool: 'kitchen_oven' },
+                'fish_chowder_recipe': { resultId: 'fish_chowder_food', ingredients: [{ category: 'fish', count: 1 }, { id: 'milk', count: 1 }, { id: 'corn_produce', count: 1 }], tool: 'kitchen_pot' },
+                'candied_fruit_skewer_recipe': { resultId: 'candied_fruit_skewer_food', ingredients: [{ category: 'fruit', count: 3 }, { id: 'honey', count: 1 }], tool: 'kitchen_knife' },
+                'steak_red_wine_sauce_recipe': { resultId: 'steak_red_wine_sauce_food', ingredients: [{ id: 'beef', count: 1 }, { id: 'grape_wine', count: 1 }], tool: 'kitchen_pan' },
+                'crispy_fish_skin_recipe': { resultId: 'crispy_fish_skin_food', ingredients: [{ category: 'fish', count: 2 }, { id: 'rice_flour', count: 1 }], tool: 'kitchen_pan' },
+                'duck_confit_recipe': { resultId: 'duck_confit_food', ingredients: [{ id: 'duck_meat', count: 1 }, { id: 'honey', count: 1 }], tool: 'kitchen_oven' },
+                'honey_glazed_ham_recipe': { resultId: 'honey_glazed_ham_food', ingredients: [{ id: 'ham', count: 1 }, { id: 'honey', count: 1 }, { id: 'pineapple_produce', count: 1 }], tool: 'kitchen_oven' },
+                'surf_and_turf_recipe': { resultId: 'surf_and_turf_food', ingredients: [{ id: 'beef', count: 1 }, { id: 'shrimp', count: 1 }], tool: 'kitchen_pan' },
                 'gardener_stew_recipe': { 
                 resultId: 'gardener_stew_food', 
                 ingredients: [
@@ -1386,6 +1406,26 @@
             'truffle_soup_food': { name: 'ซุปทรัฟเฟิล', icon: '🥣', type: 'produce', sellPrice: [600, 700, 800], energyRestore: 80, imageUrl: 'truffle_soup.png' },
             'jam_toast_food': { name: 'ขนมปังหน้าแยม', icon: '🍞', type: 'produce', sellPrice: [650, 800, 950], energyRestore: 70, imageUrl: 'jam_toast.png' },
             'egg_tart_food': { name: 'ทาร์ตไข่', icon: '🥧', type: 'produce', sellPrice: [200, 240, 280], energyRestore: 45, imageUrl: 'egg_tart.png' },
+            'glazed_carrots_food': { name: 'แครอทเคลือบน้ำผึ้ง', icon: '🥕', type: 'produce', sellPrice: [310, 385, 465], energyRestore: 45, imageUrl: 'glazed_carrots.png' },
+            'stuffed_tomatoes_food': { name: 'มะเขือเทศยัดไส้', icon: '🍅', type: 'produce', sellPrice: [1400, 1750, 2100], energyRestore: 80, imageUrl: 'stuffed_tomatoes.png' },
+            'corn_fritters_food': { name: 'ข้าวโพดทอด', icon: '🌽', type: 'produce', sellPrice: [250, 310, 375], energyRestore: 40, imageUrl: 'corn_fritters.png' },
+            'chili_poppers_food': { name: 'พริกยัดไส้ชีสทอด', icon: '🌶️', type: 'produce', sellPrice: [1150, 1435, 1725], energyRestore: 75, imageUrl: 'chili_poppers.png' },
+            'strawberry_tart_food': { name: 'ทาร์ตสตรอว์เบอร์รี', icon: '🥧', type: 'produce', sellPrice: [230, 285, 345], energyRestore: 55, imageUrl: 'strawberry_tart.png' },
+            'grape_tart_food': { name: 'ทาร์ตองุ่น', icon: '🥧', type: 'produce', sellPrice: [225, 280, 335], energyRestore: 60, imageUrl: 'grape_tart.png' },
+            'peach_cobbler_food': { name: 'พีชคอบเบลอร์', icon: '🍑', type: 'produce', sellPrice: [400, 500, 600], energyRestore: 65, imageUrl: 'peach_cobbler.png' },
+            'orange_chicken_food': { name: 'ไก่ซอสส้ม', icon: '🍊', type: 'produce', sellPrice: [490, 610, 735], energyRestore: 60, imageUrl: 'orange_chicken.png' },
+            'pineapple_fried_rice_food': { name: 'ข้าวผัดสับปะรด', icon: '🍍', type: 'produce', sellPrice: [1330, 1660, 1995], energyRestore: 90, imageUrl: 'pineapple_fried_rice.png' },
+            'apple_pie_food': { name: 'พายแอปเปิ้ล', icon: '🥧', type: 'produce', sellPrice: [345, 430, 515], energyRestore: 50, imageUrl: 'apple_pie.png' },
+            'stir_fried_eel_food': { name: 'ปลาไหลผัดเผ็ด', icon: '🔥', type: 'produce', sellPrice: [300, 375, 450], energyRestore: 55, imageUrl: 'stir_fried_eel.png' },
+            'grilled_king_crab_food': { name: 'ปูอลาสก้าย่าง', icon: '🦀', type: 'produce', sellPrice: [480, 600, 720], energyRestore: 70, imageUrl: 'grilled_king_crab.png' },
+            'seafood_pizza_food': { name: 'พิซซ่าซีฟู้ด', icon: '🍕', type: 'produce', sellPrice: [1500, 1875, 2250], energyRestore: 110, imageUrl: 'seafood_pizza.png' },
+            'fish_chowder_food': { name: 'ซุปข้าวโพดปลา', icon: '🥣', type: 'produce', sellPrice: [180, 225, 270], energyRestore: 45, imageUrl: 'fish_chowder.png' },
+            'candied_fruit_skewer_food': { name: 'ผลไม้เคลือบน้ำตาล', icon: '🍡', type: 'produce', sellPrice: [480, 600, 720], energyRestore: 50, imageUrl: 'candied_fruit_skewer.png' },
+            'steak_red_wine_sauce_food': { name: 'สเต๊กเนื้อซอสไวน์แดง', icon: '🥩', type: 'produce', sellPrice: [2320, 2900, 3480], energyRestore: 100, imageUrl: 'steak_red_wine_sauce.png' },
+            'crispy_fish_skin_food': { name: 'หนังปลาทอดกรอบ', icon: '🐟', type: 'produce', sellPrice: [160, 200, 240], energyRestore: 35, imageUrl: 'crispy_fish_skin.png' },
+            'duck_confit_food': { name: 'กงฟีเป็ด', icon: '🦆', type: 'produce', sellPrice: [410, 510, 615], energyRestore: 65, imageUrl: 'duck_confit.png' },
+            'honey_glazed_ham_food': { name: 'แฮมเคลือบน้ำผึ้ง', icon: '🍖', type: 'produce', sellPrice: [1460, 1825, 2190], energyRestore: 100, imageUrl: 'honey_glazed_ham.png' },
+            'surf_and_turf_food': { name: 'เซิร์ฟแอนด์เทิร์ฟ', icon: '🦞', type: 'produce', sellPrice: [1680, 2100, 2520], energyRestore: 120, imageUrl: 'surf_and_turf.png' },
             'ocean_feast_food': { name: 'ซุปมหาสมุทร', icon: '🍲', type: 'produce', sellPrice: [0, 0, 0], energyRestore: 200, imageUrl: 'ocean_feast_food.png', buff: {id: 'fishing_luck',duration: 300, description: 'เพิ่มโอกาสตกได้ปลาหายาก 10% เป็นเวลา 5 นาที'}},
             'gardener_stew_food': { name: 'ซุปชาวสวน', icon: '🥣', type: 'produce', sellPrice: [0, 0, 0], energyRestore: 200, imageUrl: 'gardener_stew.png', buff: {id: 'harvest_boost',duration: 300,description: 'ผลผลิตที่เก็บเกี่ยวได้จะเพิ่มเป็น 2 เท่า เป็นเวลา 5 นาที'}
             },
@@ -5454,24 +5494,26 @@
             const job = newFarmState.kitchen.queue[queueIndex];
             const recipe = GAME_DATA.recipes[job.recipeId];
 
-            // --- ส่วนที่แก้ไข: คำนวณคุณภาพจากวัตถุดิบ ---
             const qualities = job.ingredientQualities || [];
             let averageQuality = 0;
             if (qualities.length > 0) {
                 const totalIngredientsPerDish = recipe.ingredients.length;
-                const totalQualitySum = qualities.reduce((a, b) => a + b, 0);
-                // ค่าเฉลี่ย = ผลรวมคุณภาพทั้งหมด / (จำนวนจาน * จำนวนวัตถุดิบต่อจาน)
-                averageQuality = Math.floor(totalQualitySum / (job.quantity * totalIngredientsPerDish));
+                if (totalIngredientsPerDish > 0) { // ป้องกันการหารด้วยศูนย์
+                    const totalQualitySum = qualities.reduce((a, b) => a + b, 0);
+                    averageQuality = Math.floor(totalQualitySum / (job.quantity * totalIngredientsPerDish));
+                }
             }
-            // --- จบส่วนที่แก้ไข ---
-            updateQuestProgress('craft_specific', { itemId: recipe.resultId, quality: averageQuality, amount: job.quantity });
+            
+            // --- แก้ไขบรรทัดนี้ ---
+            // เพิ่ม newFarmState เข้าไปเป็นพารามิเตอร์ตัวแรก
+            updateQuestProgress(newFarmState, 'craft_specific', { itemId: recipe.resultId, quality: averageQuality, amount: job.quantity });
 
             for (let i = 0; i < job.quantity; i++) {
-                // ใช้ averageQuality ที่คำนวณได้
                 newPlayerState.storageBin.push({ id: recipe.resultId, quality: averageQuality });
             }
 
             newFarmState.kitchen.queue.splice(queueIndex, 1);
+            
             updateFarmState(newFarmState);
             updatePlayerState(newPlayerState);
         }
