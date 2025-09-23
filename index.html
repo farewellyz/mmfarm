@@ -3749,7 +3749,7 @@
 
             const createButton = (text, action, disabled = false, extraClasses = 'bg-green-500 hover:bg-green-600 text-white') => {
                 const button = document.createElement('button');
-                button.innerHTML = text; // <-- เปลี่ยนเป็น innerHTML เพื่อรองรับไอคอน
+                button.innerHTML = text; // ใช้ innerHTML เพื่อรองรับไอคอน
                 button.className = `w-full font-bold py-2 px-4 rounded-lg transition ${disabled ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : extraClasses}`;
                 if (!disabled) button.onclick = () => { action(); hideContextMenu(); };
                 return button;
@@ -3790,7 +3790,7 @@
                     const effectiveGrowth = elapsedSeconds * growthMultiplier;
                     const adjustedGrowTime = plantData.growTime * weatherMultiplier;
                     const isGrown = effectiveGrowth >= adjustedGrowTime;
-                    
+
                     let remainingSeconds = 0;
                     if (growthMultiplier > 0) {
                         remainingSeconds = Math.max(0, (adjustedGrowTime - effectiveGrowth) / growthMultiplier);
@@ -3798,21 +3798,21 @@
                         const totalTimeNeeded = plantData.growTime * weatherMultiplier;
                         remainingSeconds = Math.max(0, totalTimeNeeded - elapsedSeconds);
                     }
-                    
+
                     detailsEl.innerHTML = `<p>ปลูกโดย: ${plot.plantedBy?.nickname || '??'}</p><p>เหลือเวลา: ${formatTime(remainingSeconds)}</p>`;
                     if (plot.wateredBy && plot.wateredBy.length > 0) {
                         const waterers = plot.wateredBy.map(p => p.nickname).join(', ');
                         detailsEl.innerHTML += `<div class="mt-2"><p>รดน้ำแล้วโดย:</p><p class="font-semibold text-green-700">${waterers}</p></div>`;
                     }
                     actionsEl.before(detailsEl);
-                    
+
                     if (isGrown) {
                         const hasHarvested = plot.harvestedBy?.some(p => p.uid === userId);
                         actionsEl.appendChild(createButton('🌾 เก็บเกี่ยว (-1⚡)', () => harvest(index), hasHarvested));
 
                         const involvedUids = new Set([plot.plantedBy?.uid, ...(plot.wateredBy?.map(p => p.uid).filter(uid => uid) || [])]);
                         const harvestedUids = new Set(plot.harvestedBy?.map(p => p.uid) || []);
-                        
+
                         let harvestStatusHTML = '<div class="mt-2 text-xs text-left border-t pt-2">';
                         harvestStatusHTML += '<p class="font-bold">สถานะการเก็บเกี่ยว:</p>';
 
@@ -3921,7 +3921,7 @@
                         outputBinHTML += `</div>`;
                         detailsEl.innerHTML += outputBinHTML;
                     }
-                    
+
                     actionsEl.before(detailsEl);
 
                     const myCollectableItemsCount = factory.outputBin?.filter(item => item.owner === userId || item.owner === 'unknown').length || 0;
@@ -3932,6 +3932,7 @@
                     const isQueueFull = (factory.queue?.length || 0) >= 5;
                     actionsEl.appendChild(createButton('⚙️ เพิ่มของเข้าคิว', () => showSubMenu('useFactory', index, factoryData.recipes.map(r => r.id)), isQueueFull));
 
+                    // --- เพิ่มปุ่ม "ทำซ้ำ" ---
                     const lastRecipe = lastFactoryRecipeId ? findRecipeById(lastFactoryRecipeId) : null;
                     let canRepeat = false;
                     if (lastRecipe && factoryData.recipes.some(r => r.id === lastFactoryRecipeId)) {
@@ -3950,7 +3951,7 @@
                     }
                 }
             }
-            
+
             modal.classList.remove('hidden', 'modal-leave');
             modal.classList.add('modal-enter');
         }
