@@ -2326,58 +2326,71 @@
         }
 
         function renderAnimals() {
-             if (!farmState || !Array.isArray(farmState.animals)) return;
-             const animalPen = document.getElementById('animal-pen');
-             animalPen.innerHTML = '';
-             const weatherMultiplier = WEATHER_DATA[farmState.currentWeather]?.animalMultiplier || 1;
-             
-             farmState.animals.forEach((animal, index) => {
-                const slotEl = document.createElement('div');
-                slotEl.className = 'animal-slot aspect-square rounded-2xl shadow-inner cursor-pointer flex flex-col items-center justify-center p-1 bg-green-200/50 relative';
-                
-                if (animal.animalId) {
-                    const animalData = GAME_DATA[animal.animalId];
-                    slotEl.style.backgroundImage = `url(${animalData.imageUrl})`;
+            if (!farmState || !Array.isArray(farmState.animals)) return;
+            const animalPen = document.getElementById('animal-pen');
+            animalPen.innerHTML = '';
+            const weatherMultiplier = WEATHER_DATA[farmState.currentWeather]?.animalMultiplier || 1;
 
-                    const progressContainer = document.createElement('div');
-                    progressContainer.className = 'absolute bottom-1 left-1 right-1 h-2 bg-gray-300/70 rounded-full overflow-hidden';
-                    const progressFill = document.createElement('div');
-                    const adjustedProduceTime = (animalData.produceTime * 1000) * weatherMultiplier;
-                    const progress = (Date.now() - animal.startTime) / adjustedProduceTime;
+            farmState.animals.forEach((animal, index) => {
+            const slotEl = document.createElement('div');
+            slotEl.className = 'animal-slot aspect-square rounded-2xl shadow-inner cursor-pointer flex flex-col items-center justify-center p-1 bg-green-200/50 relative';
 
-                    progressFill.className = 'h-full bg-yellow-400 rounded-full';
-                    progressFill.style.width = `${Math.min(progress, 1) * 100}%`;
-                    progressContainer.appendChild(progressFill);
-                    slotEl.appendChild(progressContainer);
+            if (animal.animalId) {
+                const animalData = GAME_DATA[animal.animalId];
+                slotEl.style.backgroundImage = `url(${animalData.imageUrl})`;
 
-                    if (progress >= 1) {
-                        slotEl.classList.add('animate-bounce');
-                        const produceData = GAME_DATA[animalData.produceId];
-                        const produceIcon = document.createElement('div');
-                        produceIcon.className = 'absolute top-1 right-1 text-2xl z-10';
-                        produceIcon.textContent = produceData.icon;
-                        slotEl.appendChild(produceIcon);
-                    }
-                } else {
-                    slotEl.textContent = '➕';
-                    slotEl.className += ' text-4xl text-gray-400 hover:bg-green-200/70';
+                const adjustedProduceTime = (animalData.produceTime * 1000) * weatherMultiplier;
+                const progress = (Date.now() - animal.startTime) / adjustedProduceTime;
+                const isReady = progress >= 1;
+
+                const progressContainer = document.createElement('div');
+                progressContainer.className = 'absolute bottom-1 left-1 right-1 h-2 bg-gray-300/70 rounded-full overflow-hidden';
+                const progressFill = document.createElement('div');
+                progressFill.className = 'h-full bg-yellow-400 rounded-full';
+                progressFill.style.width = `${Math.min(progress, 1) * 100}%`;
+                progressContainer.appendChild(progressFill);
+                slotEl.appendChild(progressContainer);
+
+                if (isReady) {
+                    slotEl.classList.add('animate-bounce');
+                    const produceData = GAME_DATA[animalData.produceId];
+                    const produceIcon = document.createElement('div');
+                    produceIcon.className = 'absolute top-1 right-1 text-2xl z-10';
+                    produceIcon.textContent = produceData.icon;
+                    slotEl.appendChild(produceIcon);
                 }
+
+                // --- START: แก้ไขตรรกะการคลิก ---
+                slotEl.onclick = () => {
+                    // ถ้าถือเคียวอยู่ และสัตว์พร้อมให้เก็บผลผลิต
+                    if (activeToolState.tool === 'scythe' && isReady) {
+                        collectAnimalProduct(index); // ให้เก็บผลผลิตทันที
+                    } else {
+                        showContextMenu('animal', index); // ถ้าไม่ใช่ ให้เปิดเมนูปกติ
+                    }
+                };
+                // --- END: แก้ไขตรรกะการคลิก ---
+
+            } else {
+                slotEl.textContent = '➕';
+                slotEl.className += ' text-4xl text-gray-400 hover:bg-green-200/70';
                 slotEl.onclick = () => showContextMenu('animal', index);
-                animalPen.appendChild(slotEl);
-             });
-             
-            const cost = calculateExpansionCost('animals');
-            const expandButton = document.createElement('div');
-            expandButton.className = 'aspect-square rounded-2xl shadow-inner cursor-pointer flex items-center justify-center p-2 bg-green-200/50 hover:bg-green-200/80 transition';
-            expandButton.innerHTML = `
-                <div class="text-center">
-                    <span class="text-3xl font-bold text-green-800">➕</span>
-                    <p class="text-xs font-semibold mt-1">เพิ่มคอก</p>
-                    <p class="text-xs font-bold text-yellow-900 bg-yellow-300 px-2 py-0.5 rounded-full mt-1">${cost}💰</p>
-                </div>
-            `;
-            expandButton.onclick = () => expandGrid('animals');
-            animalPen.appendChild(expandButton);
+            }
+            animalPen.appendChild(slotEl);
+            });
+
+        const cost = calculateExpansionCost('animals');
+        const expandButton = document.createElement('div');
+        expandButton.className = 'aspect-square rounded-2xl shadow-inner cursor-pointer flex items-center justify-center p-2 bg-green-200/50 hover:bg-green-200/80 transition';
+        expandButton.innerHTML = `
+            <div class="text-center">
+                <span class="text-3xl font-bold text-green-800">➕</span>
+                <p class="text-xs font-semibold mt-1">เพิ่มคอก</p>
+                <p class="text-xs font-bold text-yellow-900 bg-yellow-300 px-2 py-0.5 rounded-full mt-1">${cost}💰</p>
+            </div>
+        `;
+        expandButton.onclick = () => expandGrid('animals');
+        animalPen.appendChild(expandButton);
         }
 
         function calculateBreedingStationCost() {
