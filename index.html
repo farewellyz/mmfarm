@@ -4595,6 +4595,8 @@
             }
 
             const potentialPlots = getAoePlots(plotIndex, 'scythe');
+
+            // --- START: แก้ไขตรรกะการคัดกรองแปลงที่จะเก็บเกี่ยว ---
             const plotsToHarvest = potentialPlots.filter(index => {
                 const plot = farmState.plots[index];
                 const plantData = GAME_DATA[plot?.plantId];
@@ -4604,17 +4606,22 @@
                 const weatherMultiplier = weather?.cropMultiplier || 1;
                 const elapsedSeconds = (Date.now() - plot.plantTime) / 1000;
                 let growthMultiplier = 1;
+
+                // --- ใช้ตรรกะที่ถูกต้องเหมือนกับ renderFarm ---
+                const totalWateringsToday = plot.wateredByToday ? Object.values(plot.wateredByToday).reduce((sum, count) => sum + count, 0) : 0;
                 if (weather?.needsTwoWaterings) {
-                    growthMultiplier = (plot.wateringsToday || 0) >= 2 ? 1.0 : 0;
+                    growthMultiplier = totalWateringsToday >= 2 ? 1.0 : 0;
                 } else if (farmState.currentWeather === 'rainy' || farmState.currentWeather === 'stormy') {
                     growthMultiplier = 1.5;
                 } else {
                     growthMultiplier = 1 + ((plot.wateredBy?.length || 0) * 0.5);
                 }
+
                 const effectiveGrowth = elapsedSeconds * growthMultiplier;
                 const adjustedGrowTime = plantData.growTime * weatherMultiplier;
                 return effectiveGrowth >= adjustedGrowTime;
             });
+            // --- END: แก้ไขตรรกะ ---
 
             if (plotsToHarvest.length === 0) return;
             if (!deductEnergy(1 * plotsToHarvest.length)) return;
@@ -4622,7 +4629,7 @@
             const newFarmState = { ...farmState };
             const newPlayerState = { ...playerState };
             let harvestedItems = [];
-            const weather = WEATHER_DATA[farmState.currentWeather]; // ดึงข้อมูลอากาศปัจจุบัน
+            const weather = WEATHER_DATA[farmState.currentWeather];
 
             plotsToHarvest.forEach(index => {
                 const plot = newFarmState.plots[index];
@@ -4631,7 +4638,6 @@
                 if (Math.random() < (plot.fertilizerLevel || 0)) quality = 1;
                 if (Math.random() < (plot.fertilizerLevel || 0) - 1) quality = 2;
 
-                // เพิ่มโบนัสคุณภาพจากรุ้งกินน้ำ
                 if (weather?.qualityBonusChance && quality < 2 && Math.random() < weather.qualityBonusChance) {
                     quality++;
                 }
@@ -4639,7 +4645,7 @@
                 for (let i = 0; i < harvestMultiplier; i++) {
                     harvestedItems.push({ id: cropData.produceId, quality: quality });
                 }
-                
+
                 if (!plot.harvestedBy) plot.harvestedBy = [];
                 plot.harvestedBy.push({ uid: userId, nickname: playerState.nickname });
                 const involvedUids = new Set([plot.plantedBy?.uid, ...(plot.wateredBy?.map(p => p.uid).filter(uid => uid) || [])]);
@@ -4655,7 +4661,7 @@
 
             if (harvestedItems.length > 0) {
                 newPlayerState.storageBin.push(...harvestedItems);
-                updateQuestProgress(newFarmState, 'harvest', harvestedItems.length);
+                updateQuestProgress(newFarmState, 'harvest', { amount: harvestedItems.length });
                 harvestedItems.forEach(item => {
                     updateQuestProgress(newFarmState, 'harvest_specific', { itemId: item.id, quality: item.quality });
                 });
