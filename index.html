@@ -2261,22 +2261,27 @@
                         if (plot.plantTime) { 
                             const elapsedSeconds = (Date.now() - plot.plantTime) / 1000;
                             let growthMultiplier = 1;
-                            
+
+                            const uniqueWaterersToday = plot.wateredByToday ? Object.keys(plot.wateredByToday).length : 0;
                             const totalWateringsToday = plot.wateredByToday ? Object.values(plot.wateredByToday).reduce((sum, count) => sum + count, 0) : 0;
 
                             if (weather?.needsTwoWaterings) {
-                                growthMultiplier = totalWateringsToday >= 2 ? 1.0 : 0;
+                                if (totalWateringsToday < 2) {
+                                    growthMultiplier = 0;
+                                } else {
+                                    growthMultiplier = 1 + (uniqueWaterersToday * 0.5);
+                                }
                             } else if (farmState.currentWeather === 'rainy' || farmState.currentWeather === 'stormy') {
                                 growthMultiplier = 1.5;
                             } else {
-                                growthMultiplier = 1 + ((plot.wateredBy?.length || 0) * 0.5);
+                                growthMultiplier = 1 + (uniqueWaterersToday * 0.5);
                             }
 
                             const effectiveGrowth = elapsedSeconds * growthMultiplier;
                             const adjustedGrowTime = plantData.growTime * weatherMultiplier;
                             progress = Math.min(effectiveGrowth / adjustedGrowTime, 1);
                         }
-                        
+
                         const totalWateringsTodayForIcon = plot.wateredByToday ? Object.values(plot.wateredByToday).reduce((sum, count) => sum + count, 0) : 0;
                         if (weather?.needsTwoWaterings && totalWateringsTodayForIcon === 1 && progress < 1) {
                             const thirstyIcon = document.createElement('div');
@@ -2285,12 +2290,14 @@
                             thirstyIcon.title = 'ต้องการน้ำอีกครั้ง!';
                             plotEl.appendChild(thirstyIcon);
                         } 
-                        else if (progress < 1 && !(farmState.currentWeather === 'rainy' || farmState.currentWeather === 'stormy') && !plot.wateredBy?.some(p => p.uid === userId)) {
+                        // --- START: แก้ไขเงื่อนไขการแสดงไอคอนหยดน้ำ ---
+                        else if (progress < 1 && !(farmState.currentWeather === 'rainy' || farmState.currentWeather === 'stormy') && (!plot.wateredByToday || !plot.wateredByToday[userId])) {
                             const waterIcon = document.createElement('div');
                             waterIcon.className = 'water-indicator';
                             waterIcon.textContent = '💧';
                             plotEl.appendChild(waterIcon);
                         }
+                        // --- END: แก้ไขเงื่อนไข ---
 
                         plotEl.style.backgroundImage = `linear-gradient(to top, rgba(96, 165, 250, 0.5) 0%, rgba(96, 165, 250, 0.5) ${progress*100}%, transparent ${progress*100}%)`;
                         const content = document.createElement('div');
@@ -2303,7 +2310,7 @@
                 plotEl.onclick = () => handlePlotClick(index);
                 farmGrid.appendChild(plotEl);
             });
-            
+
             const cost = calculateExpansionCost('farm');
             const expandButton = document.createElement('div');
             expandButton.className = 'aspect-square rounded-lg shadow-inner cursor-pointer flex items-center justify-center p-2 bg-green-200/50 hover:bg-green-200/80 transition';
@@ -2317,6 +2324,7 @@
             expandButton.onclick = () => expandGrid('farm');
             farmGrid.appendChild(expandButton);
         }
+
         function renderAnimals() {
              if (!farmState || !Array.isArray(farmState.animals)) return;
              const animalPen = document.getElementById('animal-pen');
@@ -3615,15 +3623,20 @@
                     const plantData = GAME_DATA[plot.plantId];
                     const elapsedSeconds = (Date.now() - plot.plantTime) / 1000;
                     let growthMultiplier = 1;
-                    
+
+                    const uniqueWaterersToday = plot.wateredByToday ? Object.keys(plot.wateredByToday).length : 0;
                     const totalWateringsToday = plot.wateredByToday ? Object.values(plot.wateredByToday).reduce((sum, count) => sum + count, 0) : 0;
 
                     if (weather?.needsTwoWaterings) {
-                        growthMultiplier = totalWateringsToday >= 2 ? 1.0 : 0;
+                        if (totalWateringsToday < 2) {
+                            growthMultiplier = 0;
+                        } else {
+                            growthMultiplier = 1 + (uniqueWaterersToday * 0.5);
+                        }
                     } else if (farmState.currentWeather === 'rainy' || farmState.currentWeather === 'stormy') {
                         growthMultiplier = 1.5;
                     } else {
-                        growthMultiplier = 1 + ((plot.wateredBy?.length || 0) * 0.5);
+                        growthMultiplier = 1 + (uniqueWaterersToday * 0.5);
                     }
 
                     const effectiveGrowth = elapsedSeconds * growthMultiplier;
@@ -3666,8 +3679,9 @@
                         detailsEl.innerHTML += harvestStatusHTML;
 
                     } else {
-                        const hasWatered = plot.wateredBy?.some(p => p.uid === userId);
-                        actionsEl.appendChild(createButton('💧 รดน้ำ (-2⚡)', () => water(index), hasWatered));
+                        const myWateringsToday = plot.wateredByToday ? (plot.wateredByToday[userId] || 0) : 0;
+                        const canWaterMore = weather?.needsTwoWaterings ? myWateringsToday < 2 : !plot.wateredBy?.some(p => p.uid === userId);
+                        actionsEl.appendChild(createButton('💧 รดน้ำ (-2⚡)', () => water(index), !canWaterMore));
                         const fertilizersInStorage = playerState.storageBin
                             .filter(item => GAME_DATA[item.id]?.type === 'item' && GAME_DATA[item.id]?.qualityBonus)
                             .map(item => item.id);
@@ -4595,8 +4609,7 @@
             }
 
             const potentialPlots = getAoePlots(plotIndex, 'scythe');
-
-            // --- START: แก้ไขตรรกะการคัดกรองแปลงที่จะเก็บเกี่ยว ---
+            
             const plotsToHarvest = potentialPlots.filter(index => {
                 const plot = farmState.plots[index];
                 const plantData = GAME_DATA[plot?.plantId];
@@ -4606,22 +4619,28 @@
                 const weatherMultiplier = weather?.cropMultiplier || 1;
                 const elapsedSeconds = (Date.now() - plot.plantTime) / 1000;
                 let growthMultiplier = 1;
-
-                // --- ใช้ตรรกะที่ถูกต้องเหมือนกับ renderFarm ---
+                
+                // --- START: ตรรกะการเติบโตแบบใหม่ ---
+                const uniqueWaterersToday = plot.wateredByToday ? Object.keys(plot.wateredByToday).length : 0;
                 const totalWateringsToday = plot.wateredByToday ? Object.values(plot.wateredByToday).reduce((sum, count) => sum + count, 0) : 0;
-                if (weather?.needsTwoWaterings) {
-                    growthMultiplier = totalWateringsToday >= 2 ? 1.0 : 0;
+
+                if (weather?.needsTwoWaterings) { // กรณีแดดแรง
+                    if (totalWateringsToday < 2) {
+                        growthMultiplier = 0; // ไม่โตเลย
+                    } else {
+                        growthMultiplier = 1 + (uniqueWaterersToday * 0.5); // โตพร้อมโบนัสตามจำนวนคนรด
+                    }
                 } else if (farmState.currentWeather === 'rainy' || farmState.currentWeather === 'stormy') {
-                    growthMultiplier = 1.5;
-                } else {
-                    growthMultiplier = 1 + ((plot.wateredBy?.length || 0) * 0.5);
+                    growthMultiplier = 1.5; // โบนัสคงที่จากฝน
+                } else { // กรณีวันปกติ
+                    growthMultiplier = 1 + (uniqueWaterersToday * 0.5); // โบนัสตามจำนวนคนรดวันนี้
                 }
+                // --- END: ตรรกะการเติบโตแบบใหม่ ---
 
                 const effectiveGrowth = elapsedSeconds * growthMultiplier;
                 const adjustedGrowTime = plantData.growTime * weatherMultiplier;
                 return effectiveGrowth >= adjustedGrowTime;
             });
-            // --- END: แก้ไขตรรกะ ---
 
             if (plotsToHarvest.length === 0) return;
             if (!deductEnergy(1 * plotsToHarvest.length)) return;
@@ -4645,7 +4664,7 @@
                 for (let i = 0; i < harvestMultiplier; i++) {
                     harvestedItems.push({ id: cropData.produceId, quality: quality });
                 }
-
+                
                 if (!plot.harvestedBy) plot.harvestedBy = [];
                 plot.harvestedBy.push({ uid: userId, nickname: playerState.nickname });
                 const involvedUids = new Set([plot.plantedBy?.uid, ...(plot.wateredBy?.map(p => p.uid).filter(uid => uid) || [])]);
