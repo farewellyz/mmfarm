@@ -5395,7 +5395,7 @@
 
                 let wiltedPlantsReport = null;
                 if (WEATHER_DATA[weatherYesterday]?.needsTwoWaterings) {
-                    const wiltedPlots = newPlayerState.plots.filter(p => p && p.plantId && (Object.values(p.wateredByToday || {}).reduce((a, b) => a + b, 0)) < 2);
+                    const wiltedPlots = newFarmState.plots.filter(p => p && p.plantId && (Object.values(p.wateredByToday || {}).reduce((a, b) => a + b, 0)) < 2);
                     if (wiltedPlots.length > 0) {
                         wiltedPlantsReport = wiltedPlots.reduce((acc, plot) => {
                             const plantName = GAME_DATA[plot.plantId]?.name || 'Unknown';
