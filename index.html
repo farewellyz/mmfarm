@@ -2247,7 +2247,6 @@
                     const numIcons = Math.round(plot.fertilizerLevel / 0.3);
                     let iconsHTML = '';
                     for (let i = 0; i < numIcons; i++) {
-                        // แก้ไขอีโมจิเป็น ✨
                         iconsHTML += '<span class="text-xs" style="text-shadow: 0 1px 2px rgba(0,0,0,0.5);">✨</span>';
                     }
                     fertilizerIndicator.innerHTML = iconsHTML;
@@ -2262,12 +2261,13 @@
                         if (plot.plantTime) { 
                             const elapsedSeconds = (Date.now() - plot.plantTime) / 1000;
                             let growthMultiplier = 1;
+                            
+                            const totalWateringsToday = plot.wateredByToday ? Object.values(plot.wateredByToday).reduce((sum, count) => sum + count, 0) : 0;
 
-                            // --- ตรรกะการเติบโตตามสภาพอากาศแบบใหม่ ---
                             if (weather?.needsTwoWaterings) {
-                                growthMultiplier = (plot.wateringsToday || 0) >= 2 ? 1.0 : 0; // ไม่โตเลยถ้ารดไม่ครบ
+                                growthMultiplier = totalWateringsToday >= 2 ? 1.0 : 0;
                             } else if (farmState.currentWeather === 'rainy' || farmState.currentWeather === 'stormy') {
-                                growthMultiplier = 1.5; // โต x1.5 เพราะฝนตก (ไม่ต้องมีคนรด)
+                                growthMultiplier = 1.5;
                             } else {
                                 growthMultiplier = 1 + ((plot.wateredBy?.length || 0) * 0.5);
                             }
@@ -2276,15 +2276,16 @@
                             const adjustedGrowTime = plantData.growTime * weatherMultiplier;
                             progress = Math.min(effectiveGrowth / adjustedGrowTime, 1);
                         }
-
-                        // --- ไอคอนเตือนในวันแดดแรง และไอคอนรดน้ำปกติ ---
-                        if (weather?.needsTwoWaterings && (plot.wateringsToday || 0) === 1 && progress < 1) {
+                        
+                        const totalWateringsTodayForIcon = plot.wateredByToday ? Object.values(plot.wateredByToday).reduce((sum, count) => sum + count, 0) : 0;
+                        if (weather?.needsTwoWaterings && totalWateringsTodayForIcon === 1 && progress < 1) {
                             const thirstyIcon = document.createElement('div');
                             thirstyIcon.className = 'absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-4xl opacity-75 animate-pulse';
                             thirstyIcon.textContent = '🥵';
                             thirstyIcon.title = 'ต้องการน้ำอีกครั้ง!';
                             plotEl.appendChild(thirstyIcon);
-                        } else if (progress < 1 && !(farmState.currentWeather === 'rainy' || farmState.currentWeather === 'stormy') && !plot.wateredBy?.some(p => p.uid === userId)) {
+                        } 
+                        else if (progress < 1 && !(farmState.currentWeather === 'rainy' || farmState.currentWeather === 'stormy') && !plot.wateredBy?.some(p => p.uid === userId)) {
                             const waterIcon = document.createElement('div');
                             waterIcon.className = 'water-indicator';
                             waterIcon.textContent = '💧';
@@ -3581,8 +3582,6 @@
         }
         
 		async function showContextMenu(type, id) {
-            // This function had a misplaced closing brace in the previous version.
-            // This is the fully corrected version.
             const modal = document.getElementById('context-modal');
             const contentEl = document.getElementById('context-modal-content');
             const titleEl = document.getElementById('context-modal-title');
@@ -3616,17 +3615,28 @@
                     const plantData = GAME_DATA[plot.plantId];
                     const elapsedSeconds = (Date.now() - plot.plantTime) / 1000;
                     let growthMultiplier = 1;
+                    
+                    const totalWateringsToday = plot.wateredByToday ? Object.values(plot.wateredByToday).reduce((sum, count) => sum + count, 0) : 0;
+
                     if (weather?.needsTwoWaterings) {
-                        growthMultiplier = (plot.wateringsToday || 0) >= 2 ? 1.0 : 0;
+                        growthMultiplier = totalWateringsToday >= 2 ? 1.0 : 0;
                     } else if (farmState.currentWeather === 'rainy' || farmState.currentWeather === 'stormy') {
                         growthMultiplier = 1.5;
                     } else {
                         growthMultiplier = 1 + ((plot.wateredBy?.length || 0) * 0.5);
                     }
+
                     const effectiveGrowth = elapsedSeconds * growthMultiplier;
                     const adjustedGrowTime = plantData.growTime * weatherMultiplier;
                     const isGrown = effectiveGrowth >= adjustedGrowTime;
-                    const remainingSeconds = Math.max(0, (adjustedGrowTime - effectiveGrowth) / growthMultiplier);
+                    
+                    let remainingSeconds = 0;
+                    if (growthMultiplier > 0) {
+                        remainingSeconds = Math.max(0, (adjustedGrowTime - effectiveGrowth) / growthMultiplier);
+                    } else {
+                        const totalTimeNeeded = plantData.growTime * weatherMultiplier;
+                        remainingSeconds = Math.max(0, totalTimeNeeded - elapsedSeconds);
+                    }
                     
                     detailsEl.innerHTML = `<p>ปลูกโดย: ${plot.plantedBy?.nickname || '??'}</p><p>เหลือเวลา: ${formatTime(remainingSeconds)}</p>`;
                     if (plot.wateredBy && plot.wateredBy.length > 0) {
@@ -3662,7 +3672,7 @@
                             .filter(item => GAME_DATA[item.id]?.type === 'item' && GAME_DATA[item.id]?.qualityBonus)
                             .map(item => item.id);
                         const uniqueFertilizers = [...new Set(fertilizersInStorage)];
-                        actionsEl.appendChild(createButton('✨ ใส่ปุ๋ย', () => showSubMenu('fertilize', index, uniqueFertilizers), uniqueFertilizers.length === 0)); // แก้ไขอีโมจิ
+                        actionsEl.appendChild(createButton('✨ ใส่ปุ๋ย', () => showSubMenu('fertilize', index, uniqueFertilizers), uniqueFertilizers.length === 0));
                     }
                     actionsEl.appendChild(createButton('❌ เคลียแปลง (-5⚡)', () => clearPlot(index), false, 'bg-red-500 hover:bg-red-600 text-white'));
                 }
@@ -4479,14 +4489,16 @@
         // ฟังก์ชัน water เวอร์ชันแก้ไข
         function water(plotIndex) {
             const potentialPlots = getAoePlots(plotIndex, 'watering_can');
-
+            
             const plotsToWater = potentialPlots.filter(index => {
                 const plot = farmState.plots[index];
                 if (!plot || !plot.plantId) return false;
-
-                // ตรรกะใหม่: เช็คว่าต้องรด 2 ครั้งหรือไม่
+                
+                // --- ตรรกะใหม่: เช็คจำนวนครั้งที่ "ตัวเอง" รดไปแล้วในวันนี้ ---
                 if (WEATHER_DATA[farmState.currentWeather]?.needsTwoWaterings) {
-                    return (plot.wateringsToday || 0) < 2;
+                    // อนุญาตให้รดได้ ถ้า "เรา" ยังรดไม่ถึง 2 ครั้งในวันนี้
+                    const myWateringsToday = plot.wateredByToday ? (plot.wateredByToday[userId] || 0) : 0;
+                    return myWateringsToday < 2;
                 } else {
                     return !plot.wateredBy?.some(p => p.uid === userId);
                 }
@@ -4499,12 +4511,15 @@
             plotsToWater.forEach(index => {
                 const plot = newFarmState.plots[index];
                 if (!plot.wateredBy) plot.wateredBy = [];
+                if (!plot.wateredByToday) plot.wateredByToday = {}; // <-- ต้องเป็น Object
+                
                 if (!plot.wateredBy.some(p => p.uid === userId)) {
                     plot.wateredBy.push({ uid: userId, nickname: playerState.nickname });
                 }
 
+                // --- เพิ่มจำนวนครั้งที่รดสำหรับผู้เล่นคนนั้นๆ ---
                 if (WEATHER_DATA[farmState.currentWeather]?.needsTwoWaterings) {
-                    plot.wateringsToday = (plot.wateringsToday || 0) + 1;
+                    plot.wateredByToday[userId] = (plot.wateredByToday[userId] || 0) + 1;
                 }
                 document.querySelector(`#farm-grid > div:nth-child(${index + 1})`).classList.add('watered');
             });
@@ -5105,7 +5120,7 @@
 
             if (needsDailyReset) {
                 console.log("New day detected! Running daily reset...");
-
+                
                 let newFarmState = JSON.parse(JSON.stringify(farmState));
                 let newPlayerState = JSON.parse(JSON.stringify(currentPlayerState));
                 let totalValue = 0;
@@ -5113,7 +5128,7 @@
 
                 let wiltedPlantsReport = null;
                 if (WEATHER_DATA[weatherYesterday]?.needsTwoWaterings) {
-                    const wiltedPlots = newPlayerState.plots.filter(p => p && p.plantId && (p.wateringsToday || 0) < 2);
+                    const wiltedPlots = newPlayerState.plots.filter(p => p && p.plantId && (Object.values(p.wateredByToday || {}).reduce((a, b) => a + b, 0)) < 2);
                     if (wiltedPlots.length > 0) {
                         wiltedPlantsReport = wiltedPlots.reduce((acc, plot) => {
                             const plantName = GAME_DATA[plot.plantId]?.name || 'Unknown';
@@ -5137,18 +5152,22 @@
                             newFarmState.salesVolume[item.id] = (newFarmState.salesVolume[item.id] || 0) + 1;
                         }
                     });
-
-                    // --- บรรทัดสำคัญที่ 1: เพิ่มเงินให้ผู้เล่น ---
+                    
                     newPlayerState.money = (newPlayerState.money || 0) + totalValue;
-                    // --- บรรทัดสำคัญที่ 2: ล้างของออกจากกล่อง ---
                     newPlayerState.produceBin = [];
                 }
-
+                
                 newPlayerState.energy = getMaxEnergy();
                 newPlayerState.dailyRestCount = 0;
                 newPlayerState.dailyNapCount = 0;
                 newPlayerState.lastResetTime = now.getTime();
-
+                
+                newFarmState.plots.forEach(plot => {
+                    if (plot) {
+                        plot.wateredByToday = {}; // <-- เปลี่ยนเป็น Object ว่าง
+                    }
+                });
+                
                 await updatePlayerState(newPlayerState);
 
                 const lastFarmReset = new Date(newFarmState.quests.lastDailyReset || 0);
@@ -5165,16 +5184,14 @@
                         newFarmState.quests.weekly = generateRandomQuests('weekly', 2);
                         newFarmState.quests.lastWeeklyReset = now.getTime();
                     }
-                    newFarmState.plots.forEach(plot => { if(plot) plot.wateringsToday = 0; });
                     await updateMarketPrices(newFarmState); 
                 } else {
-                    newFarmState.plots.forEach(plot => { if(plot) plot.wateringsToday = 0; });
                     await updateFarmState(newFarmState);
                 }
-
+                
                 return { wasReset: true, earningsData: { total: totalValue }, wiltedPlants: wiltedPlantsReport };
             }
-
+            
             return { wasReset: false };
         }
         
