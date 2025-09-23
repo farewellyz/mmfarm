@@ -4723,19 +4723,17 @@
             }
             newPlayerState.storageBin.splice(seedIndexInStorage, 1);
 
-            // ▼▼▼ START EDIT ▼▼▼
-            // 1. เข้าถึงฟาร์มที่กำลังใช้งานอยู่
             const currentFarm = newFarmState.farms[currentFarmIndex];
-            // 2. ดึงข้อมูลปุ๋ยจากแปลงในฟาร์มปัจจุบัน
             const currentFertilizerLevel = currentFarm.plots[plotIndex]?.fertilizerLevel || 0;
             const seedData = GAME_DATA[seedId];
-            // 3. กำหนดข้อมูลการปลูกให้กับแปลงในฟาร์มปัจจุบัน
+            
+            // แก้ไข Object ที่สร้างขึ้นใหม่ตรงนี้
             currentFarm.plots[plotIndex] = { 
-            // ▲▲▲ END EDIT ▲▲▲
                 plantId: seedData.plantId, 
                 plantTime: Date.now(), 
                 fertilizerLevel: currentFertilizerLevel,
                 wateredBy: [],
+                wateredByToday: {}, // ▼▼▼ เพิ่มบรรทัดนี้เข้ามาครับ ▼▼▼
                 plantedBy: { uid: userId, nickname: playerState.nickname },
                 harvestedBy: []
             };
