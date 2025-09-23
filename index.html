@@ -241,7 +241,7 @@
         <div id="special-upgrade-modal" class="hidden fixed inset-0 bg-black/60 z-[52] flex items-center justify-center p-4">
             <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-lg modal-enter">
                 <h2 class="text-2xl font-bold text-gray-800 mb-4 text-center">⭐ เลือกสายการพัฒนาปราสาทของคุณ ⭐</h2>
-                <p class="text-center text-gray-600 mb-6">เลือกการอัปเกรดพิเศษเพียง 1 อย่างที่จะติดตัวฟาร์มของคุณไปตลอดกาล</p>
+                <p class="text-center text-gray-600 mb-6">เลือกการอัปเกรดพิเศษ</p>
                 <div id="special-upgrade-options" class="space-y-4">
                     </div>
                 <button id="special-upgrade-modal-close" class="mt-6 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg w-full">ภายหลัง</button>
@@ -2054,12 +2054,11 @@
             const houseBonus = ((farmState.sharedHouseLevel || 0) > 0 ? (farmState.sharedHouseLevel - 1) : 0) * bonusPerLevel;
             let finalEnergy = baseEnergy + houseBonus;
 
-            // --- START: เพิ่มการคำนวณโบนัสจาก Onsen ---
-            if (farmState.houseSpecialization === 'onsen_garden') {
+            // --- แก้ไขเงื่อนไขตรงนี้ ---
+            if (farmState.ownedSpecializations?.includes('onsen_garden')) {
                 const specEffect = GAME_DATA.house_specializations.onsen_garden.effect;
                 finalEnergy *= specEffect.maxEnergyMultiplier;
             }
-            // --- END: เพิ่มการคำนวณโบนัส ---
 
             return Math.floor(finalEnergy);
         }
@@ -2706,9 +2705,10 @@
             if (currentLevelIndex >= toolDataArray.length - 1) return;
 
             const nextToolData = toolDataArray[currentLevelIndex + 1];
-            
+
             let costMultiplier = 1.0;
-            if (farmState.houseSpecialization === 'master_workshop') {
+            // --- แก้ไขเงื่อนไขตรงนี้ ---
+            if (farmState.ownedSpecializations?.includes('master_workshop')) {
                 costMultiplier = GAME_DATA.house_specializations.master_workshop.effect.toolUpgradeCostMultiplier;
             }
             const finalCost = Math.floor(nextToolData.cost * costMultiplier);
@@ -2733,7 +2733,7 @@
             showConfirmationModal(`คุณต้องการอัปเกรดเป็น "${nextToolData.name}" หรือไม่?`, () => {
                 const newPlayerState = { ...playerState };
                 const newFarmState = { ...farmState };
-                
+
                 newPlayerState.money -= finalCost;
 
                 for (const [materialId, requiredCount] of Object.entries(nextToolData.materials)) {
@@ -2746,7 +2746,7 @@
                         return true;
                     });
                 }
-                
+
                 newFarmState.sharedTools[toolType] = nextToolData.id;
 
                 updatePlayerState(newPlayerState);
@@ -2762,7 +2762,8 @@
             container.innerHTML = '';
 
             let costMultiplier = 1.0;
-            if (farmState.houseSpecialization === 'master_workshop') {
+            // --- แก้ไขเงื่อนไขตรงนี้ ---
+            if (farmState.ownedSpecializations?.includes('master_workshop')) {
                 costMultiplier = GAME_DATA.house_specializations.master_workshop.effect.toolUpgradeCostMultiplier;
             }
 
@@ -2775,7 +2776,7 @@
 
             toolTypes.forEach(toolTypeKey => {
                 const toolType = toolTypeKey.endsWith('s') ? toolTypeKey.slice(0, -1) : toolTypeKey;
-                
+
                 if (!farmState.sharedTools || !farmState.sharedTools[toolType]) {
                     console.error(`Error: farmState.sharedTools.${toolType} is missing!`);
                     return;
@@ -2787,7 +2788,7 @@
 
                 const toolEl = document.createElement('div');
                 toolEl.className = 'bg-white/80 p-3 rounded-xl shadow-md flex flex-col items-center gap-2 text-center';
-                
+
                 let contentHTML = '';
 
                 if (currentLevelIndex === -1 || currentLevelIndex >= toolDataArray.length - 1) {
@@ -2810,7 +2811,7 @@
                             materialsHTML += `<p class="${ownedCount >= count ? 'text-green-600' : 'text-red-600'}">${GAME_DATA[id].name} (${ownedCount}/${count})</p>`;
                         });
                     }
-                    
+
                     contentHTML = `
                         <div class="font-semibold text-sm h-10 flex items-center">อัปเกรดเป็น ${nextTool.name}</div>
                         <img src="${nextTool.id.replace(/_basic/g, '')}.png" class="w-12 h-12 object-contain" alt="${nextTool.name}">
@@ -2946,7 +2947,7 @@
             totalEl.textContent = totalValue;
         }
         
-		function renderBedroom() {
+        function renderBedroom() {
             if (!playerState || !farmState) return;
             const container = document.getElementById('bedroom-display');
             const infoP = document.getElementById('bedroom-info').querySelector('p');
@@ -2954,11 +2955,8 @@
             const napBtn = document.getElementById('nap-btn');
             const napInfo = document.getElementById('nap-info');
             const onsenBtnContainer = document.getElementById('onsen-btn-container');
-            
-            // ล้างปุ่ม Onsen เก่าทิ้งก่อน
-            if (onsenBtnContainer) {
-                onsenBtnContainer.innerHTML = '';
-            }
+
+            if (onsenBtnContainer) onsenBtnContainer.innerHTML = '';
 
             const houseLevel = farmState.sharedHouseLevel || 0;
             const maxNormalLevel = GAME_DATA.house_upgrades.length;
@@ -2977,11 +2975,25 @@
                 container.style.backgroundImage = `url(${houseData.imageUrl})`;
 
                 if (houseLevel >= maxNormalLevel) {
-                    if (farmState.houseSpecialization) {
-                        const specData = GAME_DATA.house_specializations[farmState.houseSpecialization];
-                        infoP.innerHTML = `บ้านระดับ <span class="font-bold">${houseLevel}</span>: <span class="text-purple-700 font-semibold">${specData.name}</span>`;
+                    const ownedCount = farmState.ownedSpecializations?.length || 0;
+                    const totalCount = Object.keys(GAME_DATA.house_specializations).length;
+
+                    let specializationText = 'ยังไม่มีสายพัฒนาพิเศษ';
+                    if (ownedCount > 0) {
+                        specializationText = farmState.ownedSpecializations.map(id => GAME_DATA.house_specializations[id].icon).join(' ');
+                    }
+                    infoP.innerHTML = `บ้านระดับ <span class="font-bold">${houseLevel}</span>: ${specializationText}`;
+
+                    if (ownedCount >= totalCount) {
                         upgradeBtn.textContent = 'เชี่ยวชาญสูงสุดแล้ว';
                         upgradeBtn.disabled = true;
+                    } else {
+                        upgradeBtn.textContent = `⭐ ซื้อสายพัฒนาพิเศษ (${ownedCount}/${totalCount})`;
+                        upgradeBtn.disabled = false;
+                        upgradeBtn.onclick = showSpecialUpgradeModal;
+                    }
+
+                    if (farmState.ownedSpecializations?.includes('onsen_garden') && onsenBtnContainer) {
 
                         // --- แสดงปุ่ม Onsen ถ้ามี ---
                         if (farmState.houseSpecialization === 'onsen_garden' && onsenBtnContainer) {
@@ -3646,16 +3658,15 @@
             farmState.kitchen.queue.forEach((job, index) => {
                 const recipeData = GAME_DATA.recipes[job.recipeId];
                 const resultData = GAME_DATA[recipeData.resultId];
-                
-                // --- START: เพิ่มการคำนวณโบนัสจาก Chef's Kitchen ---
+
                 let cookTimeMultiplier = 1.0;
-                if (farmState.houseSpecialization === 'chefs_kitchen') {
+                // --- แก้ไขเงื่อนไขตรงนี้ ---
+                if (farmState.ownedSpecializations?.includes('chefs_kitchen')) {
                     cookTimeMultiplier = GAME_DATA.house_specializations.chefs_kitchen.effect.cookTimeMultiplier;
                 }
-                // --- END: เพิ่มการคำนวณ ---
 
                 const COOK_TIME_PER_ITEM = 600;
-                const totalCookTime = job.quantity * COOK_TIME_PER_ITEM * 1000 * cookTimeMultiplier; // <-- ใช้ cookTimeMultiplier
+                const totalCookTime = job.quantity * COOK_TIME_PER_ITEM * 1000 * cookTimeMultiplier;
                 const elapsed = Date.now() - job.startTime;
                 const progress = Math.min(elapsed / totalCookTime, 1);
                 const remainingSeconds = Math.max(0, (totalCookTime - elapsed) / 1000);
@@ -3673,7 +3684,7 @@
                         </div>
                     </div>
                 `;
-                
+
                 const actionContainer = document.createElement('div');
                 actionContainer.className = 'flex-shrink-0 w-20 text-center';
 
@@ -3688,7 +3699,7 @@
                 } else {
                     actionContainer.innerHTML = `<div class="text-sm font-semibold">${formatTime(remainingSeconds)}</div>`;
                 }
-                
+
                 jobEl.innerHTML = iconHTML + detailsHTML;
                 jobEl.appendChild(actionContainer);
                 container.appendChild(jobEl);
@@ -4102,9 +4113,10 @@
 
             const parent1 = station.parents[0];
             const animalData = GAME_DATA[parent1.animalId];
-            
+
             let timeMultiplier = 1.0;
-            if (newFarmState.houseSpecialization === 'animal_sanctuary') {
+            // --- แก้ไขเงื่อนไขตรงนี้ ---
+            if (newFarmState.ownedSpecializations?.includes('animal_sanctuary')) {
                 timeMultiplier = GAME_DATA.house_specializations.animal_sanctuary.effect.breedingTimeMultiplier;
             }
 
@@ -4115,7 +4127,7 @@
                 parentQualities: [station.parents[0].quality, station.parents[1].quality],
                 breedingTime: animalData.breedingTime * timeMultiplier
             };
-            
+
             station.parents = []; 
             updatePlayerState(newPlayerState);
             updateFarmState(newFarmState);
@@ -4192,11 +4204,9 @@
         function showStorageItemDetailsModal(itemId, quality) {
             const modal = document.getElementById('storage-item-details-modal');
             const itemData = GAME_DATA[itemId];
-            
-            // หาจำนวนของทั้งหมดที่มีในคลัง
+
             const count = playerState.storageBin.filter(i => i.id === itemId && i.quality === quality).length;
 
-            // อัปเดตข้อมูลใน Modal
             const iconEl = document.getElementById('details-modal-icon');
             iconEl.style.backgroundImage = itemData.imageUrl ? `url('${itemData.imageUrl}')` : 'none';
             iconEl.textContent = itemData.imageUrl ? '' : itemData.icon;
@@ -4204,7 +4214,6 @@
             document.getElementById('details-modal-quality').textContent = '★'.repeat(quality);
             document.getElementById('details-modal-count').textContent = count;
 
-            // คำนวณและแสดงราคาตลาด
             const priceEl = document.getElementById('details-modal-price');
             if (itemData.sellPrice) {
                 const basePriceForQuality = itemData.sellPrice[quality];
@@ -4217,11 +4226,27 @@
                 priceEl.textContent = 'ไม่สามารถขายได้';
             }
 
-            // สร้างปุ่ม Actions
             const actionsContainer = document.getElementById('details-modal-actions');
             actionsContainer.innerHTML = '';
 
-            // 1. ปุ่มขาย
+            if (itemData.energyRestore > 0) {
+                const eatButton = document.createElement('button');
+                eatButton.textContent = `กิน (+${itemData.energyRestore}⚡)`;
+                eatButton.className = 'bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg';
+                eatButton.onclick = () => {
+                    hideStorageItemDetailsModal();
+                    const eatAction = (quantityToEat) => eatFromStorage(itemId, quality, quantityToEat);
+                    showQuantityModal({ 
+                        title: `กิน ${itemData.name}`, 
+                        itemId: itemId, 
+                        quality: quality, 
+                        maxQuantity: count, 
+                        onConfirm: eatAction 
+                    });
+                };
+                actionsContainer.appendChild(eatButton);
+            }
+
             const sellButton = document.createElement('button');
             sellButton.textContent = 'ขาย';
             sellButton.className = 'bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg';
@@ -4232,23 +4257,7 @@
             };
             actionsContainer.appendChild(sellButton);
 
-            // 2. ปุ่มกิน (ถ้ากินได้)
-            if (itemData.energyRestore > 0) {
-                const eatButton = document.createElement('button');
-                eatButton.textContent = `กิน (+${itemData.energyRestore}⚡)`;
-                eatButton.className = 'bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg';
-                eatButton.onclick = () => {
-                    eatFromStorage(itemId, quality);
-                    hideStorageItemDetailsModal();
-                };
-                actionsContainer.appendChild(eatButton);
-            }
-            
-            // 3. ปุ่มย้ายเข้าตัว (ถ้าเป็นไอเท็มที่ย้ายได้)
-            // 3. ปุ่มย้ายเข้าตัว / เลือกใช้ / นำไปเลี้ยง
             if (itemData.type === 'item' || itemData.type === 'factory_deed' || itemData.type === 'animal_deed' || itemData.type === 'seed' || itemData.category === 'fish') {
-                
-                // ปุ่ม "เลือกใช้" สำหรับเมล็ดและปุ๋ย
                 if (itemData.type === 'seed' || (itemData.type === 'item' && itemData.qualityBonus)) {
                     const equipButton = document.createElement('button');
                     equipButton.textContent = '🖐️ เลือกใช้';
@@ -4260,8 +4269,7 @@
                     };
                     actionsContainer.appendChild(equipButton);
                 }
-                
-                // ปุ่มย้ายเข้าตัว (Deeds, Items)
+
                 if (itemData.type === 'item' || itemData.type === 'factory_deed' || itemData.type === 'animal_deed') {
                     const moveButton = document.createElement('button');
                     moveButton.textContent = 'ย้ายเข้าตัว';
@@ -4273,8 +4281,7 @@
                     actionsContainer.appendChild(moveButton);
 
                 }
-                
-                // ปุ่มนำไปเลี้ยง (Fish)
+
                 if(itemData.category === 'fish' && itemData.rarity !== 'Mystical' && quality < 2) {
                     const farmButton = document.createElement('button');
                     farmButton.textContent = '🏞️ นำไปเลี้ยง';
@@ -4307,46 +4314,6 @@
                     actionsContainer.appendChild(farmButton);
                 }
             }
-            if(itemData.category === 'fish' && itemData.rarity !== 'Mystical' && quality < 2) {
-                const farmButton = document.createElement('button');
-                farmButton.textContent = '🏞️ นำไปเลี้ยง';
-                farmButton.className = 'bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-2 px-4 rounded-lg';
-                farmButton.onclick = () => {
-                    // หาช่องว่างในบ่อปลา
-                    const capacity = GAME_DATA.fish_farm_upgrades.pond[farmState.fishFarm.pondLevel].capacity;
-                    const filledSlots = farmState.fishFarm.slots.filter(s => s).length;
-                    if (filledSlots >= capacity) {
-                        alert("บ่อเลี้ยงปลาเต็มแล้ว!");
-                        return;
-                    }
-                    // หา index ของช่องว่างช่องแรก
-                    let emptySlotIndex = -1;
-                    for(let i=0; i<capacity; i++) {
-                        if(!farmState.fishFarm.slots[i]) {
-                            emptySlotIndex = i;
-                            break;
-                        }
-                    }
-
-                    const newPlayerState = { ...playerState };
-                    const itemIndex = newPlayerState.storageBin.findIndex(i => i.id === itemId && i.quality === quality);
-                    const itemToMove = newPlayerState.storageBin.splice(itemIndex, 1)[0];
-
-                    const newFarmState = { ...farmState };
-                    newFarmState.fishFarm.slots[emptySlotIndex] = {
-                        fishId: itemToMove.id,
-                        quality: itemToMove.quality,
-                        startTime: Date.now(),
-                        lastFedTime: Date.now()
-                    };
-                    updatePlayerState(newPlayerState);
-                    updateFarmState(newFarmState);
-                    hideStorageItemDetailsModal();
-                };
-                actionsContainer.appendChild(farmButton);
-            }
-
-            // แสดง Modal
             modal.classList.remove('hidden');
         }
 
@@ -4754,7 +4721,7 @@
                 const weatherMultiplier = weather?.cropMultiplier || 1;
                 const elapsedSeconds = (Date.now() - plot.plantTime) / 1000;
                 let growthMultiplier = 1;
-                
+
                 const uniqueWaterersToday = plot.wateredByToday ? Object.keys(plot.wateredByToday).length : 0;
                 const totalWateringsToday = plot.wateredByToday ? Object.values(plot.wateredByToday).reduce((sum, count) => sum + count, 0) : 0;
 
@@ -4782,9 +4749,10 @@
             const newPlayerState = { ...playerState };
             let harvestedItems = [];
             const weather = WEATHER_DATA[farmState.currentWeather];
-            
+
             let botanistBonusChance = 0;
-            if (newFarmState.houseSpecialization === 'botanist_study') {
+            // --- แก้ไขเงื่อนไขตรงนี้ ---
+            if (newFarmState.ownedSpecializations?.includes('botanist_study')) {
                 botanistBonusChance = GAME_DATA.house_specializations.botanist_study.effect.harvestQualityBonusChance;
             }
 
@@ -4798,7 +4766,7 @@
                 if (weather?.qualityBonusChance && quality < 2 && Math.random() < weather.qualityBonusChance) {
                     quality++;
                 }
-                
+
                 if (botanistBonusChance > 0 && quality < 2 && Math.random() < botanistBonusChance) {
                     quality++;
                 }
@@ -4806,7 +4774,7 @@
                 for (let i = 0; i < harvestMultiplier; i++) {
                     harvestedItems.push({ id: cropData.produceId, quality: quality });
                 }
-                
+
                 if (!plot.harvestedBy) plot.harvestedBy = [];
                 plot.harvestedBy.push({ uid: userId, nickname: playerState.nickname });
                 const involvedUids = new Set([plot.plantedBy?.uid, ...(plot.wateredBy?.map(p => p.uid).filter(uid => uid) || [])]);
@@ -4879,14 +4847,15 @@
             const animal = newFarmState.animals[slotIndex];
             const animalData = GAME_DATA[animal.animalId];
             let quality = animal.quality || 0;
-            
+
             const weather = WEATHER_DATA[farmState.currentWeather];
             if (weather?.qualityBonusChance && quality < 2 && Math.random() < weather.qualityBonusChance) {
                 quality++;
             }
-            
+
             let productCount = 1;
-            if (newFarmState.houseSpecialization === 'animal_sanctuary') {
+            // --- แก้ไขเงื่อนไขตรงนี้ ---
+            if (newFarmState.ownedSpecializations?.includes('animal_sanctuary')) {
                 const bonusChance = GAME_DATA.house_specializations.animal_sanctuary.effect.doubleAnimalProductChance;
                 if (Math.random() < bonusChance) {
                     productCount = 2;
@@ -4981,13 +4950,14 @@
                     let hasQuestChanges = false;
 
                     let industrialistBonusChance = 0;
-                    if (freshFarmState.houseSpecialization === 'industrialist_office') {
+                    // --- แก้ไขเงื่อนไขตรงนี้ ---
+                    if (freshFarmState.ownedSpecializations?.includes('industrialist_office')) {
                         industrialistBonusChance = GAME_DATA.house_specializations.industrialist_office.effect.doubleFactoryOutputChance;
                     }
 
                     const now = Date.now();
                     const factoryModifier = WEATHER_DATA[freshFarmState.currentWeather]?.factoryModifier || 1;
-                    
+
                     for (const factory of freshFarmState.factories) {
                         if (!factory.factoryId || !factory.queue || factory.queue.length === 0 || !factory.queue[0].startTime) continue;
                         if (!factory.outputBin) factory.outputBin = [];
@@ -5001,7 +4971,7 @@
                         if (now >= completionTime) {
                             hasFactoryChanges = true;
                             const finishedJob = factory.queue.shift(); 
-                            
+
                             let outputQuality = 0;
                             if (factory.factoryId === 'hatchery') {
                                 const parentFishId = finishedJob.ingredientInputs[0]?.parentFishId;
@@ -5028,7 +4998,7 @@
                             if (industrialistBonusChance > 0 && Math.random() < industrialistBonusChance) {
                                 outputCount *= 2;
                             }
-                            
+
                             const questUpdated = updateQuestProgress(freshFarmState, 'craft_specific', {
                                 itemId: recipe.output.id, 
                                 quality: outputQuality, 
@@ -5048,7 +5018,7 @@
                             }
                         }
                     }
-                    
+
                     if (hasFactoryChanges || hasQuestChanges) {
                         const updates = {};
                         if(hasFactoryChanges) updates.factories = freshFarmState.factories;
@@ -5141,50 +5111,61 @@
             const container = document.getElementById('special-upgrade-options');
             container.innerHTML = '';
 
-            Object.entries(GAME_DATA.house_specializations).forEach(([id, spec]) => {
-                const canAfford = playerState.money >= spec.cost;
-                const button = document.createElement('button');
-                button.className = `w-full text-left p-4 border rounded-lg flex items-center gap-4 transition ${canAfford ? 'hover:bg-green-50 hover:border-green-400' : 'opacity-60 cursor-not-allowed'}`;
+            const availableSpecs = Object.entries(GAME_DATA.house_specializations)
+                .filter(([id, _]) => !farmState.ownedSpecializations.includes(id));
 
-                button.innerHTML = `
-                    <div class="text-4xl">${spec.icon}</div>
-                    <div class="flex-grow">
-                        <h3 class="font-bold text-lg text-gray-800">${spec.name}</h3>
-                        <p class="text-sm text-gray-600">${spec.description}</p>
-                    </div>
-                    <div class="text-right flex-shrink-0">
-                        <p class="font-bold text-lg ${canAfford ? 'text-green-600' : 'text-red-500'}">${spec.cost}💰</p>
-                    </div>
-                `;
+            if (availableSpecs.length === 0) {
+                container.innerHTML = `<p class="text-center text-gray-500">คุณได้ซื้อการอัปเกรดพิเศษทั้งหมดแล้ว!</p>`;
+            } else {
+                availableSpecs.forEach(([id, spec]) => {
+                    const canAfford = playerState.money >= spec.cost;
+                    const button = document.createElement('button');
+                    button.className = `w-full text-left p-4 border rounded-lg flex items-center gap-4 transition ${canAfford ? 'hover:bg-green-50 hover:border-green-400' : 'opacity-60 cursor-not-allowed'}`;
+                    
+                    button.innerHTML = `
+                        <div class="text-4xl">${spec.icon}</div>
+                        <div class="flex-grow">
+                            <h3 class="font-bold text-lg text-gray-800">${spec.name}</h3>
+                            <p class="text-sm text-gray-600">${spec.description}</p>
+                        </div>
+                        <div class="text-right flex-shrink-0">
+                            <p class="font-bold text-lg ${canAfford ? 'text-green-600' : 'text-red-500'}">${spec.cost}💰</p>
+                        </div>
+                    `;
 
-                if (canAfford) {
-                    button.onclick = () => {
-                        showConfirmationModal(`คุณแน่ใจหรือไม่ว่าจะเลือกสาย "${spec.name}"? การเลือกนี้ไม่สามารถเปลี่ยนแปลงได้`, () => {
-                            selectSpecialUpgrade(id);
-                        });
-                    };
-                }
-                container.appendChild(button);
-            });
+                    if (canAfford) {
+                        button.onclick = () => {
+                            showConfirmationModal(`คุณแน่ใจหรือไม่ว่าจะซื้อสายพัฒนา "${spec.name}"?`, () => {
+                                selectSpecialUpgrade(id);
+                            });
+                        };
+                    }
+                    container.appendChild(button);
+                });
+            }
 
             modal.classList.remove('hidden');
         }
 
         async function selectSpecialUpgrade(upgradeId) {
-            if (!farmState.houseSpecialization) {
+            // ตรวจสอบว่ายังไม่มีการอัปเกรดนี้
+            if (!farmState.ownedSpecializations.includes(upgradeId)) {
                 const specData = GAME_DATA.house_specializations[upgradeId];
                 if (playerState.money >= specData.cost) {
                     const newPlayerState = { ...playerState };
                     const newFarmState = { ...farmState };
 
                     newPlayerState.money -= specData.cost;
-                    newFarmState.houseSpecialization = upgradeId;
+
+                    // เพิ่ม ID เข้าไปใน Array
+                    if (!newFarmState.ownedSpecializations) newFarmState.ownedSpecializations = [];
+                    newFarmState.ownedSpecializations.push(upgradeId);
 
                     await updatePlayerState(newPlayerState);
                     await updateFarmState(newFarmState);
 
                     document.getElementById('special-upgrade-modal').classList.add('hidden');
-                    showInfoModal(specData.icon, 'อัปเกรดสำเร็จ!', `ตอนนี้ฟาร์มของคุณเชี่ยวชาญด้าน "${specData.name}" แล้ว!`);
+                    showInfoModal(specData.icon, 'ซื้อสำเร็จ!', `คุณได้ปลดล็อกสายพัฒนา "${specData.name}" แล้ว!`);
                 }
             }
         }
@@ -5243,18 +5224,28 @@
             }
         }
 
-        async function eatFromStorage(itemId, quality) {
+        async function eatFromStorage(itemId, quality, quantity) {
             const newPlayerState = { ...playerState };
-            const newFarmState = { ...farmState }; // ต้องดึง farmState มาด้วย
-            const itemIndex = newPlayerState.storageBin.findIndex(item => item.id === itemId && item.quality === quality);
+            const newFarmState = { ...farmState };
+            const itemData = GAME_DATA[itemId];
 
-            if (itemIndex > -1) {
-                const itemData = GAME_DATA[itemId];
-                newPlayerState.storageBin.splice(itemIndex, 1);
+            let itemsFoundAndRemoved = 0;
+
+            const remainingItems = newPlayerState.storageBin.filter(item => {
+                if (itemsFoundAndRemoved < quantity && item.id === itemId && item.quality === quality) {
+                    itemsFoundAndRemoved++;
+                    return false;
+                }
+                return true;
+            });
+
+            if (itemsFoundAndRemoved === quantity) {
+                newPlayerState.storageBin = remainingItems;
 
                 if (itemData.energyRestore > 0) {
+                    const totalEnergyRestore = itemData.energyRestore * quantity;
                     const MAX_ENERGY = getMaxEnergy();
-                    newPlayerState.energy = Math.min(MAX_ENERGY, (newPlayerState.energy || 0) + itemData.energyRestore);
+                    newPlayerState.energy = Math.min(MAX_ENERGY, (newPlayerState.energy || 0) + totalEnergyRestore);
                 }
 
                 if (itemData.buff) {
@@ -5266,13 +5257,14 @@
                     });
                     showInfoModal(itemData.icon, 'ได้รับบัพ!', itemData.buff.description);
                 }
-                
-                // --- แก้ไขการเรียกใช้ฟังก์ชันตรงนี้ ---
-                updateQuestProgress(newFarmState, 'eat');
-                
+
+                updateQuestProgress(newFarmState, 'eat', { amount: quantity });
+
                 await updatePlayerState(newPlayerState);
-                await updateFarmState(newFarmState); // ต้องบันทึก farmState ด้วย
+                await updateFarmState(newFarmState);
                 hideStorageItemDetailsModal();
+            } else {
+                console.error(`พยายามจะกิน ${itemId} จำนวน ${quantity} ชิ้น แต่หาในคลังเจอแค่ ${itemsFoundAndRemoved} ชิ้น`);
             }
         }
 		
@@ -5828,7 +5820,7 @@
             const newFarmState = JSON.parse(JSON.stringify(farmState));
             const newPlayerState = JSON.parse(JSON.stringify(playerState));
             if (!newFarmState.kitchen.queue[queueIndex]) return; 
-            
+
             const job = newFarmState.kitchen.queue[queueIndex];
             const recipe = GAME_DATA.recipes[job.recipeId];
 
@@ -5841,16 +5833,15 @@
                     averageQuality = Math.floor(totalQualitySum / (job.quantity * totalIngredientsPerDish));
                 }
             }
-            
-            // --- START: เพิ่มการคำนวณโบนัสคุณภาพ ---
-            if (newFarmState.houseSpecialization === 'chefs_kitchen' && averageQuality < 2) {
+
+            // --- แก้ไขเงื่อนไขตรงนี้ ---
+            if (newFarmState.ownedSpecializations?.includes('chefs_kitchen') && averageQuality < 2) {
                 const bonusChance = GAME_DATA.house_specializations.chefs_kitchen.effect.qualityBonusChance;
                 if (Math.random() < bonusChance) {
                     averageQuality++;
                 }
             }
-            // --- END: เพิ่มการคำนวณ ---
-            
+
             updateQuestProgress(newFarmState, 'craft_specific', { itemId: recipe.resultId, quality: averageQuality, amount: job.quantity });
 
             for (let i = 0; i < job.quantity; i++) {
@@ -5858,7 +5849,7 @@
             }
 
             newFarmState.kitchen.queue.splice(queueIndex, 1);
-            
+
             updateFarmState(newFarmState);
             updatePlayerState(newPlayerState);
         }
@@ -6142,11 +6133,9 @@
                 if (docSnap.exists()) {
                     farmState = docSnap.data();
                     
-                    // ▼▼▼ แก้ไขตรรกะการตรวจสอบ sharedTools ให้รัดกุมขึ้น ▼▼▼
                     if (!farmState.sharedTools) {
-                        farmState.sharedTools = {}; // สร้าง object ว่างๆ ก่อน
+                        farmState.sharedTools = {};
                     }
-                    // ตรวจสอบและสร้างข้อมูลเริ่มต้นให้แต่ละเครื่องมือ ถ้ายังไม่มี
                     if (!farmState.sharedTools.watering_can) {
                         farmState.sharedTools.watering_can = 'watering_can_basic';
                     }
@@ -6156,11 +6145,10 @@
                     if (!farmState.sharedTools.spreader) {
                         farmState.sharedTools.spreader = 'spreader_basic';
                     }
-                    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
                     
                     if (!farmState.currentWeather) {
                         farmState.currentWeather = 'sunny';
-					}
+                    }
                     if (!farmState.quests) farmState.quests = { daily: [], weekly: [], lastDailyReset: 0, lastWeeklyReset: 0 };
                     if (!farmState.ownedKitchenTools) farmState.ownedKitchenTools = [];
                     if (!farmState.factories) farmState.factories = Array(FACTORY_GRID_SIZE).fill(null).map(() => ({ factoryId: null }));
@@ -6173,6 +6161,13 @@
                     if (!farmState.fishFarm) {
                         farmState.fishFarm = { foodLevel: 0, pondLevel: 0, slots: [] };
                     }
+
+                    // --- START: เพิ่มการตรวจสอบ ownedSpecializations ---
+                    if (!farmState.ownedSpecializations) {
+                        farmState.ownedSpecializations = [];
+                    }
+                    // --- END: เพิ่มการตรวจสอบ ---
+
                 }
             }, handleFirestoreError);
         }
@@ -6195,8 +6190,8 @@
                         sharedHouseLevel: 0,
                         sharedRodLevel: 0,
                         sharedPondLevel: 0,
-						currentWeather: 'sunny',
-                        sharedTools: { // ▼▼▼ เพิ่มส่วนนี้เข้าไป ▼▼▼
+                        currentWeather: 'sunny',
+                        sharedTools: {
                             watering_can: 'watering_can_basic',
                             scythe: 'scythe_basic',
                             spreader: 'spreader_basic'
@@ -6206,7 +6201,8 @@
                             foodLevel: 0,
                             pondLevel: 0,
                             slots: []
-                        }
+                        },
+                        ownedSpecializations: [] // <-- เปลี่ยนจาก houseSpecialization
                     };
                     await setDoc(farmDocRef, initialFarmState);
                 }
