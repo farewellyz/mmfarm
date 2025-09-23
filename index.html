@@ -4204,7 +4204,7 @@
         function showStorageItemDetailsModal(itemId, quality) {
             const modal = document.getElementById('storage-item-details-modal');
             const itemData = GAME_DATA[itemId];
-
+            
             const count = playerState.storageBin.filter(i => i.id === itemId && i.quality === quality).length;
 
             const iconEl = document.getElementById('details-modal-icon');
@@ -4229,13 +4229,16 @@
             const actionsContainer = document.getElementById('details-modal-actions');
             actionsContainer.innerHTML = '';
 
+            // --- ตรรกะใหม่สำหรับปุ่ม "กิน" ---
             if (itemData.energyRestore > 0) {
                 const eatButton = document.createElement('button');
                 eatButton.textContent = `กิน (+${itemData.energyRestore}⚡)`;
                 eatButton.className = 'bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg';
                 eatButton.onclick = () => {
                     hideStorageItemDetailsModal();
+                    // สร้าง callback function ที่จะเรียกใช้ eatFromStorage
                     const eatAction = (quantityToEat) => eatFromStorage(itemId, quality, quantityToEat);
+                    // เรียกหน้าต่างเลือกจำนวน
                     showQuantityModal({ 
                         title: `กิน ${itemData.name}`, 
                         itemId: itemId, 
@@ -4246,7 +4249,8 @@
                 };
                 actionsContainer.appendChild(eatButton);
             }
-
+            
+            // ปุ่มขาย (เหมือนเดิม)
             const sellButton = document.createElement('button');
             sellButton.textContent = 'ขาย';
             sellButton.className = 'bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg';
@@ -4269,7 +4273,7 @@
                     };
                     actionsContainer.appendChild(equipButton);
                 }
-
+                
                 if (itemData.type === 'item' || itemData.type === 'factory_deed' || itemData.type === 'animal_deed') {
                     const moveButton = document.createElement('button');
                     moveButton.textContent = 'ย้ายเข้าตัว';
@@ -4281,7 +4285,7 @@
                     actionsContainer.appendChild(moveButton);
 
                 }
-
+                
                 if(itemData.category === 'fish' && itemData.rarity !== 'Mystical' && quality < 2) {
                     const farmButton = document.createElement('button');
                     farmButton.textContent = '🏞️ นำไปเลี้ยง';
@@ -5228,9 +5232,9 @@
             const newPlayerState = { ...playerState };
             const newFarmState = { ...farmState };
             const itemData = GAME_DATA[itemId];
-
+            
             let itemsFoundAndRemoved = 0;
-
+            
             const remainingItems = newPlayerState.storageBin.filter(item => {
                 if (itemsFoundAndRemoved < quantity && item.id === itemId && item.quality === quality) {
                     itemsFoundAndRemoved++;
@@ -5257,9 +5261,9 @@
                     });
                     showInfoModal(itemData.icon, 'ได้รับบัพ!', itemData.buff.description);
                 }
-
+                
                 updateQuestProgress(newFarmState, 'eat', { amount: quantity });
-
+                
                 await updatePlayerState(newPlayerState);
                 await updateFarmState(newFarmState);
                 hideStorageItemDetailsModal();
