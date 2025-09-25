@@ -3879,8 +3879,7 @@
             actionsEl.innerHTML = '';
             contentEl.querySelectorAll('.context-details').forEach(el => el.remove());
             const detailsEl = document.createElement('div');
-            // --- แก้ไขคลาสเป็น text-center ---
-            detailsEl.className = 'context-details text-sm text-gray-600 mb-4 border-t pt-4 mt-4 text-center'; 
+            detailsEl.className = 'context-details text-sm text-gray-600 mb-4 border-t pt-4 mt-4 text-center';
 
             const createButton = (text, action, disabled = false, extraClasses = 'bg-green-500 hover:bg-green-600 text-white') => {
                 const button = document.createElement('button');
@@ -3891,9 +3890,9 @@
             };
 
             if (type === 'plot') {
-                // ... (โค้ดส่วนของ plot เหมือนเดิมทุกประการ ไม่มีการเปลี่ยนแปลง) ...
-                detailsEl.classList.remove('text-center'); // แปลงยังคงชิดซ้ายเหมือนเดิม
+                detailsEl.classList.remove('text-center');
                 detailsEl.classList.add('text-left');
+                // ... (โค้ดส่วนของ plot เหมือนเดิมทุกประการ ไม่มีการเปลี่ยนแปลง) ...
                 const index = id;
                 const plot = farmState.farms[currentFarmIndex].plots[index];
                 titleEl.textContent = `แปลงที่ ${index + 1} (ฟาร์ม: ${farmState.farms[currentFarmIndex].name})`;
@@ -3962,7 +3961,7 @@
                     actionsEl.appendChild(createButton('❌ เคลียแปลง (-5⚡)', () => clearPlot(index), false, 'bg-red-500 hover:bg-red-600 text-white'));
                 }
             } else if (type === 'animal') {
-                // ... (โค้ดส่วนของ animal เหมือนเดิมทุกประการ ไม่ต้องแก้ไข) ...
+                // ... (โค้ดส่วนของ animal เหมือนเดิมทุกประการ ไม่มีการเปลี่ยนแปลง) ...
                 const index = id;
                 const animal = farmState.animals[index];
                 if (!animal.animalId) {
@@ -4000,10 +3999,7 @@
                     const factoryData = GAME_DATA[factory.factoryId];
                     titleEl.textContent = factoryData.name;
 
-                    // ▼▼▼ START EDIT: เพิ่มการแสดงรายละเอียดแบบเต็ม ▼▼▼
-                    let detailsHTML = `<div class="space-y-3">`; // เพิ่มระยะห่างระหว่างหัวข้อ
-                    
-                    // --- ส่วนของคิวการผลิต ---
+                    let detailsHTML = `<div class="space-y-3">`;
                     detailsHTML += `<div><p class="font-bold">คิวการผลิต (${factory.queue?.length || 0})</p>`;
                     if (factory.queue && factory.queue.length > 0) {
                         factory.queue.forEach(job => {
@@ -4016,25 +4012,16 @@
                         detailsHTML += `<p class="text-xs text-gray-500">-- ว่าง --</p>`;
                     }
                     detailsHTML += `</div>`;
-
-                    // --- ส่วนของของที่เสร็จแล้ว ---
                     detailsHTML += `<div><p class="font-bold mt-2">ของที่เสร็จแล้ว (${factory.outputBin?.length || 0})</p>`;
                     if (factory.outputBin && factory.outputBin.length > 0) {
-                        // --- ตรรกะใหม่: จัดกลุ่มของที่เสร็จแล้ว ---
                         const groupedOutput = factory.outputBin.reduce((acc, output) => {
                             const key = `${output.item.id}_q${output.item.quality}_by_${output.owner}`;
                             if (!acc[key]) {
-                                acc[key] = {
-                                    item: output.item,
-                                    ownerNickname: output.ownerNickname,
-                                    owner: output.owner,
-                                    count: 0
-                                };
+                                acc[key] = { ...output, count: 0 };
                             }
                             acc[key].count++;
                             return acc;
                         }, {});
-
                         Object.values(groupedOutput).forEach(group => {
                             const itemData = GAME_DATA[group.item.id];
                             if (itemData) {
@@ -4042,20 +4029,26 @@
                                 detailsHTML += `<p class="text-xs ${ownerClass}">${itemData.name} ${'★'.repeat(group.item.quality)} ${group.count} ชิ้น (ของ: ${group.ownerNickname || '??'})</p>`;
                             }
                         });
-
                     } else {
                         detailsHTML += `<p class="text-xs text-gray-500">-- ว่าง --</p>`;
                     }
                     detailsHTML += `</div>`;
-                    
                     detailsHTML += `</div>`;
                     detailsEl.innerHTML = detailsHTML;
-                    // ▲▲▲ END EDIT ▲▲▲
                     
                     actionsEl.before(detailsEl);
                     const myItemsInBin = factory.outputBin?.filter(item => item.owner === userId).length || 0;
+                    
+                    // ▼▼▼ START EDIT: เพิ่มปุ่ม "ทำซ้ำ" กลับเข้ามา ▼▼▼
                     actionsEl.appendChild(createButton('▶️ เริ่มการผลิต', () => showSubMenu('useFactory', index, factoryData.recipes.map(r => r.id))));
+                    
+                    // ตรวจสอบว่ามีสูตรล่าสุดที่สามารถทำซ้ำในโรงงานนี้ได้หรือไม่
+                    const lastRecipeIsAvailable = lastFactoryRecipeId && factoryData.recipes.some(r => r.id === lastFactoryRecipeId);
+                    
+                    actionsEl.appendChild(createButton('🔄 ทำซ้ำรายการล่าสุด', () => startProcessing(index, lastFactoryRecipeId), !lastRecipeIsAvailable));
+                    
                     actionsEl.appendChild(createButton('📥 เก็บของของฉัน', () => collectMyFactoryGoods(index), myItemsInBin === 0));
+                    // ▲▲▲ END EDIT ▲▲▲
                 }
             }
 
