@@ -533,7 +533,6 @@
             <button id="reset-player-btn" class="absolute bottom-1 right-2 bg-yellow-500 text-white text-xs font-bold py-1 px-3 rounded-full hover:bg-yellow-600">รีเซ็ตข้อมูลฉัน</button>
             <button id="admin-force-reset-quests-btn" class="hidden absolute top-10 right-[150px] bg-green-600 text-white text-xs font-bold py-1 px-3 rounded-full hover:bg-green-700">รีเซ็ตเควส (แอดมิน)</button>
             <button id="admin-force-reset-weather-btn" class="hidden absolute top-10 right-[280px] bg-indigo-600 text-white text-xs font-bold py-1 px-3 rounded-full hover:bg-indigo-700">รีเซ็ตอากาศ (แอดมิน)</button>
-            <button id="trim-farm-btn" class="absolute top-2 left-2 bg-orange-500 text-white text-xs font-bold py-1 px-3 rounded-full hover:bg-orange-600">ลบแปลงเกิน (แอดมิน)</button>
             <h1 class="text-3xl md:text-4xl font-bold text-green-800">สวนผักของเรา 💚</h1>
             <div class="mt-3 flex flex-wrap justify-center items-center gap-x-4 gap-y-2 text-sm text-gray-600">
                 <div id="weather-display" class="flex items-center justify-center gap-2 bg-blue-100 px-3 py-1 rounded-full" title="สภาพอากาศวันนี้">
@@ -3880,7 +3879,8 @@
             actionsEl.innerHTML = '';
             contentEl.querySelectorAll('.context-details').forEach(el => el.remove());
             const detailsEl = document.createElement('div');
-            detailsEl.className = 'context-details text-sm text-gray-600 mb-4 border-t pt-4 mt-4 text-left'; // <-- จัดให้ชิดซ้าย
+            // --- แก้ไขคลาสเป็น text-center ---
+            detailsEl.className = 'context-details text-sm text-gray-600 mb-4 border-t pt-4 mt-4 text-center'; 
 
             const createButton = (text, action, disabled = false, extraClasses = 'bg-green-500 hover:bg-green-600 text-white') => {
                 const button = document.createElement('button');
@@ -3891,7 +3891,9 @@
             };
 
             if (type === 'plot') {
-                // ... (โค้ดส่วนของ plot เหมือนเดิมทุกประการ ไม่ต้องแก้ไข) ...
+                // ... (โค้ดส่วนของ plot เหมือนเดิมทุกประการ ไม่มีการเปลี่ยนแปลง) ...
+                detailsEl.classList.remove('text-center'); // แปลงยังคงชิดซ้ายเหมือนเดิม
+                detailsEl.classList.add('text-left');
                 const index = id;
                 const plot = farmState.farms[currentFarmIndex].plots[index];
                 titleEl.textContent = `แปลงที่ ${index + 1} (ฟาร์ม: ${farmState.farms[currentFarmIndex].name})`;
@@ -3999,19 +4001,17 @@
                     titleEl.textContent = factoryData.name;
 
                     // ▼▼▼ START EDIT: เพิ่มการแสดงรายละเอียดแบบเต็ม ▼▼▼
-                    let detailsHTML = `<div class="space-y-2">`;
+                    let detailsHTML = `<div class="space-y-3">`; // เพิ่มระยะห่างระหว่างหัวข้อ
                     
                     // --- ส่วนของคิวการผลิต ---
                     detailsHTML += `<div><p class="font-bold">คิวการผลิต (${factory.queue?.length || 0})</p>`;
                     if (factory.queue && factory.queue.length > 0) {
-                        detailsHTML += `<ul class="list-disc list-inside">`;
                         factory.queue.forEach(job => {
                             const recipe = factoryData.recipes.find(r => r.id === job.recipeId);
                             if (recipe) {
-                                detailsHTML += `<li class="text-xs">${recipe.name} (โดย: ${job.processedBy?.nickname || '??'})</li>`;
+                                detailsHTML += `<p class="text-xs">${recipe.name} (โดย: ${job.processedBy?.nickname || '??'})</p>`;
                             }
                         });
-                        detailsHTML += `</ul>`;
                     } else {
                         detailsHTML += `<p class="text-xs text-gray-500">-- ว่าง --</p>`;
                     }
@@ -4020,15 +4020,29 @@
                     // --- ส่วนของของที่เสร็จแล้ว ---
                     detailsHTML += `<div><p class="font-bold mt-2">ของที่เสร็จแล้ว (${factory.outputBin?.length || 0})</p>`;
                     if (factory.outputBin && factory.outputBin.length > 0) {
-                        detailsHTML += `<ul class="list-disc list-inside">`;
-                        factory.outputBin.forEach(output => {
-                            const itemData = GAME_DATA[output.item.id];
+                        // --- ตรรกะใหม่: จัดกลุ่มของที่เสร็จแล้ว ---
+                        const groupedOutput = factory.outputBin.reduce((acc, output) => {
+                            const key = `${output.item.id}_q${output.item.quality}_by_${output.owner}`;
+                            if (!acc[key]) {
+                                acc[key] = {
+                                    item: output.item,
+                                    ownerNickname: output.ownerNickname,
+                                    owner: output.owner,
+                                    count: 0
+                                };
+                            }
+                            acc[key].count++;
+                            return acc;
+                        }, {});
+
+                        Object.values(groupedOutput).forEach(group => {
+                            const itemData = GAME_DATA[group.item.id];
                             if (itemData) {
-                                let ownerClass = output.owner === userId ? 'text-blue-600 font-semibold' : '';
-                                detailsHTML += `<li class="text-xs ${ownerClass}">${itemData.name} ${'★'.repeat(output.item.quality)} (ของ: ${output.ownerNickname || '??'})</li>`;
+                                let ownerClass = group.owner === userId ? 'text-blue-600 font-semibold' : '';
+                                detailsHTML += `<p class="text-xs ${ownerClass}">${itemData.name} ${'★'.repeat(group.item.quality)} ${group.count} ชิ้น (ของ: ${group.ownerNickname || '??'})</p>`;
                             }
                         });
-                        detailsHTML += `</ul>`;
+
                     } else {
                         detailsHTML += `<p class="text-xs text-gray-500">-- ว่าง --</p>`;
                     }
@@ -6117,39 +6131,6 @@
                 });
             });
             // ลบการเรียก await updateFarmState(newFarmState) ออกจากฟังก์ชันนี้
-        }
-        
-        function trimExcessPlots() {
-            if (!farmState || !farmState.farms) {
-                alert("ข้อมูลฟาร์มยังไม่พร้อม กรุณารอสักครู่แล้วลองอีกครั้ง");
-                return;
-            }
-
-            // สร้างสำเนาของข้อมูลเพื่อป้องกันการแก้ไขโดยตรง
-            const newFarmState = JSON.parse(JSON.stringify(farmState));
-            let plotsTrimmed = false;
-
-            // วนลูปเช็คทุกฟาร์ม เผื่อมีฟาร์มอื่นเกินด้วย
-            newFarmState.farms.forEach((farm, index) => {
-                if (farm.plots.length > MAX_PLOTS_PER_FARM) {
-                    console.log(`ตรวจพบฟาร์ม "${farm.name}" มี ${farm.plots.length} แปลง (เกิน ${MAX_PLOTS_PER_FARM})`);
-
-                    // ใช้ slice เพื่อตัด Array ให้เหลือแค่ 40 แปลงแรก
-                    farm.plots = farm.plots.slice(0, MAX_PLOTS_PER_FARM);
-
-                    console.log(`ทำการลบแปลงส่วนเกินของฟาร์ม "${farm.name}" เรียบร้อยแล้ว เหลือ ${farm.plots.length} แปลง`);
-                    plotsTrimmed = true;
-                }
-            });
-
-            if (plotsTrimmed) {
-                updateFarmState(newFarmState);
-                alert("ลบแปลงที่เกิน 40 แปลงออกเรียบร้อยแล้ว! หน้าเว็บจะรีโหลดเพื่อแสดงผล");
-                // หน่วงเวลาเล็กน้อยเพื่อให้แน่ใจว่าข้อมูลถูกบันทึกแล้วค่อยรีโหลด
-                setTimeout(() => window.location.reload(), 1500);
-            } else {
-                alert("ไม่พบฟาร์มที่มีแปลงเกินกำหนด (40 แปลง)");
-            }
         }
 
         async function claimQuestReward(questType, questId) {
