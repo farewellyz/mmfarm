@@ -533,6 +533,7 @@
             <button id="reset-player-btn" class="absolute bottom-1 right-2 bg-yellow-500 text-white text-xs font-bold py-1 px-3 rounded-full hover:bg-yellow-600">รีเซ็ตข้อมูลฉัน</button>
             <button id="admin-force-reset-quests-btn" class="hidden absolute top-10 right-[150px] bg-green-600 text-white text-xs font-bold py-1 px-3 rounded-full hover:bg-green-700">รีเซ็ตเควส (แอดมิน)</button>
             <button id="admin-force-reset-weather-btn" class="hidden absolute top-10 right-[280px] bg-indigo-600 text-white text-xs font-bold py-1 px-3 rounded-full hover:bg-indigo-700">รีเซ็ตอากาศ (แอดมิน)</button>
+            <button id="trim-farm-btn" class="absolute top-2 left-2 bg-orange-500 text-white text-xs font-bold py-1 px-3 rounded-full hover:bg-orange-600">ลบแปลงเกิน (แอดมิน)</button>
             <h1 class="text-3xl md:text-4xl font-bold text-green-800">สวนผักของเรา 💚</h1>
             <div class="mt-3 flex flex-wrap justify-center items-center gap-x-4 gap-y-2 text-sm text-gray-600">
                 <div id="weather-display" class="flex items-center justify-center gap-2 bg-blue-100 px-3 py-1 rounded-full" title="สภาพอากาศวันนี้">
@@ -3974,9 +3975,60 @@
                     actionsEl.appendChild(createButton('❌ เคลียแปลง (-5⚡)', () => clearPlot(index), false, 'bg-red-500 hover:bg-red-600 text-white'));
                 }
             } else if (type === 'animal') {
-                // ... (No changes needed for multi-farm in this section) ...
+                const index = id;
+                const animal = farmState.animals[index];
+                if (!animal.animalId) {
+                    titleEl.textContent = 'คอกสัตว์ว่าง';
+                    const placeableDeedsInStorage = playerState.storageBin
+                        .filter(item => GAME_DATA[item.id]?.type === 'animal_deed')
+                        .reduce((acc, deed) => {
+                            const key = `${deed.id}_q${deed.quality}`;
+                            if (!acc[key]) acc[key] = { ...deed, count: 0 };
+                            acc[key].count++;
+                            return acc;
+                        }, {});
+                    actionsEl.appendChild(createButton('➕ วางสัตว์', () => showSubMenu('custom', 'เลือกกรรมสิทธิ์สัตว์', Object.values(placeableDeedsInStorage), (selectedDeed) => placeAnimal(index, selectedDeed.id, selectedDeed.quality)), Object.keys(placeableDeedsInStorage).length === 0));
+                } else {
+                    const animalData = GAME_DATA[animal.animalId];
+                    const weatherMultiplier = WEATHER_DATA[farmState.currentWeather]?.animalMultiplier || 1;
+                    const adjustedProduceTime = (animalData.produceTime * 1000) * weatherMultiplier;
+                    const isReady = (Date.now() - animal.startTime) >= adjustedProduceTime;
+                    titleEl.textContent = animalData.name;
+                    detailsEl.innerHTML = `<p>คุณภาพ: ${'★'.repeat(animal.quality || 0)}</p>`;
+                    if (!isReady) {
+                        const remainingSeconds = Math.max(0, (animal.startTime + adjustedProduceTime - Date.now()) / 1000);
+                        detailsEl.innerHTML += `<p>จะให้ผลผลิตใน: ${formatTime(remainingSeconds)}</p>`;
+                    }
+                    actionsEl.before(detailsEl);
+                    actionsEl.appendChild(createButton('📦 เก็บผลผลิต', () => collectAnimalProduct(index), !isReady));
+                    actionsEl.appendChild(createButton('👋 ปล่อยสัตว์', () => releaseAnimal(index), false, 'bg-red-500 hover:bg-red-600'));
+                }
             } else if (type === 'factory') {
-                // ... (No changes needed for multi-farm in this section) ...
+                const index = id;
+                const factory = farmState.factories[index];
+                if (!factory.factoryId) {
+                    titleEl.textContent = 'ที่ดินว่าง';
+                    const placeableDeeds = playerState.storageBin.filter(item => GAME_DATA[item.id]?.type === 'factory_deed').map(item => item.id);
+                    actionsEl.appendChild(createButton('➕ สร้างโรงงาน', () => showSubMenu('placeFactory', index, [...new Set(placeableDeeds)]), placeableDeeds.length === 0));
+                } else {
+                    const factoryData = GAME_DATA[factory.factoryId];
+                    titleEl.textContent = factoryData.name;
+                    let detailsHTML = `<p class="font-bold">คิวการผลิต (${factory.queue?.length || 0})</p>`;
+                    if (factory.queue && factory.queue.length > 0) {
+                        const nextJob = factory.queue[0];
+                        const recipe = factoryData.recipes.find(r => r.id === nextJob.recipeId);
+                        detailsHTML += `<p class="text-xs">กำลังผลิต: ${recipe.name}</p>`;
+                    }
+                    detailsHTML += `<p class="font-bold mt-2">ของที่เสร็จแล้ว (${factory.outputBin?.length || 0})</p>`;
+                    const myItemsInBin = factory.outputBin?.filter(item => item.owner === userId).length || 0;
+                    if (myItemsInBin > 0) {
+                        detailsHTML += `<p class="text-xs text-blue-600">ของของคุณ: ${myItemsInBin} ชิ้น</p>`;
+                    }
+                    detailsEl.innerHTML = detailsHTML;
+                    actionsEl.before(detailsEl);
+                    actionsEl.appendChild(createButton('▶️ เริ่มการผลิต', () => showSubMenu('useFactory', index, factoryData.recipes.map(r => r.id))));
+                    actionsEl.appendChild(createButton('📥 เก็บของของฉัน', () => collectMyFactoryGoods(index), myItemsInBin === 0));
+                }
             }
 
             modal.classList.remove('hidden', 'modal-leave');
@@ -6053,6 +6105,39 @@
             // ลบการเรียก await updateFarmState(newFarmState) ออกจากฟังก์ชันนี้
         }
         
+        function trimExcessPlots() {
+            if (!farmState || !farmState.farms) {
+                alert("ข้อมูลฟาร์มยังไม่พร้อม กรุณารอสักครู่แล้วลองอีกครั้ง");
+                return;
+            }
+
+            // สร้างสำเนาของข้อมูลเพื่อป้องกันการแก้ไขโดยตรง
+            const newFarmState = JSON.parse(JSON.stringify(farmState));
+            let plotsTrimmed = false;
+
+            // วนลูปเช็คทุกฟาร์ม เผื่อมีฟาร์มอื่นเกินด้วย
+            newFarmState.farms.forEach((farm, index) => {
+                if (farm.plots.length > MAX_PLOTS_PER_FARM) {
+                    console.log(`ตรวจพบฟาร์ม "${farm.name}" มี ${farm.plots.length} แปลง (เกิน ${MAX_PLOTS_PER_FARM})`);
+
+                    // ใช้ slice เพื่อตัด Array ให้เหลือแค่ 40 แปลงแรก
+                    farm.plots = farm.plots.slice(0, MAX_PLOTS_PER_FARM);
+
+                    console.log(`ทำการลบแปลงส่วนเกินของฟาร์ม "${farm.name}" เรียบร้อยแล้ว เหลือ ${farm.plots.length} แปลง`);
+                    plotsTrimmed = true;
+                }
+            });
+
+            if (plotsTrimmed) {
+                updateFarmState(newFarmState);
+                alert("ลบแปลงที่เกิน 40 แปลงออกเรียบร้อยแล้ว! หน้าเว็บจะรีโหลดเพื่อแสดงผล");
+                // หน่วงเวลาเล็กน้อยเพื่อให้แน่ใจว่าข้อมูลถูกบันทึกแล้วค่อยรีโหลด
+                setTimeout(() => window.location.reload(), 1500);
+            } else {
+                alert("ไม่พบฟาร์มที่มีแปลงเกินกำหนด (40 แปลง)");
+            }
+        }
+
         async function claimQuestReward(questType, questId) {
             if (!farmState || !playerState || !farmState.quests[questType]) return;
 
@@ -6352,7 +6437,7 @@
             }, msUntilReset);
         }
 
-function setupControls() {
+        function setupControls() {
             const mapModal = document.getElementById('map-modal');
             const mapBtn = document.getElementById('map-btn');
             const mapCloseBtn = document.getElementById('map-modal-close');
@@ -6373,12 +6458,11 @@ function setupControls() {
                 
                 const view = target.dataset.view;
 
-                // --- START EDIT: เปลี่ยนการทำงานของปุ่มฟาร์ม ---
+                // ดักจับการคลิกที่ปุ่มฟาร์มเพื่อเปิดหน้าต่างเลือกฟาร์ม
                 if (view === 'farm') {
-                    showFarmSelectorModal(); // แสดงหน้าต่างเลือกฟาร์ม
-                    return; // หยุดการทำงาน ไม่ต้องสลับหน้าจอ
+                    showFarmSelectorModal();
+                    return;
                 }
-                // --- END EDIT ---
 
                 if (view === 'map') {
                     mapModal.classList.remove('hidden');
@@ -6389,16 +6473,46 @@ function setupControls() {
                     if(userId) leavePark(userId);
                 }
 
+                // ซ่อนหน้าจอทั้งหมด แล้วเปิดเฉพาะอันที่เลือก
                 document.querySelectorAll('#tab-content-area > div').forEach(div => div.classList.add('hidden'));
                 const viewEl = document.getElementById(`${view}-view`);
                 if (viewEl) viewEl.classList.remove('hidden');
                 
+                // --- START EDIT: เพิ่มคำสั่งวาดเนื้อหาสำหรับแต่ละหน้า ---
+                // เมื่อสลับหน้าจอ ให้สั่งวาดเนื้อหาของหน้านั้นๆ ทันที
+                switch (view) {
+                    case 'animals':
+                        renderAnimals();
+                        break;
+                    case 'factory':
+                        renderFactory();
+                        break;
+                    case 'shop':
+                        renderShop();
+                        break;
+                    case 'quests':
+                        renderQuests();
+                        break;
+                    case 'storage':
+                        renderStorage();
+                        break;
+                    case 'market':
+                        renderMarket();
+                        break;
+                    case 'breeding':
+                        renderBreedingView();
+                        break;
+                    // กรณีอื่นๆ ที่ต้องการให้วาดใหม่ทันที
+                }
+                // --- END EDIT ---
+
                 if (view === 'park') {
                     if(userId && playerState) enterPark(userId, playerState);
                 }
                 
                 currentView = view;
 
+                // อัปเดตสไตล์ของปุ่มที่ถูกเลือก
                 document.querySelectorAll('#footer-nav .nav-btn').forEach(b => b.classList.remove('active'));
                 const primaryBtn = document.querySelector(`.nav-btn[data-view="${view}"]`);
                 if (primaryBtn) {
@@ -6418,7 +6532,7 @@ function setupControls() {
 
             document.querySelector('.nav-btn[data-view="farm"]').classList.add('active');
             
-            // --- START EDIT: เพิ่ม Event Listener สำหรับหน้าต่างเลือกฟาร์ม ---
+            // Event Listener สำหรับหน้าต่างเลือกฟาร์ม
             const farmSelectorModal = document.getElementById('farm-selector-modal');
             farmSelectorModal.addEventListener('click', e => {
                 const gotoBtn = e.target.closest('.goto-farm-btn');
@@ -6429,7 +6543,6 @@ function setupControls() {
                     const index = parseInt(gotoBtn.dataset.index, 10);
                     currentFarmIndex = index;
 
-                    // สั่งให้สลับไปหน้าฟาร์มด้วยตนเอง
                     document.querySelectorAll('#tab-content-area > div').forEach(div => div.classList.add('hidden'));
                     document.getElementById('farm-view').classList.remove('hidden');
                     
@@ -6445,8 +6558,8 @@ function setupControls() {
                     hideFarmSelectorModal();
                 }
             });
-            // --- END EDIT ---
 
+            // Event Listeners อื่นๆ ทั้งหมด
             document.getElementById('context-modal-close').onclick = hideContextMenu;
             document.getElementById('submenu-modal-close').onclick = hideSubMenu;
             document.getElementById('info-modal-close').onclick = hideInfoModal;
@@ -6501,7 +6614,8 @@ function setupControls() {
                     const sellAction = (quantityToSell) => sellFromStorage(itemId, quality, quantityToSell);
                     showQuantityModal({ title: `ขาย ${GAME_DATA[itemId].name}`, itemId: itemId, quality: quality, maxQuantity: maxQuantity, onConfirm: sellAction });
                 } else if (button.classList.contains('eat-storage-btn')) {
-                    eatFromStorage(itemId, quality);
+                    const eatAction = (quantityToEat) => eatFromStorage(itemId, quality, quantityToEat);
+                    showQuantityModal({ title: `กิน ${GAME_DATA[itemId].name}`, itemId: itemId, quality: quality, maxQuantity: parseInt(button.dataset.max, 10), onConfirm: eatAction });
                 } else if (button.classList.contains('move-to-inventory-btn')) {
                     moveFromStorageToInventory(itemId, quality);
                 }
@@ -6577,15 +6691,13 @@ function setupControls() {
                     const yesterday = new Date();
                     yesterday.setDate(yesterday.getDate() - 1);
                     const tempPlayerState = { ...playerState, lastResetTime: yesterday.getTime() };
-
                     const resetResult = await checkForTimeResets(tempPlayerState);
-
                     if (resetResult.wasReset) {
                         alert("บังคับรีเซ็ตวันสำเร็จ!");
                         const farmDocRef = doc(db, "publicFarmData", "farmState");
                         const farmDocSnap = await getDoc(farmDocRef);
                         if (farmDocSnap.exists()) {
-                            showSummaryModal(resetResult.earningsData, farmDocSnap.data());
+                            showSummaryModal(resetResult.earningsData, farmDocSnap.data(), resetResult.wiltedPlants);
                         }
                     } else {
                         alert("ไม่สามารถรีเซ็ตได้ อาจจะรีเซ็ตไปแล้ว");
@@ -6658,6 +6770,7 @@ function setupControls() {
                         if (toolName !== 'seed_bag' && toolName !== 'spreader') {
                             activeToolState.loaded = null;
                         }
+                        renderToolbar();
                     }
                 });
             }
