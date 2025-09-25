@@ -3892,7 +3892,7 @@
             if (type === 'plot') {
                 detailsEl.classList.remove('text-center');
                 detailsEl.classList.add('text-left');
-                // ... (โค้ดส่วนของ plot เหมือนเดิมทุกประการ ไม่มีการเปลี่ยนแปลง) ...
+                // ... (โค้ดส่วนของ plot เหมือนเดิมทุกประการ) ...
                 const index = id;
                 const plot = farmState.farms[currentFarmIndex].plots[index];
                 titleEl.textContent = `แปลงที่ ${index + 1} (ฟาร์ม: ${farmState.farms[currentFarmIndex].name})`;
@@ -3961,7 +3961,7 @@
                     actionsEl.appendChild(createButton('❌ เคลียแปลง (-5⚡)', () => clearPlot(index), false, 'bg-red-500 hover:bg-red-600 text-white'));
                 }
             } else if (type === 'animal') {
-                // ... (โค้ดส่วนของ animal เหมือนเดิมทุกประการ ไม่มีการเปลี่ยนแปลง) ...
+                // ... (โค้ดส่วนของ animal เหมือนเดิมทุกประการ) ...
                 const index = id;
                 const animal = farmState.animals[index];
                 if (!animal.animalId) {
@@ -3999,19 +3999,32 @@
                     const factoryData = GAME_DATA[factory.factoryId];
                     titleEl.textContent = factoryData.name;
 
+                    // ▼▼▼ START EDIT: แก้ไขส่วนแสดงรายละเอียดคิวทั้งหมด ▼▼▼
                     let detailsHTML = `<div class="space-y-3">`;
+                    
                     detailsHTML += `<div><p class="font-bold">คิวการผลิต (${factory.queue?.length || 0})</p>`;
                     if (factory.queue && factory.queue.length > 0) {
-                        factory.queue.forEach(job => {
+                        factory.queue.forEach((job, jobIndex) => {
                             const recipe = factoryData.recipes.find(r => r.id === job.recipeId);
                             if (recipe) {
-                                detailsHTML += `<p class="text-xs">${recipe.name} (โดย: ${job.processedBy?.nickname || '??'})</p>`;
+                                // ถ้าเป็นชิ้นแรกในคิว (กำลังผลิต) ให้คำนวณเวลาที่เหลือ
+                                if (jobIndex === 0 && job.startTime) {
+                                    const factoryModifier = WEATHER_DATA[farmState.currentWeather]?.factoryModifier || 1;
+                                    const processTimeMillis = (recipe.processTime * 1000) * factoryModifier;
+                                    const remainingSeconds = Math.max(0, (processTimeMillis - (Date.now() - job.startTime)) / 1000);
+                                    detailsHTML += `<p class="text-xs font-semibold text-green-700">${recipe.name} (โดย: ${job.processedBy?.nickname || '??'}) - เหลือ ${formatTime(remainingSeconds)}</p>`;
+                                } else {
+                                    // ถ้าเป็นชิ้นถัดไปในคิว ให้แสดงว่ารอคิวอยู่
+                                    detailsHTML += `<p class="text-xs text-gray-500">${recipe.name} (โดย: ${job.processedBy?.nickname || '??'}) - รอคิว</p>`;
+                                }
                             }
                         });
                     } else {
                         detailsHTML += `<p class="text-xs text-gray-500">-- ว่าง --</p>`;
                     }
                     detailsHTML += `</div>`;
+
+                    // ส่วนของที่เสร็จแล้ว (ยังคงเหมือนเดิม)
                     detailsHTML += `<div><p class="font-bold mt-2">ของที่เสร็จแล้ว (${factory.outputBin?.length || 0})</p>`;
                     if (factory.outputBin && factory.outputBin.length > 0) {
                         const groupedOutput = factory.outputBin.reduce((acc, output) => {
@@ -4033,22 +4046,18 @@
                         detailsHTML += `<p class="text-xs text-gray-500">-- ว่าง --</p>`;
                     }
                     detailsHTML += `</div>`;
+                    
                     detailsHTML += `</div>`;
                     detailsEl.innerHTML = detailsHTML;
+                    // ▲▲▲ END EDIT ▲▲▲
                     
                     actionsEl.before(detailsEl);
                     const myItemsInBin = factory.outputBin?.filter(item => item.owner === userId).length || 0;
                     
-                    // ▼▼▼ START EDIT: เพิ่มปุ่ม "ทำซ้ำ" กลับเข้ามา ▼▼▼
                     actionsEl.appendChild(createButton('▶️ เริ่มการผลิต', () => showSubMenu('useFactory', index, factoryData.recipes.map(r => r.id))));
-                    
-                    // ตรวจสอบว่ามีสูตรล่าสุดที่สามารถทำซ้ำในโรงงานนี้ได้หรือไม่
                     const lastRecipeIsAvailable = lastFactoryRecipeId && factoryData.recipes.some(r => r.id === lastFactoryRecipeId);
-                    
                     actionsEl.appendChild(createButton('🔄 ทำซ้ำรายการล่าสุด', () => startProcessing(index, lastFactoryRecipeId), !lastRecipeIsAvailable));
-                    
                     actionsEl.appendChild(createButton('📥 เก็บของของฉัน', () => collectMyFactoryGoods(index), myItemsInBin === 0));
-                    // ▲▲▲ END EDIT ▲▲▲
                 }
             }
 
