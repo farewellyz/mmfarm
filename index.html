@@ -3880,7 +3880,7 @@
             actionsEl.innerHTML = '';
             contentEl.querySelectorAll('.context-details').forEach(el => el.remove());
             const detailsEl = document.createElement('div');
-            detailsEl.className = 'context-details text-sm text-gray-600 mb-4 border-t pt-4 mt-4';
+            detailsEl.className = 'context-details text-sm text-gray-600 mb-4 border-t pt-4 mt-4 text-left'; // <-- จัดให้ชิดซ้าย
 
             const createButton = (text, action, disabled = false, extraClasses = 'bg-green-500 hover:bg-green-600 text-white') => {
                 const button = document.createElement('button');
@@ -3891,6 +3891,7 @@
             };
 
             if (type === 'plot') {
+                // ... (โค้ดส่วนของ plot เหมือนเดิมทุกประการ ไม่ต้องแก้ไข) ...
                 const index = id;
                 const plot = farmState.farms[currentFarmIndex].plots[index];
                 titleEl.textContent = `แปลงที่ ${index + 1} (ฟาร์ม: ${farmState.farms[currentFarmIndex].name})`;
@@ -3906,26 +3907,19 @@
                     const plantData = GAME_DATA[plot.plantId];
                     const elapsedSeconds = (Date.now() - plot.plantTime) / 1000;
                     let growthMultiplier = 1;
-
                     const uniqueWaterersToday = plot.wateredByToday ? Object.keys(plot.wateredByToday).length : 0;
                     const totalWateringsToday = plot.wateredByToday ? Object.values(plot.wateredByToday).reduce((sum, count) => sum + count, 0) : 0;
-
                     if (weather?.needsTwoWaterings) {
-                        if (totalWateringsToday < 2) {
-                            growthMultiplier = 0;
-                        } else {
-                            growthMultiplier = 1 + (uniqueWaterersToday * 0.5);
-                        }
+                        if (totalWateringsToday < 2) { growthMultiplier = 0; } 
+                        else { growthMultiplier = 1 + (uniqueWaterersToday * 0.5); }
                     } else if (farmState.currentWeather === 'rainy' || farmState.currentWeather === 'stormy') {
                         growthMultiplier = 1.5;
                     } else {
                         growthMultiplier = 1 + (uniqueWaterersToday * 0.5);
                     }
-
                     const effectiveGrowth = elapsedSeconds * growthMultiplier;
                     const adjustedGrowTime = plantData.growTime * weatherMultiplier;
                     const isGrown = effectiveGrowth >= adjustedGrowTime;
-
                     let remainingSeconds = 0;
                     if (growthMultiplier > 0) {
                         remainingSeconds = Math.max(0, (adjustedGrowTime - effectiveGrowth) / growthMultiplier);
@@ -3933,24 +3927,19 @@
                         const totalTimeNeeded = plantData.growTime * weatherMultiplier;
                         remainingSeconds = Math.max(0, totalTimeNeeded - elapsedSeconds);
                     }
-
                     detailsEl.innerHTML = `<p>ปลูกโดย: ${plot.plantedBy?.nickname || '??'}</p><p>เหลือเวลา: ${formatTime(remainingSeconds)}</p>`;
                     if (plot.wateredBy && plot.wateredBy.length > 0) {
                         const waterers = plot.wateredBy.map(p => p.nickname).join(', ');
                         detailsEl.innerHTML += `<div class="mt-2"><p>รดน้ำแล้วโดย:</p><p class="font-semibold text-green-700">${waterers}</p></div>`;
                     }
                     actionsEl.before(detailsEl);
-
                     if (isGrown) {
                         const hasHarvested = plot.harvestedBy?.some(p => p.uid === userId);
                         actionsEl.appendChild(createButton('🌾 เก็บเกี่ยว (-1⚡)', () => harvest(index), hasHarvested));
-
                         const involvedUids = new Set([plot.plantedBy?.uid, ...(plot.wateredBy?.map(p => p.uid).filter(uid => uid) || [])]);
                         const harvestedUids = new Set(plot.harvestedBy?.map(p => p.uid) || []);
-
                         let harvestStatusHTML = '<div class="mt-2 text-xs text-left border-t pt-2">';
                         harvestStatusHTML += '<p class="font-bold">สถานะการเก็บเกี่ยว:</p>';
-
                         involvedUids.forEach(uid => {
                             const planterName = plot.plantedBy?.uid === uid ? plot.plantedBy.nickname : null;
                             const waterer = plot.wateredBy?.find(p => p.uid === uid);
@@ -3960,33 +3949,28 @@
                         });
                         harvestStatusHTML += '</div>';
                         detailsEl.innerHTML += harvestStatusHTML;
-
                     } else {
                         const myWateringsToday = plot.wateredByToday ? (plot.wateredByToday[userId] || 0) : 0;
                         const canWaterMore = weather?.needsTwoWaterings ? myWateringsToday < 2 : myWateringsToday < 1;
                         actionsEl.appendChild(createButton('💧 รดน้ำ (-2⚡)', () => water(index), !canWaterMore));
-                        
-                        const fertilizersInStorage = playerState.storageBin
-                            .filter(item => GAME_DATA[item.id]?.type === 'item' && GAME_DATA[item.id]?.qualityBonus)
-                            .map(item => item.id);
+                        const fertilizersInStorage = playerState.storageBin.filter(item => GAME_DATA[item.id]?.type === 'item' && GAME_DATA[item.id]?.qualityBonus).map(item => item.id);
                         const uniqueFertilizers = [...new Set(fertilizersInStorage)];
                         actionsEl.appendChild(createButton('✨ ใส่ปุ๋ย', () => showSubMenu('fertilize', index, uniqueFertilizers), uniqueFertilizers.length === 0));
                     }
                     actionsEl.appendChild(createButton('❌ เคลียแปลง (-5⚡)', () => clearPlot(index), false, 'bg-red-500 hover:bg-red-600 text-white'));
                 }
             } else if (type === 'animal') {
+                // ... (โค้ดส่วนของ animal เหมือนเดิมทุกประการ ไม่ต้องแก้ไข) ...
                 const index = id;
                 const animal = farmState.animals[index];
                 if (!animal.animalId) {
                     titleEl.textContent = 'คอกสัตว์ว่าง';
-                    const placeableDeedsInStorage = playerState.storageBin
-                        .filter(item => GAME_DATA[item.id]?.type === 'animal_deed')
-                        .reduce((acc, deed) => {
-                            const key = `${deed.id}_q${deed.quality}`;
-                            if (!acc[key]) acc[key] = { ...deed, count: 0 };
-                            acc[key].count++;
-                            return acc;
-                        }, {});
+                    const placeableDeedsInStorage = playerState.storageBin.filter(item => GAME_DATA[item.id]?.type === 'animal_deed').reduce((acc, deed) => {
+                        const key = `${deed.id}_q${deed.quality}`;
+                        if (!acc[key]) acc[key] = { ...deed, count: 0 };
+                        acc[key].count++;
+                        return acc;
+                    }, {});
                     actionsEl.appendChild(createButton('➕ วางสัตว์', () => showSubMenu('custom', 'เลือกกรรมสิทธิ์สัตว์', Object.values(placeableDeedsInStorage), (selectedDeed) => placeAnimal(index, selectedDeed.id, selectedDeed.quality)), Object.keys(placeableDeedsInStorage).length === 0));
                 } else {
                     const animalData = GAME_DATA[animal.animalId];
@@ -4013,19 +3997,49 @@
                 } else {
                     const factoryData = GAME_DATA[factory.factoryId];
                     titleEl.textContent = factoryData.name;
-                    let detailsHTML = `<p class="font-bold">คิวการผลิต (${factory.queue?.length || 0})</p>`;
+
+                    // ▼▼▼ START EDIT: เพิ่มการแสดงรายละเอียดแบบเต็ม ▼▼▼
+                    let detailsHTML = `<div class="space-y-2">`;
+                    
+                    // --- ส่วนของคิวการผลิต ---
+                    detailsHTML += `<div><p class="font-bold">คิวการผลิต (${factory.queue?.length || 0})</p>`;
                     if (factory.queue && factory.queue.length > 0) {
-                        const nextJob = factory.queue[0];
-                        const recipe = factoryData.recipes.find(r => r.id === nextJob.recipeId);
-                        detailsHTML += `<p class="text-xs">กำลังผลิต: ${recipe.name}</p>`;
+                        detailsHTML += `<ul class="list-disc list-inside">`;
+                        factory.queue.forEach(job => {
+                            const recipe = factoryData.recipes.find(r => r.id === job.recipeId);
+                            if (recipe) {
+                                detailsHTML += `<li class="text-xs">${recipe.name} (โดย: ${job.processedBy?.nickname || '??'})</li>`;
+                            }
+                        });
+                        detailsHTML += `</ul>`;
+                    } else {
+                        detailsHTML += `<p class="text-xs text-gray-500">-- ว่าง --</p>`;
                     }
-                    detailsHTML += `<p class="font-bold mt-2">ของที่เสร็จแล้ว (${factory.outputBin?.length || 0})</p>`;
-                    const myItemsInBin = factory.outputBin?.filter(item => item.owner === userId).length || 0;
-                    if (myItemsInBin > 0) {
-                        detailsHTML += `<p class="text-xs text-blue-600">ของของคุณ: ${myItemsInBin} ชิ้น</p>`;
+                    detailsHTML += `</div>`;
+
+                    // --- ส่วนของของที่เสร็จแล้ว ---
+                    detailsHTML += `<div><p class="font-bold mt-2">ของที่เสร็จแล้ว (${factory.outputBin?.length || 0})</p>`;
+                    if (factory.outputBin && factory.outputBin.length > 0) {
+                        detailsHTML += `<ul class="list-disc list-inside">`;
+                        factory.outputBin.forEach(output => {
+                            const itemData = GAME_DATA[output.item.id];
+                            if (itemData) {
+                                let ownerClass = output.owner === userId ? 'text-blue-600 font-semibold' : '';
+                                detailsHTML += `<li class="text-xs ${ownerClass}">${itemData.name} ${'★'.repeat(output.item.quality)} (ของ: ${output.ownerNickname || '??'})</li>`;
+                            }
+                        });
+                        detailsHTML += `</ul>`;
+                    } else {
+                        detailsHTML += `<p class="text-xs text-gray-500">-- ว่าง --</p>`;
                     }
+                    detailsHTML += `</div>`;
+                    
+                    detailsHTML += `</div>`;
                     detailsEl.innerHTML = detailsHTML;
+                    // ▲▲▲ END EDIT ▲▲▲
+                    
                     actionsEl.before(detailsEl);
+                    const myItemsInBin = factory.outputBin?.filter(item => item.owner === userId).length || 0;
                     actionsEl.appendChild(createButton('▶️ เริ่มการผลิต', () => showSubMenu('useFactory', index, factoryData.recipes.map(r => r.id))));
                     actionsEl.appendChild(createButton('📥 เก็บของของฉัน', () => collectMyFactoryGoods(index), myItemsInBin === 0));
                 }
