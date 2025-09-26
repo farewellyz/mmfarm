@@ -263,6 +263,19 @@
                 <button id="farm-selector-modal-close" class="mt-4 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg w-full">ปิด</button>
             </div>
         </div>
+        <div id="pen-selector-modal" class="hidden fixed inset-0 bg-black/60 z-[52] flex items-center justify-center p-4">
+            <div class="bg-green-50 rounded-2xl shadow-xl p-6 w-full max-w-md modal-enter">
+                <h2 class="text-2xl font-bold text-green-800 mb-4 text-center">เลือกคอกสัตว์ของคุณ</h2>
+                <div id="pen-selector-list" class="space-y-3 max-h-[60vh] overflow-y-auto">
+                    </div>
+                <div class="mt-4 border-t pt-4">
+                    <button id="buy-new-pen-btn" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-6 rounded-lg w-full transition">
+                        ซื้อคอกใหม่ (ราคา: <span id="new-pen-cost">0</span>💰)
+                    </button>
+                </div>
+                <button id="pen-selector-modal-close" class="mt-4 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg w-full">ปิด</button>
+            </div>
+        </div>
         <div id="special-upgrade-modal" class="hidden fixed inset-0 bg-black/60 z-[52] flex items-center justify-center p-4">
             <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-lg modal-enter">
                 <h2 class="text-2xl font-bold text-gray-800 mb-4 text-center">⭐ เลือกสายการพัฒนาปราสาทของคุณ ⭐</h2>
@@ -1910,6 +1923,8 @@
         let playerState = null;
         let isProcessingFactoryQueue = false;
         let currentFarmIndex = 0;
+        let currentPenIndex = 0; 
+        const MAX_ANIMALS_PER_PEN = 12;
         const MAX_PLOTS_PER_FARM = 40;
         let currentBgImage = '';
         let currentSortBy = 'category';
@@ -2150,6 +2165,92 @@
             }
         }
 
+        function showPenSelectorModal() {
+            const modal = document.getElementById('pen-selector-modal');
+            const listEl = document.getElementById('pen-selector-list');
+            listEl.innerHTML = ''; 
+
+            if (!farmState || !farmState.animalPens) {
+                listEl.innerHTML = '<p class="text-center text-gray-500">กำลังโหลดข้อมูลคอกสัตว์...</p>';
+                return;
+            }
+
+            farmState.animalPens.forEach((pen, index) => {
+                const penItem = document.createElement('div');
+                penItem.className = 'bg-white p-4 rounded-lg shadow-sm';
+
+                const totalSlots = pen.slots.length;
+                const filledSlots = pen.slots.filter(slot => slot && slot.animalId).length;
+
+                let readyAnimals = 0;
+                if (filledSlots > 0) {
+                    readyAnimals = pen.slots.filter(slot => {
+                        if (!slot || !slot.animalId || !slot.startTime) return false;
+                        const animalData = GAME_DATA[slot.animalId];
+                        if (!animalData) return false;
+                        const weatherMultiplier = WEATHER_DATA[farmState.currentWeather]?.animalMultiplier || 1;
+                        const adjustedProduceTime = (animalData.produceTime * 1000) * weatherMultiplier;
+                        return (Date.now() - slot.startTime) >= adjustedProduceTime;
+                    }).length;
+                }
+
+                penItem.innerHTML = `
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="text-lg font-bold text-green-700">${pen.name}</h3>
+                        <button class="rename-pen-btn text-sm text-blue-600 hover:underline" data-index="${index}">✏️ เปลี่ยนชื่อ</button>
+                    </div>
+                    <p class="text-sm text-gray-600">จำนวนสัตว์: ${filledSlots} / ${totalSlots} (สูงสุด ${MAX_ANIMALS_PER_PEN})</p>
+                    <p class="text-sm text-gray-600">พร้อมเก็บผลผลิต: ${readyAnimals} ตัว</p>
+                    <button class="goto-pen-btn mt-3 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg w-full" data-index="${index}">
+                        ไปที่คอกนี้
+                    </button>
+                `;
+                listEl.appendChild(penItem);
+            });
+
+            const newPenCost = 25000 * (farmState.animalPens.length);
+            document.getElementById('new-pen-cost').textContent = newPenCost.toLocaleString();
+            document.getElementById('buy-new-pen-btn').onclick = () => buyNewPen(newPenCost);
+
+            modal.classList.remove('hidden');
+        }
+
+        function hidePenSelectorModal() {
+            document.getElementById('pen-selector-modal').classList.add('hidden');
+        }
+
+        function renamePen(penIndex) {
+            const newName = prompt("ใส่ชื่อใหม่สำหรับคอกสัตว์:", farmState.animalPens[penIndex].name);
+            if (newName && newName.trim().length > 0 && newName.length <= 20) {
+                const newFarmState = { ...farmState };
+                newFarmState.animalPens[penIndex].name = newName.trim();
+                updateFarmState(newFarmState);
+                showPenSelectorModal();
+            } else if (newName !== null) {
+                alert("ชื่อไม่ถูกต้อง (ต้องมี 1-20 ตัวอักษร)");
+            }
+        }
+
+        async function buyNewPen(cost) {
+            if (playerState.money < cost) {
+                alert("เงินไม่พอ!");
+                return;
+            }
+            showConfirmationModal(`คุณต้องการซื้อคอกสัตว์ใหม่ในราคา ${cost}💰 หรือไม่? คอกใหม่จะเริ่มต้นที่ 0 ช่อง`, () => {
+                const newPlayerState = { ...playerState };
+                newPlayerState.money -= cost;
+                const newFarmState = { ...farmState };
+                newFarmState.animalPens.push({
+                    id: Date.now(),
+                    name: `คอกสัตว์แห่งที่ ${newFarmState.animalPens.length + 1}`,
+                    slots: [] // คอกใหม่เริ่มที่ 0 ช่อง
+                });
+                updatePlayerState(newPlayerState);
+                updateFarmState(newFarmState);
+                showPenSelectorModal();
+            });
+        }
+
         async function buyNewFarm(cost) {
             if (playerState.money < cost) {
                 alert("เงินไม่พอ!");
@@ -2356,11 +2457,15 @@
             if (type === 'farm') {
                 if (!farmState || !farmState.farms) return baseCost.farm;
                 currentSize = farmState.farms[currentFarmIndex].plots.length;
+            } else if (type === 'animals') {
+                if (!farmState || !farmState.animalPens) return baseCost.animals;
+                currentSize = farmState.animalPens[currentPenIndex].slots.length;
             } else {
-                currentSize = type === 'animals' ? farmState.animals.length : farmState.factories.length;
+                currentSize = farmState.factories.length;
             }
             
-            const initialSize = (type === 'farm') ? 0 : { animals: ANIMAL_PEN_SIZE, factory: FACTORY_GRID_SIZE }[type];
+            // คอกและฟาร์มใหม่จะเริ่มที่ 0 ช่องเสมอ
+            const initialSize = { farm: 0, animals: 0, factory: FACTORY_GRID_SIZE }[type];
 
             const addedSlots = Math.max(0, currentSize - initialSize);
             return baseCost[type] + (addedSlots * perSlotCost[type]);
@@ -2618,71 +2723,74 @@
         }
 
         function renderAnimals() {
-            if (!farmState || !Array.isArray(farmState.animals)) return;
-            const animalPen = document.getElementById('animal-pen');
-            animalPen.innerHTML = '';
+            if (!farmState || !farmState.animalPens || !farmState.animalPens[currentPenIndex]) {
+                document.getElementById('animal-pen').innerHTML = '<p>กำลังโหลดข้อมูลคอกสัตว์...</p>';
+                return;
+            }
+            const currentPen = farmState.animalPens[currentPenIndex];
+            const animalPenEl = document.getElementById('animal-pen');
+            animalPenEl.innerHTML = '';
             const weatherMultiplier = WEATHER_DATA[farmState.currentWeather]?.animalMultiplier || 1;
 
-            farmState.animals.forEach((animal, index) => {
-            const slotEl = document.createElement('div');
-            slotEl.className = 'animal-slot aspect-square rounded-2xl shadow-inner cursor-pointer flex flex-col items-center justify-center p-1 bg-green-200/50 relative';
+            currentPen.slots.forEach((animal, index) => {
+                const slotEl = document.createElement('div');
+                slotEl.className = 'animal-slot aspect-square rounded-2xl shadow-inner cursor-pointer flex flex-col items-center justify-center p-1 bg-green-200/50 relative';
 
-            if (animal.animalId) {
-                const animalData = GAME_DATA[animal.animalId];
-                slotEl.style.backgroundImage = `url(${animalData.imageUrl})`;
+                if (animal.animalId) {
+                    const animalData = GAME_DATA[animal.animalId];
+                    slotEl.style.backgroundImage = `url(${animalData.imageUrl})`;
 
-                const adjustedProduceTime = (animalData.produceTime * 1000) * weatherMultiplier;
-                const progress = (Date.now() - animal.startTime) / adjustedProduceTime;
-                const isReady = progress >= 1;
+                    const adjustedProduceTime = (animalData.produceTime * 1000) * weatherMultiplier;
+                    const progress = (Date.now() - animal.startTime) / adjustedProduceTime;
+                    const isReady = progress >= 1;
 
-                const progressContainer = document.createElement('div');
-                progressContainer.className = 'absolute bottom-1 left-1 right-1 h-2 bg-gray-300/70 rounded-full overflow-hidden';
-                const progressFill = document.createElement('div');
-                progressFill.className = 'h-full bg-yellow-400 rounded-full';
-                progressFill.style.width = `${Math.min(progress, 1) * 100}%`;
-                progressContainer.appendChild(progressFill);
-                slotEl.appendChild(progressContainer);
+                    const progressContainer = document.createElement('div');
+                    progressContainer.className = 'absolute bottom-1 left-1 right-1 h-2 bg-gray-300/70 rounded-full overflow-hidden';
+                    const progressFill = document.createElement('div');
+                    progressFill.className = 'h-full bg-yellow-400 rounded-full';
+                    progressFill.style.width = `${Math.min(progress, 1) * 100}%`;
+                    progressContainer.appendChild(progressFill);
+                    slotEl.appendChild(progressContainer);
 
-                if (isReady) {
-                    slotEl.classList.add('animate-bounce');
-                    const produceData = GAME_DATA[animalData.produceId];
-                    const produceIcon = document.createElement('div');
-                    produceIcon.className = 'absolute top-1 right-1 text-2xl z-10';
-                    produceIcon.textContent = produceData.icon;
-                    slotEl.appendChild(produceIcon);
-                }
-
-                // --- START: แก้ไขตรรกะการคลิก ---
-                slotEl.onclick = () => {
-                    // ถ้าถือเคียวอยู่ และสัตว์พร้อมให้เก็บผลผลิต
-                    if (activeToolState.tool === 'scythe' && isReady) {
-                        collectAnimalProduct(index); // ให้เก็บผลผลิตทันที
-                    } else {
-                        showContextMenu('animal', index); // ถ้าไม่ใช่ ให้เปิดเมนูปกติ
+                    if (isReady) {
+                        slotEl.classList.add('animate-bounce');
+                        const produceData = GAME_DATA[animalData.produceId];
+                        const produceIcon = document.createElement('div');
+                        produceIcon.className = 'absolute top-1 right-1 text-2xl z-10';
+                        produceIcon.textContent = produceData.icon;
+                        slotEl.appendChild(produceIcon);
                     }
-                };
-                // --- END: แก้ไขตรรกะการคลิก ---
 
-            } else {
-                slotEl.textContent = '➕';
-                slotEl.className += ' text-4xl text-gray-400 hover:bg-green-200/70';
-                slotEl.onclick = () => showContextMenu('animal', index);
-            }
-            animalPen.appendChild(slotEl);
+                    slotEl.onclick = () => {
+                        if (activeToolState.tool === 'scythe' && isReady) {
+                            collectAnimalProduct(index);
+                        } else {
+                            showContextMenu('animal', index);
+                        }
+                    };
+
+                } else {
+                    slotEl.textContent = '➕';
+                    slotEl.className += ' text-4xl text-gray-400 hover:bg-green-200/70';
+                    slotEl.onclick = () => showContextMenu('animal', index);
+                }
+                animalPenEl.appendChild(slotEl);
             });
 
-        const cost = calculateExpansionCost('animals');
-        const expandButton = document.createElement('div');
-        expandButton.className = 'aspect-square rounded-2xl shadow-inner cursor-pointer flex items-center justify-center p-2 bg-green-200/50 hover:bg-green-200/80 transition';
-        expandButton.innerHTML = `
-            <div class="text-center">
-                <span class="text-3xl font-bold text-green-800">➕</span>
-                <p class="text-xs font-semibold mt-1">เพิ่มคอก</p>
-                <p class="text-xs font-bold text-yellow-900 bg-yellow-300 px-2 py-0.5 rounded-full mt-1">${cost}💰</p>
-            </div>
-        `;
-        expandButton.onclick = () => expandGrid('animals');
-        animalPen.appendChild(expandButton);
+            if (currentPen.slots.length < MAX_ANIMALS_PER_PEN) {
+                const cost = calculateExpansionCost('animals');
+                const expandButton = document.createElement('div');
+                expandButton.className = 'aspect-square rounded-2xl shadow-inner cursor-pointer flex items-center justify-center p-2 bg-green-200/50 hover:bg-green-200/80 transition';
+                expandButton.innerHTML = `
+                    <div class="text-center">
+                        <span class="text-3xl font-bold text-green-800">➕</span>
+                        <p class="text-xs font-semibold mt-1">เพิ่มคอก</p>
+                        <p class="text-xs font-bold text-yellow-900 bg-yellow-300 px-2 py-0.5 rounded-full mt-1">${cost}💰</p>
+                    </div>
+                `;
+                expandButton.onclick = () => expandGrid('animals');
+                animalPenEl.appendChild(expandButton);
+            }
         }
 
         function calculateBreedingStationCost() {
@@ -3975,7 +4083,6 @@
             if (type === 'plot') {
                 detailsEl.classList.remove('text-center');
                 detailsEl.classList.add('text-left');
-                // ... (โค้ดส่วนของ plot เหมือนเดิมทุกประการ) ...
                 const index = id;
                 const plot = farmState.farms[currentFarmIndex].plots[index];
                 titleEl.textContent = `แปลงที่ ${index + 1} (ฟาร์ม: ${farmState.farms[currentFarmIndex].name})`;
@@ -4044,11 +4151,12 @@
                     actionsEl.appendChild(createButton('❌ เคลียแปลง (-5⚡)', () => clearPlot(index), false, 'bg-red-500 hover:bg-red-600 text-white'));
                 }
             } else if (type === 'animal') {
-                // ... (โค้ดส่วนของ animal เหมือนเดิมทุกประการ) ...
                 const index = id;
-                const animal = farmState.animals[index];
-                if (!animal.animalId) {
-                    titleEl.textContent = 'คอกสัตว์ว่าง';
+                const animal = farmState.animalPens[currentPenIndex].slots[index];
+                const penName = farmState.animalPens[currentPenIndex].name;
+                
+                if (!animal || !animal.animalId) {
+                    titleEl.textContent = `คอกว่าง (${penName})`;
                     const placeableDeedsInStorage = playerState.storageBin.filter(item => GAME_DATA[item.id]?.type === 'animal_deed').reduce((acc, deed) => {
                         const key = `${deed.id}_q${deed.quality}`;
                         if (!acc[key]) acc[key] = { ...deed, count: 0 };
@@ -4062,14 +4170,14 @@
                     const adjustedProduceTime = (animalData.produceTime * 1000) * weatherMultiplier;
                     const isReady = (Date.now() - animal.startTime) >= adjustedProduceTime;
                     titleEl.textContent = animalData.name;
-                    detailsEl.innerHTML = `<p>คุณภาพ: ${'★'.repeat(animal.quality || 0)}</p>`;
+                    detailsEl.innerHTML = `<p>คุณภาพ: ${'★'.repeat(animal.quality || 0)}</p><p>จาก: ${penName}</p>`;
                     if (!isReady) {
                         const remainingSeconds = Math.max(0, (animal.startTime + adjustedProduceTime - Date.now()) / 1000);
                         detailsEl.innerHTML += `<p>จะให้ผลผลิตใน: ${formatTime(remainingSeconds)}</p>`;
                     }
                     actionsEl.before(detailsEl);
                     actionsEl.appendChild(createButton('📦 เก็บผลผลิต', () => collectAnimalProduct(index), !isReady));
-                    actionsEl.appendChild(createButton('👋 ปล่อยสัตว์', () => releaseAnimal(index), false, 'bg-red-500 hover:bg-red-600'));
+                    actionsEl.appendChild(createButton('📥 เก็บเข้าคลัง', () => storeAnimal(index), false, 'bg-orange-500 hover:bg-orange-600'));
                 }
             } else if (type === 'factory') {
                 const index = id;
@@ -4081,8 +4189,6 @@
                 } else {
                     const factoryData = GAME_DATA[factory.factoryId];
                     titleEl.textContent = factoryData.name;
-
-                    // ▼▼▼ START EDIT: แก้ไขส่วนแสดงรายละเอียดคิวทั้งหมด ▼▼▼
                     let detailsHTML = `<div class="space-y-3">`;
                     
                     detailsHTML += `<div><p class="font-bold">คิวการผลิต (${factory.queue?.length || 0})</p>`;
@@ -4090,14 +4196,12 @@
                         factory.queue.forEach((job, jobIndex) => {
                             const recipe = factoryData.recipes.find(r => r.id === job.recipeId);
                             if (recipe) {
-                                // ถ้าเป็นชิ้นแรกในคิว (กำลังผลิต) ให้คำนวณเวลาที่เหลือ
                                 if (jobIndex === 0 && job.startTime) {
                                     const factoryModifier = WEATHER_DATA[farmState.currentWeather]?.factoryModifier || 1;
                                     const processTimeMillis = (recipe.processTime * 1000) * factoryModifier;
                                     const remainingSeconds = Math.max(0, (processTimeMillis - (Date.now() - job.startTime)) / 1000);
                                     detailsHTML += `<p class="text-xs font-semibold text-green-700">${recipe.name} (โดย: ${job.processedBy?.nickname || '??'}) - เหลือ ${formatTime(remainingSeconds)}</p>`;
                                 } else {
-                                    // ถ้าเป็นชิ้นถัดไปในคิว ให้แสดงว่ารอคิวอยู่
                                     detailsHTML += `<p class="text-xs text-gray-500">${recipe.name} (โดย: ${job.processedBy?.nickname || '??'}) - รอคิว</p>`;
                                 }
                             }
@@ -4106,8 +4210,7 @@
                         detailsHTML += `<p class="text-xs text-gray-500">-- ว่าง --</p>`;
                     }
                     detailsHTML += `</div>`;
-
-                    // ส่วนของที่เสร็จแล้ว (ยังคงเหมือนเดิม)
+                    
                     detailsHTML += `<div><p class="font-bold mt-2">ของที่เสร็จแล้ว (${factory.outputBin?.length || 0})</p>`;
                     if (factory.outputBin && factory.outputBin.length > 0) {
                         const groupedOutput = factory.outputBin.reduce((acc, output) => {
@@ -4132,7 +4235,6 @@
                     
                     detailsHTML += `</div>`;
                     detailsEl.innerHTML = detailsHTML;
-                    // ▲▲▲ END EDIT ▲▲▲
                     
                     actionsEl.before(detailsEl);
                     const myItemsInBin = factory.outputBin?.filter(item => item.owner === userId).length || 0;
@@ -4741,35 +4843,58 @@
             }
         }
         
-        function plant(plotIndex, seedId) {
-            const newFarmState = { ...farmState };
-            const newPlayerState = { ...playerState };
+        async function plant(plotIndex, seedId) {
+            try {
+                await runTransaction(db, async (transaction) => {
+                    const farmDocRef = doc(db, "publicFarmData", "farmState");
+                    const playerDocRef = doc(db, "players", userId);
 
-            const seedIndexInStorage = newPlayerState.storageBin.findIndex(item => item.id === seedId);
-            if (seedIndexInStorage === -1) {
-                alert(`หาเมล็ด ${GAME_DATA[seedId].name} ไม่เจอในคลัง!`);
-                return;
+                    const [farmDoc, playerDoc] = await Promise.all([
+                        transaction.get(farmDocRef),
+                        transaction.get(playerDocRef)
+                    ]);
+
+                    if (!farmDoc.exists() || !playerDoc.exists()) {
+                        throw "Document not found!";
+                    }
+
+                    const freshFarmState = farmDoc.data();
+                    const freshPlayerState = playerDoc.data();
+                    
+                    const seedIndexInStorage = freshPlayerState.storageBin.findIndex(item => item.id === seedId);
+                    if (seedIndexInStorage === -1) {
+                        alert(`หาเมล็ด ${GAME_DATA[seedId].name} ไม่เจอในคลัง!`);
+                        return; // ใช้ return ธรรมดาใน transaction
+                    }
+                    freshPlayerState.storageBin.splice(seedIndexInStorage, 1);
+
+                    const currentFarm = freshFarmState.farms[currentFarmIndex];
+                    const currentFertilizerLevel = currentFarm.plots[plotIndex]?.fertilizerLevel || 0;
+                    const seedData = GAME_DATA[seedId];
+                    
+                    currentFarm.plots[plotIndex] = { 
+                        plantId: seedData.plantId, 
+                        plantTime: Date.now(), 
+                        fertilizerLevel: currentFertilizerLevel,
+                        wateredBy: [],
+                        wateredByToday: {}, 
+                        plantedBy: { uid: userId, nickname: freshPlayerState.nickname },
+                        harvestedBy: []
+                    };
+                    
+                    updateQuestProgress(freshFarmState, 'plant');
+                    
+                    transaction.set(farmDocRef, freshFarmState);
+                    transaction.set(playerDocRef, freshPlayerState);
+                });
+                
+                // เอฟเฟกต์ภาพจะทำงานหลังจาก transaction สำเร็จ
+                document.querySelector(`#farm-grid > div:nth-child(${plotIndex + 1})`).classList.add('pop-animation');
+
+            } catch (e) {
+                console.error("Planting transaction failed: ", e);
+                alert("เกิดข้อผิดพลาดในการปลูก! อาจมีคนอื่นกำลังทำอะไรบางอย่างอยู่ ลองอีกครั้งครับ");
             }
-            newPlayerState.storageBin.splice(seedIndexInStorage, 1);
-
-            const currentFarm = newFarmState.farms[currentFarmIndex];
-            const currentFertilizerLevel = currentFarm.plots[plotIndex]?.fertilizerLevel || 0;
-            const seedData = GAME_DATA[seedId];
-            
-            currentFarm.plots[plotIndex] = { 
-                plantId: seedData.plantId, 
-                plantTime: Date.now(), 
-                fertilizerLevel: currentFertilizerLevel,
-                wateredBy: [],
-                wateredByToday: {}, 
-                plantedBy: { uid: userId, nickname: playerState.nickname },
-                harvestedBy: []
-            };
-            
-            updateQuestProgress(newFarmState, 'plant');
-            document.querySelector(`#farm-grid > div:nth-child(${plotIndex + 1})`).classList.add('pop-animation');
-            updateFarmState(newFarmState);
-            updatePlayerState(newPlayerState);
         }
 
         // ฟังก์ชันผู้ช่วยใหม่สำหรับคำนวณพื้นที่ AOE
@@ -4821,187 +4946,260 @@
         }
 
         // ฟังก์ชัน water เวอร์ชันแก้ไข
-        function water(plotIndex) {
-            const potentialPlots = getAoePlots(plotIndex, 'watering_can');
-            
-            const plotsToWater = potentialPlots.filter(index => {
-                const plot = farmState.farms[currentFarmIndex].plots[index];
-                if (!plot || !plot.plantId) return false;
-                
-                const myWateringsToday = plot.wateredByToday ? (plot.wateredByToday[userId] || 0) : 0;
-                
-                if (WEATHER_DATA[farmState.currentWeather]?.needsTwoWaterings) {
-                    return myWateringsToday < 2;
-                } 
-                
-                return myWateringsToday < 1;
-            });
+        async function water(plotIndex) {
+            try {
+                await runTransaction(db, async (transaction) => {
+                    const farmDocRef = doc(db, "publicFarmData", "farmState");
+                    const playerDocRef = doc(db, "players", userId);
 
-            if (plotsToWater.length === 0) return;
-            if (!deductEnergy(2 * plotsToWater.length)) return;
+                    const [farmDoc, playerDoc] = await Promise.all([
+                        transaction.get(farmDocRef),
+                        transaction.get(playerDocRef)
+                    ]);
 
-            const newFarmState = { ...farmState };
-            plotsToWater.forEach(index => {
-                const plot = newFarmState.farms[currentFarmIndex].plots[index];
-                if (!plot.wateredBy) plot.wateredBy = [];
-                if (!plot.wateredByToday) plot.wateredByToday = {};
-                
-                plot.wateredByToday[userId] = (plot.wateredByToday[userId] || 0) + 1;
-                
-                if (!plot.wateredBy.some(p => p.uid === userId)) {
-                    plot.wateredBy.push({ uid: userId, nickname: playerState.nickname });
-                }
-
-                document.querySelector(`#farm-grid > div:nth-child(${index + 1})`).classList.add('watered');
-            });
-            updateFarmState(newFarmState);
-            updateQuestProgress(newFarmState, 'water', plotsToWater.length);
-        }
-
-        function fertilize(plotIndex, fertilizerId) {
-            const potentialPlots = getAoePlots(plotIndex, 'spreader');
-            const fertilizerData = GAME_DATA[fertilizerId];
-
-            const plotsToFertilize = potentialPlots.filter(index => {
-                const plot = farmState.farms[currentFarmIndex].plots[index];
-                return plot && plot.plantId && (plot.fertilizerLevel || 0) < MAX_FERTILIZER_LEVEL;
-            });
-
-            if (plotsToFertilize.length === 0) {
-                const targetPlot = farmState.farms[currentFarmIndex].plots[plotIndex];
-                if (!targetPlot || !targetPlot.plantId) {
-                    alert("ต้องปลูกพืชก่อนถึงจะใส่ปุ๋ยได้ครับ");
-                } else if (targetPlot.fertilizerLevel >= MAX_FERTILIZER_LEVEL) {
-                    alert("แปลงนี้ใส่ปุ๋ยจนเต็มแล้ว!");
-                }
-                return;
-            }
-
-            const newPlayerState = { ...playerState };
-            const availableFertilizerCount = newPlayerState.storageBin.filter(item => item.id === fertilizerId).length;
-            if (availableFertilizerCount < plotsToFertilize.length) {
-                alert("ปุ๋ยไม่พอสำหรับพื้นที่ที่เลือก!");
-                return;
-            }
-
-            let countToRemove = plotsToFertilize.length;
-            newPlayerState.storageBin = newPlayerState.storageBin.filter(item => {
-                if (item.id === fertilizerId && countToRemove > 0) {
-                    countToRemove--;
-                    return false;
-                }
-                return true;
-            });
-
-            const newFarmState = { ...farmState };
-            plotsToFertilize.forEach(index => {
-                const plot = newFarmState.farms[currentFarmIndex].plots[index];
-                const newLevel = (plot.fertilizerLevel || 0) + fertilizerData.qualityBonus;
-                plot.fertilizerLevel = Math.min(MAX_FERTILIZER_LEVEL, newLevel);
-                
-                const plotEl = document.querySelector(`#farm-grid > div:nth-child(${index + 1})`);
-                if(plotEl) plotEl.classList.add('fertilized');
-            });
-
-            updateFarmState(newFarmState);
-            updatePlayerState(newPlayerState);
-            updateQuestProgress(newFarmState, 'fertilize', { amount: plotsToFertilize.length });
-        }
-
-        function harvest(plotIndex) {
-            let harvestMultiplier = 1;
-            if (playerState && playerState.buffs) {
-                const now = Date.now();
-                const activeHarvestBuff = playerState.buffs.find(b => b.id === 'harvest_boost' && b.expirationTime > now);
-                if (activeHarvestBuff) {
-                    harvestMultiplier = 2;
-                }
-            }
-
-            const potentialPlots = getAoePlots(plotIndex, 'scythe');
-            const plotsToHarvest = potentialPlots.filter(index => {
-                const plot = farmState.farms[currentFarmIndex].plots[index];
-                const plantData = GAME_DATA[plot?.plantId];
-                if (!plot || !plantData || plot.harvestedBy?.some(p => p.uid === userId)) return false;
-
-                const weather = WEATHER_DATA[farmState.currentWeather];
-                const weatherMultiplier = weather?.cropMultiplier || 1;
-                const elapsedSeconds = (Date.now() - plot.plantTime) / 1000;
-                let growthMultiplier = 1;
-
-                const uniqueWaterersToday = plot.wateredByToday ? Object.keys(plot.wateredByToday).length : 0;
-                const totalWateringsToday = plot.wateredByToday ? Object.values(plot.wateredByToday).reduce((sum, count) => sum + count, 0) : 0;
-
-                if (weather?.needsTwoWaterings) {
-                    if (totalWateringsToday < 2) {
-                        growthMultiplier = 0;
-                    } else {
-                        growthMultiplier = 1 + (uniqueWaterersToday * 0.5);
+                    if (!farmDoc.exists() || !playerDoc.exists()) {
+                        throw "Document not found!";
                     }
-                } else if (farmState.currentWeather === 'rainy' || farmState.currentWeather === 'stormy') {
-                    growthMultiplier = 1.5;
-                } else {
-                    growthMultiplier = 1 + (uniqueWaterersToday * 0.5);
-                }
+                    
+                    const freshFarmState = farmDoc.data();
+                    const freshPlayerState = playerDoc.data();
+                    
+                    // ใช้ freshFarmState ที่อ่านมาล่าสุดในการคำนวณ
+                    const potentialPlots = getAoePlots(plotIndex, 'watering_can');
+                    const plotsToWater = potentialPlots.filter(index => {
+                        const plot = freshFarmState.farms[currentFarmIndex].plots[index];
+                        if (!plot || !plot.plantId) return false;
+                        const myWateringsToday = plot.wateredByToday ? (plot.wateredByToday[userId] || 0) : 0;
+                        if (WEATHER_DATA[freshFarmState.currentWeather]?.needsTwoWaterings) {
+                            return myWateringsToday < 2;
+                        } 
+                        return myWateringsToday < 1;
+                    });
 
-                const effectiveGrowth = elapsedSeconds * growthMultiplier;
-                const adjustedGrowTime = plantData.growTime * weatherMultiplier;
-                return effectiveGrowth >= adjustedGrowTime;
-            });
+                    if (plotsToWater.length === 0) return;
 
-            if (plotsToHarvest.length === 0) return;
-            if (!deductEnergy(1 * plotsToHarvest.length)) return;
+                    // การหักพลังงานต้องทำภายใน Transaction
+                    let energyCost = 2 * plotsToWater.length;
+                    const weather = WEATHER_DATA[freshFarmState.currentWeather];
+                    if (weather && weather.energyModifier) {
+                        energyCost = Math.round(energyCost * weather.energyModifier);
+                    }
+                    if ((freshPlayerState.energy || 0) < energyCost) {
+                        console.log("พลังงานไม่พอ (ใน transaction)");
+                        return;
+                    }
+                    freshPlayerState.energy -= energyCost;
 
-            const newFarmState = { ...farmState };
-            const newPlayerState = { ...playerState };
-            let harvestedItems = [];
-            const weather = WEATHER_DATA[farmState.currentWeather];
-
-            let botanistBonusChance = 0;
-            if (newFarmState.ownedSpecializations?.includes('botanist_study')) {
-                botanistBonusChance = GAME_DATA.house_specializations.botanist_study.effect.harvestQualityBonusChance;
-            }
-
-            plotsToHarvest.forEach(index => {
-                const plot = newFarmState.farms[currentFarmIndex].plots[index];
-                const cropData = GAME_DATA[plot.plantId];
-                let quality = 0;
-                if (Math.random() < (plot.fertilizerLevel || 0)) quality = 1;
-                if (Math.random() < (plot.fertilizerLevel || 0) - 1) quality = 2;
-
-                if (weather?.qualityBonusChance && quality < 2 && Math.random() < weather.qualityBonusChance) {
-                    quality++;
-                }
-
-                if (botanistBonusChance > 0 && quality < 2 && Math.random() < botanistBonusChance) {
-                    quality++;
-                }
-
-                for (let i = 0; i < harvestMultiplier; i++) {
-                    harvestedItems.push({ id: cropData.produceId, quality: quality });
-                }
-
-                if (!plot.harvestedBy) plot.harvestedBy = [];
-                plot.harvestedBy.push({ uid: userId, nickname: playerState.nickname });
-                const involvedUids = new Set([plot.plantedBy?.uid, ...(plot.wateredBy?.map(p => p.uid).filter(uid => uid) || [])]);
-                const harvestedUids = new Set(plot.harvestedBy?.map(p => p.uid) || []);
-                let allHarvested = true;
-                for (const uid of involvedUids) {
-                    if (!harvestedUids.has(uid)) { allHarvested = false; break; }
-                }
-                if (allHarvested) {
-                    newFarmState.farms[currentFarmIndex].plots[index] = { plantId: null, wateredByToday: {} };
-                }
-            });
-
-            if (harvestedItems.length > 0) {
-                newPlayerState.storageBin.push(...harvestedItems);
-                updateQuestProgress(newFarmState, 'harvest', { amount: harvestedItems.length });
-                harvestedItems.forEach(item => {
-                    updateQuestProgress(newFarmState, 'harvest_specific', { itemId: item.id, quality: item.quality });
+                    plotsToWater.forEach(index => {
+                        const plot = freshFarmState.farms[currentFarmIndex].plots[index];
+                        if (!plot.wateredBy) plot.wateredBy = [];
+                        if (!plot.wateredByToday) plot.wateredByToday = {};
+                        plot.wateredByToday[userId] = (plot.wateredByToday[userId] || 0) + 1;
+                        if (!plot.wateredBy.some(p => p.uid === userId)) {
+                            plot.wateredBy.push({ uid: userId, nickname: freshPlayerState.nickname });
+                        }
+                    });
+                    
+                    updateQuestProgress(freshFarmState, 'water', { amount: plotsToWater.length });
+                    
+                    transaction.set(farmDocRef, freshFarmState);
+                    transaction.set(playerDocRef, freshPlayerState);
                 });
-                updatePlayerState(newPlayerState);
-                updateFarmState(newFarmState);
+
+                // เอฟเฟกต์ภาพจะทำงานหลังจาก transaction สำเร็จ
+                document.querySelectorAll('.plot').forEach(el => el.classList.remove('watered'));
+                setTimeout(() => {
+                     const aoePlots = getAoePlots(plotIndex, 'watering_can'); // คำนวณพื้นที่อีกครั้งเพื่อแสดงผล
+                     aoePlots.forEach(index => {
+                        const plotEl = document.querySelector(`#farm-grid > div:nth-child(${index + 1})`);
+                        if (plotEl) plotEl.classList.add('watered');
+                    });
+                }, 50);
+
+            } catch (e) {
+                console.error("Watering transaction failed: ", e);
+                alert("เกิดข้อผิดพลาดในการรดน้ำ! อาจมีคนอื่นกำลังทำอะไรบางอย่างอยู่ ลองอีกครั้งครับ");
+            }
+        }
+
+        async function fertilize(plotIndex, fertilizerId) {
+            try {
+                await runTransaction(db, async (transaction) => {
+                    const farmDocRef = doc(db, "publicFarmData", "farmState");
+                    const playerDocRef = doc(db, "players", userId);
+
+                    const [farmDoc, playerDoc] = await Promise.all([
+                        transaction.get(farmDocRef),
+                        transaction.get(playerDocRef)
+                    ]);
+
+                    if (!farmDoc.exists() || !playerDoc.exists()) {
+                        throw "Document not found!";
+                    }
+                    
+                    const freshFarmState = farmDoc.data();
+                    const freshPlayerState = playerDoc.data();
+
+                    const potentialPlots = getAoePlots(plotIndex, 'spreader');
+                    const fertilizerData = GAME_DATA[fertilizerId];
+
+                    const plotsToFertilize = potentialPlots.filter(index => {
+                        const plot = freshFarmState.farms[currentFarmIndex].plots[index];
+                        return plot && plot.plantId && (plot.fertilizerLevel || 0) < MAX_FERTILIZER_LEVEL;
+                    });
+
+                    if (plotsToFertilize.length === 0) { return; }
+
+                    const availableFertilizerCount = freshPlayerState.storageBin.filter(item => item.id === fertilizerId).length;
+                    if (availableFertilizerCount < plotsToFertilize.length) {
+                        alert("ปุ๋ยไม่พอสำหรับพื้นที่ที่เลือก!");
+                        return;
+                    }
+
+                    let countToRemove = plotsToFertilize.length;
+                    freshPlayerState.storageBin = freshPlayerState.storageBin.filter(item => {
+                        if (item.id === fertilizerId && countToRemove > 0) {
+                            countToRemove--;
+                            return false;
+                        }
+                        return true;
+                    });
+
+                    plotsToFertilize.forEach(index => {
+                        const plot = freshFarmState.farms[currentFarmIndex].plots[index];
+                        const newLevel = (plot.fertilizerLevel || 0) + fertilizerData.qualityBonus;
+                        plot.fertilizerLevel = Math.min(MAX_FERTILIZER_LEVEL, newLevel);
+                    });
+
+                    updateQuestProgress(freshFarmState, 'fertilize', { amount: plotsToFertilize.length });
+                    
+                    transaction.set(farmDocRef, freshFarmState);
+                    transaction.set(playerDocRef, freshPlayerState);
+                });
+
+                // เอฟเฟกต์ภาพ
+                const aoePlots = getAoePlots(plotIndex, 'spreader');
+                aoePlots.forEach(index => {
+                    const plotEl = document.querySelector(`#farm-grid > div:nth-child(${index + 1})`);
+                    if(plotEl) plotEl.classList.add('fertilized');
+                });
+                
+            } catch(e) {
+                console.error("Fertilizing transaction failed: ", e);
+                alert("เกิดข้อผิดพลาดในการใส่ปุ๋ย! อาจมีคนอื่นกำลังทำอะไรบางอย่างอยู่ ลองอีกครั้งครับ");
+            }
+        }
+
+        async function harvest(plotIndex) {
+            try {
+                 await runTransaction(db, async (transaction) => {
+                    const farmDocRef = doc(db, "publicFarmData", "farmState");
+                    const playerDocRef = doc(db, "players", userId);
+
+                    const [farmDoc, playerDoc] = await Promise.all([
+                        transaction.get(farmDocRef),
+                        transaction.get(playerDocRef)
+                    ]);
+                    if (!farmDoc.exists() || !playerDoc.exists()) throw "Document not found!";
+                    
+                    const freshFarmState = farmDoc.data();
+                    const freshPlayerState = playerDoc.data();
+                    
+                    let harvestMultiplier = 1;
+                    if (freshPlayerState && freshPlayerState.buffs) {
+                        const now = Date.now();
+                        const activeHarvestBuff = freshPlayerState.buffs.find(b => b.id === 'harvest_boost' && b.expirationTime > now);
+                        if (activeHarvestBuff) {
+                            harvestMultiplier = 2;
+                        }
+                    }
+
+                    const potentialPlots = getAoePlots(plotIndex, 'scythe');
+                    const plotsToHarvest = potentialPlots.filter(index => {
+                        const plot = freshFarmState.farms[currentFarmIndex].plots[index];
+                        const plantData = GAME_DATA[plot?.plantId];
+                        if (!plot || !plantData || plot.harvestedBy?.some(p => p.uid === userId)) return false;
+
+                        const weather = WEATHER_DATA[freshFarmState.currentWeather];
+                        const weatherMultiplier = weather?.cropMultiplier || 1;
+                        const elapsedSeconds = (Date.now() - plot.plantTime) / 1000;
+                        let growthMultiplier = 1;
+
+                        const uniqueWaterersToday = plot.wateredByToday ? Object.keys(plot.wateredByToday).length : 0;
+                        const totalWateringsToday = plot.wateredByToday ? Object.values(plot.wateredByToday).reduce((sum, count) => sum + count, 0) : 0;
+
+                        if (weather?.needsTwoWaterings) {
+                            if (totalWateringsToday < 2) { growthMultiplier = 0; } 
+                            else { growthMultiplier = 1 + (uniqueWaterersToday * 0.5); }
+                        } else if (freshFarmState.currentWeather === 'rainy' || freshFarmState.currentWeather === 'stormy') {
+                            growthMultiplier = 1.5;
+                        } else {
+                            growthMultiplier = 1 + (uniqueWaterersToday * 0.5);
+                        }
+                        const effectiveGrowth = elapsedSeconds * growthMultiplier;
+                        const adjustedGrowTime = plantData.growTime * weatherMultiplier;
+                        return effectiveGrowth >= adjustedGrowTime;
+                    });
+
+                    if (plotsToHarvest.length === 0) return;
+
+                    let energyCost = 1 * plotsToHarvest.length;
+                    const weather = WEATHER_DATA[freshFarmState.currentWeather];
+                    if (weather && weather.energyModifier) {
+                        energyCost = Math.round(energyCost * weather.energyModifier);
+                    }
+                    if ((freshPlayerState.energy || 0) < energyCost) {
+                        console.log("พลังงานไม่พอ (ใน transaction)");
+                        return;
+                    }
+                    freshPlayerState.energy -= energyCost;
+                    
+                    let harvestedItems = [];
+                    let botanistBonusChance = 0;
+                    if (freshFarmState.ownedSpecializations?.includes('botanist_study')) {
+                        botanistBonusChance = GAME_DATA.house_specializations.botanist_study.effect.harvestQualityBonusChance;
+                    }
+
+                    plotsToHarvest.forEach(index => {
+                        const plot = freshFarmState.farms[currentFarmIndex].plots[index];
+                        const cropData = GAME_DATA[plot.plantId];
+                        let quality = 0;
+                        if (Math.random() < (plot.fertilizerLevel || 0)) quality = 1;
+                        if (Math.random() < (plot.fertilizerLevel || 0) - 1) quality = 2;
+                        if (weather?.qualityBonusChance && quality < 2 && Math.random() < weather.qualityBonusChance) quality++;
+                        if (botanistBonusChance > 0 && quality < 2 && Math.random() < botanistBonusChance) quality++;
+
+                        for (let i = 0; i < harvestMultiplier; i++) {
+                            harvestedItems.push({ id: cropData.produceId, quality: quality });
+                        }
+
+                        if (!plot.harvestedBy) plot.harvestedBy = [];
+                        plot.harvestedBy.push({ uid: userId, nickname: freshPlayerState.nickname });
+                        const involvedUids = new Set([plot.plantedBy?.uid, ...(plot.wateredBy?.map(p => p.uid).filter(uid => uid) || [])]);
+                        const harvestedUids = new Set(plot.harvestedBy?.map(p => p.uid) || []);
+                        let allHarvested = true;
+                        for (const uid of involvedUids) {
+                            if (!harvestedUids.has(uid)) { allHarvested = false; break; }
+                        }
+                        if (allHarvested) {
+                            freshFarmState.farms[currentFarmIndex].plots[index] = { plantId: null, wateredByToday: {} };
+                        }
+                    });
+
+                    if (harvestedItems.length > 0) {
+                        freshPlayerState.storageBin.push(...harvestedItems);
+                        updateQuestProgress(freshFarmState, 'harvest', { amount: harvestedItems.length });
+                        harvestedItems.forEach(item => {
+                            updateQuestProgress(freshFarmState, 'harvest_specific', { itemId: item.id, quality: item.quality });
+                        });
+                    }
+                    
+                    transaction.set(farmDocRef, freshFarmState);
+                    transaction.set(playerDocRef, freshPlayerState);
+                });
+            } catch (e) {
+                 console.error("Harvest transaction failed: ", e);
+                 alert("เกิดข้อผิดพลาดในการเก็บเกี่ยว! อาจมีคนอื่นกำลังทำอะไรบางอย่างอยู่ ลองอีกครั้งครับ");
             }
         }
         
@@ -5022,27 +5220,20 @@
             const newPlayerState = { ...playerState };
             const deedData = GAME_DATA[deedId];
 
-            // หาและลบ Deed จาก storageBin (ตัวแรกที่เจอและคุณภาพตรงกัน)
             const deedIndex = newPlayerState.storageBin.findIndex(item => item.id === deedId && item.quality === quality);
             if (deedIndex > -1) {
                 newPlayerState.storageBin.splice(deedIndex, 1);
             } else {
-                // ถ้าไม่เจอ deed ที่คุณภาพตรงกัน ลองหา deed เดียวกันที่ไม่มีดาวเผื่อไว้
-                const zeroQualityIndex = newPlayerState.storageBin.findIndex(item => item.id === deedId && item.quality === 0);
-                 if (zeroQualityIndex > -1) {
-                    newPlayerState.storageBin.splice(zeroQualityIndex, 1);
-                 } else {
-                    console.error("Could not find deed in storage to place animal.");
-                    return; 
-                 }
+                console.error("Could not find deed in storage to place animal.");
+                return; 
             }
             
-            // สร้างสัตว์ใหม่พร้อมค่าคุณภาพ
-            newFarmState.animals[slotIndex] = { 
+            newFarmState.animalPens[currentPenIndex].slots[slotIndex] = { 
                 animalId: deedData.animalId, 
                 startTime: Date.now(),
-                quality: quality // บันทึกคุณภาพของสัตว์
+                quality: quality
             };
+
             updateFarmState(newFarmState);
             updatePlayerState(newPlayerState);
         }
@@ -5050,7 +5241,7 @@
         function collectAnimalProduct(slotIndex) {
             const newPlayerState = { ...playerState };
             const newFarmState = { ...farmState };
-            const animal = newFarmState.animals[slotIndex];
+            const animal = newFarmState.animalPens[currentPenIndex].slots[slotIndex];
             const animalData = GAME_DATA[animal.animalId];
             let quality = animal.quality || 0;
 
@@ -5060,7 +5251,6 @@
             }
 
             let productCount = 1;
-            // --- แก้ไขเงื่อนไขตรงนี้ ---
             if (newFarmState.ownedSpecializations?.includes('animal_sanctuary')) {
                 const bonusChance = GAME_DATA.house_specializations.animal_sanctuary.effect.doubleAnimalProductChance;
                 if (Math.random() < bonusChance) {
@@ -5079,32 +5269,51 @@
             updateQuestProgress(newFarmState, 'collect_specific', { itemId: animalData.produceId, quality: quality, amount: productCount });
         }
 
-        function releaseAnimal(index) {
-            const animal = farmState.animals[index];
-            if (!animal || !animal.animalId) return;
-
-            const animalData = GAME_DATA[animal.animalId];
-            const deedId = Object.keys(GAME_DATA).find(id => GAME_DATA[id].type === 'animal_deed' && GAME_DATA[id].animalId === animal.animalId);
+        // เปลี่ยนจาก "ปล่อยสัตว์" เป็น "เก็บสัตว์เข้าคลัง"
+        async function storeAnimal(slotIndex) {
+            const confirmationText = `คุณต้องการเก็บสัตว์ตัวนี้กลับเข้าคลังหรือไม่? สัตว์จะกลับไปอยู่ในรูปแบบ "กรรมสิทธิ์"`;
             
-            if (!deedId) {
-                console.error("Could not find deed for animal:", animal.animalId);
-                return;
-            }
+            showConfirmationModal(confirmationText, async () => {
+                try {
+                    await runTransaction(db, async (transaction) => {
+                        const farmDocRef = doc(db, "publicFarmData", "farmState");
+                        const playerDocRef = doc(db, "players", userId);
 
-            const deedData = GAME_DATA[deedId];
-            const refundAmount = Math.floor(deedData.cost * 0.5);
+                        const [farmDoc, playerDoc] = await Promise.all([
+                            transaction.get(farmDocRef),
+                            transaction.get(playerDocRef)
+                        ]);
+                        if (!farmDoc.exists() || !playerDoc.exists()) throw "Document not found!";
+                        
+                        const freshFarmState = farmDoc.data();
+                        const freshPlayerState = playerDoc.data();
+                        
+                        const animal = freshFarmState.animalPens[currentPenIndex].slots[slotIndex];
+                        if (!animal || !animal.animalId) return;
 
-            const confirmationText = `คุณแน่ใจหรือไม่ว่าจะปล่อย ${animalData.name}? คุณจะได้รับเงินคืน ${refundAmount}💰`;
-            
-            showConfirmationModal(confirmationText, () => {
-                const newFarmState = { ...farmState };
-                const newPlayerState = { ...playerState };
+                        const deedId = Object.keys(GAME_DATA).find(id => GAME_DATA[id].type === 'animal_deed' && GAME_DATA[id].animalId === animal.animalId);
+                        
+                        if (!deedId) {
+                            console.error("Could not find corresponding deed for animal:", animal.animalId);
+                            throw new Error("Cannot find deed for this animal.");
+                        }
 
-                newPlayerState.money += refundAmount;
-                newFarmState.animals[index] = { animalId: null }; // Reset the slot
+                        // เพิ่ม "กรรมสิทธิ์" กลับเข้าคลัง
+                        freshPlayerState.storageBin.push({ id: deedId, quality: animal.quality || 0 });
 
-                updatePlayerState(newPlayerState);
-                updateFarmState(newFarmState);
+                        // ทำให้ช่องในคอกว่างลง
+                        freshFarmState.animalPens[currentPenIndex].slots[slotIndex] = { animalId: null };
+
+                        transaction.set(farmDocRef, freshFarmState);
+                        transaction.set(playerDocRef, freshPlayerState);
+                    });
+                    
+                    showInfoModal('📦', 'เก็บเข้าคลังสำเร็จ', 'สัตว์ของคุณกลับไปอยู่ในรูปแบบกรรมสิทธิ์ในคลังแล้ว');
+
+                } catch (e) {
+                    console.error("Store Animal transaction failed: ", e);
+                    alert("เกิดข้อผิดพลาด! อาจมีคนอื่นกำลังทำอะไรบางอย่างอยู่ ลองอีกครั้งครับ");
+                }
             });
         }
         
@@ -6155,11 +6364,16 @@
                         return; 
                     }
                 } else if (type === 'animals') {
-                    if (!newFarmState.animals) newFarmState.animals = [];
-                    newFarmState.animals.push({ animalId: null });
+                    const currentPen = newFarmState.animalPens[currentPenIndex];
+                    if (currentPen.slots.length < MAX_ANIMALS_PER_PEN) {
+                        currentPen.slots.push({ animalId: null });
+                    } else {
+                        alert("คอกนี้มีสัตว์เต็มแล้ว!");
+                        return;
+                    }
                 } else if (type === 'factory') {
                     if (!newFarmState.factories) newFarmState.factories = [];
-                    newFarmState.factories.push({ factoryId: null });
+                    newFarmState.factories.push({ factoryId: null, queue: [], outputBin: [] });
                 }
 
                 updatePlayerState(newPlayerState);
@@ -6357,17 +6571,32 @@
                 if (docSnap.exists()) {
                     farmState = docSnap.data();
 
-                    // โค้ดสำหรับแปลงข้อมูลเก่าเป็นข้อมูลใหม่โดยอัตโนมัติ
+                    // แปลงข้อมูลฟาร์มเก่า (ถ้ามี)
                     if (farmState.plots && !farmState.farms) {
                         console.log("Old farm data structure detected. Migrating to multi-farm structure...");
                         farmState.farms = [
                             {
                                 id: Date.now(),
                                 name: 'ฟาร์มหลัก',
-                                plots: farmState.plots // นำข้อมูลแปลงเก่าทั้งหมดมาใส่ที่นี่
+                                plots: farmState.plots
                             }
                         ];
-                        delete farmState.plots; // ลบ key 'plots' เก่าที่ไม่ใช้ออก
+                        delete farmState.plots;
+                        updateFarmState(farmState); 
+                        return; 
+                    }
+
+                    // แปลงข้อมูลคอกสัตว์เก่า (ถ้ามี)
+                    if (farmState.animals && !farmState.animalPens) {
+                        console.log("Old animal data structure detected. Migrating to multi-pen structure...");
+                        farmState.animalPens = [
+                            {
+                                id: Date.now(),
+                                name: 'คอกสัตว์หลัก',
+                                slots: farmState.animals
+                            }
+                        ];
+                        delete farmState.animals;
                         updateFarmState(farmState); 
                         return; 
                     }
@@ -6391,7 +6620,8 @@
                     }
                     if (!farmState.quests) farmState.quests = { daily: [], weekly: [], lastDailyReset: 0, lastWeeklyReset: 0 };
                     if (!farmState.ownedKitchenTools) farmState.ownedKitchenTools = [];
-                    if (!farmState.factories) farmState.factories = Array(FACTORY_GRID_SIZE).fill(null).map(() => ({ factoryId: null }));
+                    // แก้ไข: ตรวจสอบ factories ให้ถูกต้อง
+                    if (!farmState.factories) farmState.factories = Array(FACTORY_GRID_SIZE).fill(null).map(() => ({ factoryId: null, queue: [], outputBin: [] }));
                     if (!farmState.kitchen) farmState.kitchen = { queue: [] };
                     if (!farmState.marketPrices) farmState.marketPrices = {};
                     if (!farmState.salesVolume) farmState.salesVolume = {};
@@ -6401,7 +6631,6 @@
                     if (!farmState.fishFarm) {
                         farmState.fishFarm = { foodLevel: 0, pondLevel: 0, slots: [] };
                     }
-
                     if (!farmState.ownedSpecializations) {
                         farmState.ownedSpecializations = [];
                     }
@@ -6415,9 +6644,8 @@
             try {
                 const farmSnap = await getDoc(farmDocRef);
                 if (!farmSnap.exists()) {
-                    console.log("Farm data not found, creating initial state with multi-farm structure...");
+                    console.log("Farm data not found, creating initial state with multi-farm and multi-pen structure...");
                     const initialFarmState = {
-                        // โครงสร้างใหม่จะใช้ farms ที่เป็น Array
                         farms: [
                             {
                                 id: Date.now(),
@@ -6425,8 +6653,14 @@
                                 plots: Array(FARM_GRID_SIZE).fill(null).map(() => ({ plantId: null, wateredByToday: {} }))
                             }
                         ],
-                        // ข้อมูลส่วนอื่นๆ ยังคงเหมือนเดิม
-                        animals: Array(ANIMAL_PEN_SIZE).fill(null).map(() => ({ animalId: null })),
+                        // เปลี่ยนจาก animals: [] มาเป็น animalPens: [{...}]
+                        animalPens: [
+                            {
+                                id: Date.now(),
+                                name: 'คอกสัตว์แห่งแรก',
+                                slots: Array(ANIMAL_PEN_SIZE).fill(null).map(() => ({ animalId: null }))
+                            }
+                        ],
                         factories: Array(FACTORY_GRID_SIZE).fill(null).map(() => ({ factoryId: null, queue: [], outputBin: [] })),
                         quests: { daily: generateRandomQuests('daily', 2), weekly: generateRandomQuests('weekly', 2), lastDailyReset: Date.now(), lastWeeklyReset: Date.now() },
                         ownedKitchenTools: [],
@@ -6542,11 +6776,17 @@
                 
                 const view = target.dataset.view;
 
-                // ดักจับการคลิกที่ปุ่มฟาร์มเพื่อเปิดหน้าต่างเลือกฟาร์ม
                 if (view === 'farm') {
                     showFarmSelectorModal();
                     return;
                 }
+                
+                // --- START EDIT: เปลี่ยนการทำงานของปุ่มคอกสัตว์ ---
+                if (view === 'animals') {
+                    showPenSelectorModal();
+                    return;
+                }
+                // --- END EDIT ---
 
                 if (view === 'map') {
                     mapModal.classList.remove('hidden');
@@ -6557,38 +6797,18 @@
                     if(userId) leavePark(userId);
                 }
 
-                // ซ่อนหน้าจอทั้งหมด แล้วเปิดเฉพาะอันที่เลือก
                 document.querySelectorAll('#tab-content-area > div').forEach(div => div.classList.add('hidden'));
                 const viewEl = document.getElementById(`${view}-view`);
                 if (viewEl) viewEl.classList.remove('hidden');
                 
-                // --- START EDIT: เพิ่มคำสั่งวาดเนื้อหาสำหรับแต่ละหน้า ---
-                // เมื่อสลับหน้าจอ ให้สั่งวาดเนื้อหาของหน้านั้นๆ ทันที
                 switch (view) {
-                    case 'animals':
-                        renderAnimals();
-                        break;
-                    case 'factory':
-                        renderFactory();
-                        break;
-                    case 'shop':
-                        renderShop();
-                        break;
-                    case 'quests':
-                        renderQuests();
-                        break;
-                    case 'storage':
-                        renderStorage();
-                        break;
-                    case 'market':
-                        renderMarket();
-                        break;
-                    case 'breeding':
-                        renderBreedingView();
-                        break;
-                    // กรณีอื่นๆ ที่ต้องการให้วาดใหม่ทันที
+                    case 'factory': renderFactory(); break;
+                    case 'shop': renderShop(); break;
+                    case 'quests': renderQuests(); break;
+                    case 'storage': renderStorage(); break;
+                    case 'market': renderMarket(); break;
+                    case 'breeding': renderBreedingView(); break;
                 }
-                // --- END EDIT ---
 
                 if (view === 'park') {
                     if(userId && playerState) enterPark(userId, playerState);
@@ -6596,7 +6816,6 @@
                 
                 currentView = view;
 
-                // อัปเดตสไตล์ของปุ่มที่ถูกเลือก
                 document.querySelectorAll('#footer-nav .nav-btn').forEach(b => b.classList.remove('active'));
                 const primaryBtn = document.querySelector(`.nav-btn[data-view="${view}"]`);
                 if (primaryBtn) {
@@ -6624,26 +6843,44 @@
                 const closeBtn = e.target.closest('#farm-selector-modal-close');
 
                 if (gotoBtn) {
-                    const index = parseInt(gotoBtn.dataset.index, 10);
-                    currentFarmIndex = index;
-
+                    currentFarmIndex = parseInt(gotoBtn.dataset.index, 10);
                     document.querySelectorAll('#tab-content-area > div').forEach(div => div.classList.add('hidden'));
                     document.getElementById('farm-view').classList.remove('hidden');
-                    
                     document.querySelectorAll('#footer-nav .nav-btn').forEach(b => b.classList.remove('active'));
                     document.querySelector('.nav-btn[data-view="farm"]').classList.add('active');
-
                     hideFarmSelectorModal();
                     renderFarm();
                 } else if (renameBtn) {
-                    const index = parseInt(renameBtn.dataset.index, 10);
-                    renameFarm(index);
+                    renameFarm(parseInt(renameBtn.dataset.index, 10));
                 } else if (closeBtn) {
                     hideFarmSelectorModal();
                 }
             });
+            
+            // --- START EDIT: เพิ่ม Event Listener สำหรับหน้าต่างเลือกคอกสัตว์ ---
+            const penSelectorModal = document.getElementById('pen-selector-modal');
+            penSelectorModal.addEventListener('click', e => {
+                const gotoBtn = e.target.closest('.goto-pen-btn');
+                const renameBtn = e.target.closest('.rename-pen-btn');
+                const closeBtn = e.target.closest('#pen-selector-modal-close');
 
-            // Event Listeners อื่นๆ ทั้งหมด
+                if (gotoBtn) {
+                    currentPenIndex = parseInt(gotoBtn.dataset.index, 10);
+                    document.querySelectorAll('#tab-content-area > div').forEach(div => div.classList.add('hidden'));
+                    document.getElementById('animals-view').classList.remove('hidden');
+                    document.querySelectorAll('#footer-nav .nav-btn').forEach(b => b.classList.remove('active'));
+                    document.querySelector('.nav-btn[data-view="animals"]').classList.add('active');
+                    hidePenSelectorModal();
+                    renderAnimals();
+                } else if (renameBtn) {
+                    renamePen(parseInt(renameBtn.dataset.index, 10));
+                } else if (closeBtn) {
+                    hidePenSelectorModal();
+                }
+            });
+            // --- END EDIT ---
+
+            // โค้ดส่วนที่เหลือของฟังก์ชัน setupControls เดิมของคุณ...
             document.getElementById('context-modal-close').onclick = hideContextMenu;
             document.getElementById('submenu-modal-close').onclick = hideSubMenu;
             document.getElementById('info-modal-close').onclick = hideInfoModal;
