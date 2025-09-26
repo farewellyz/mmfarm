@@ -811,7 +811,7 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        const CLIENT_VERSION = "1.0.21"; // Updated version
+        const CLIENT_VERSION = "1.0.22"; // Updated version
 
         const FARM_GRID_SIZE = 24;
         const ANIMAL_PEN_SIZE = 8;
@@ -1435,6 +1435,7 @@
                 'steak_red_wine_sauce_recipe': { resultId: 'steak_red_wine_sauce_food', ingredients: [{ id: 'beef', count: 1 }, { id: 'grape_wine', count: 1 }], tool: 'kitchen_pan' },
                 'crispy_fish_skin_recipe': { resultId: 'crispy_fish_skin_food', ingredients: [{ category: 'fish', count: 2 }, { id: 'rice_flour', count: 1 }], tool: 'kitchen_pan' },
                 'duck_confit_recipe': { resultId: 'duck_confit_food', ingredients: [{ id: 'duck_meat', count: 1 }, { id: 'honey', count: 1 }], tool: 'kitchen_oven' },
+                'coffee_recipe': { resultId: 'coffee_drink', ingredients: [{ id: 'roasted_coffee', count: 1 }], tool: 'coffee_maker' },
                 'honey_glazed_ham_recipe': { resultId: 'honey_glazed_ham_food', ingredients: [{ id: 'ham', count: 1 }, { id: 'honey', count: 1 }, { id: 'pineapple_produce', count: 1 }], tool: 'kitchen_oven' },
                 'surf_and_turf_recipe': { resultId: 'surf_and_turf_food', ingredients: [{ id: 'beef', count: 1 }, { id: 'shrimp', count: 1 }], tool: 'kitchen_pan' },
                 'gardener_stew_recipe': { 
@@ -1522,6 +1523,7 @@
             'duck_confit_food': { name: 'กงฟีเป็ด', icon: '🦆', type: 'produce', sellPrice: [410, 510, 615], energyRestore: 65, imageUrl: 'duck_confit.png' },
             'honey_glazed_ham_food': { name: 'แฮมเคลือบน้ำผึ้ง', icon: '🍖', type: 'produce', sellPrice: [1460, 1825, 2190], energyRestore: 100, imageUrl: 'honey_glazed_ham.png' },
             'surf_and_turf_food': { name: 'เซิร์ฟแอนด์เทิร์ฟ', icon: '🦞', type: 'produce', sellPrice: [1680, 2100, 2520], energyRestore: 120, imageUrl: 'surf_and_turf.png' },
+            'coffee_drink': { name: 'กาแฟ', icon: '☕', type: 'produce', sellPrice: [300, 400, 500], energyRestore: 50, imageUrl: 'coffee_drink.png',buff: {id: 'energy_saver',duration: 300,description: 'ใช้พลังงานในการทำกิจกรรมต่างๆ ลดลง 20% เป็นเวลา 5 นาที'}},
             'ocean_feast_food': { name: 'ซุปมหาสมุทร', icon: '🍲', type: 'produce', sellPrice: [0, 0, 0], energyRestore: 200, imageUrl: 'ocean_feast_food.png', buff: {id: 'fishing_luck',duration: 300, description: 'เพิ่มโอกาสตกได้ปลาหายาก 10% เป็นเวลา 5 นาที'}},
             'gardener_stew_food': { name: 'ซุปชาวสวน', icon: '🥣', type: 'produce', sellPrice: [0, 0, 0], energyRestore: 200, imageUrl: 'gardener_stew.png', buff: {id: 'harvest_boost',duration: 300,description: 'ผลผลิตที่เก็บเกี่ยวได้จะเพิ่มเป็น 2 เท่า เป็นเวลา 5 นาที'}
             },
@@ -1530,6 +1532,13 @@
             'kitchen_pan': { name: 'กระทะ', type: 'kitchen_tool', cost: 1500, icon: '🍳', imageUrl: 'pan.png' },
             'kitchen_blender': { name: 'เครื่องปั่น', type: 'kitchen_tool', cost: 2000, icon: '🌪️', imageUrl: 'mixer.png' },
             'kitchen_pot': { name: 'หม้อ', type: 'kitchen_tool', cost: 2000, icon: '🍲', imageUrl: 'pot.png' },
+            'coffee_maker': { 
+                name: 'เครื่องชงกาแฟ', 
+                type: 'kitchen_tool', 
+                cost: 3500, 
+                icon: '☕', 
+                imageUrl: 'coffee_maker.png' 
+            },
             'kitchen_oven': { name: 'เตาอบ', type: 'kitchen_tool', cost: 5000, icon: '🔥', imageUrl: 'oven.png' },
             'carp': { name: 'ปลาคาร์ป', icon: '🐟', rarity: 'Common', sellPrice: [15, 20, 25], type: 'produce', energyRestore: 3, imageUrl: 'carp.png', category: 'fish', breedingTime: 86400,
                 growthTime: 86400, // 24 ชั่วโมง
@@ -1643,6 +1652,26 @@
             'apple_seed': { name: 'เมล็ดแอปเปิ้ล', type: 'seed', cost: 28, plantId: 'apple', icon: '🍎', imageUrl: 'apple.png' },
             'apple':      { name: 'แอปเปิ้ล', type: 'crop', growTime: 32000, produceId: 'apple_produce', icon: '🍎', imageUrl: 'apple.png' },
             'apple_produce': { name: 'แอปเปิ้ล', type: 'produce', sellPrice: [50, 75, 105], icon: '🍎', imageUrl: 'apple.png', energyRestore: 10, category: 'fruit' },
+            'coffee_bean': { 
+                name: 'เมล็ดกาแฟ', 
+                type: 'seed', 
+                plantId: 'coffee_plant', 
+                sellPrice: [15, 20, 25],
+                cost: 100,
+                icon: '🌰', 
+                imageUrl: 'coffee_bean.png',
+                category: 'produce',
+                purchaseLimit: 40 
+            },
+            'coffee_plant': { 
+                name: 'ต้นกาแฟ', 
+                type: 'crop', 
+                growTime: 43200, // 12 ชั่วโมง
+                produceId: 'coffee_bean',
+                produceCount: 1, 
+                icon: '🌳', 
+                imageUrl: 'coffee_bean.png' 
+            },
             'fertilizer_1': { name: 'ปุ๋ยธรรมดา', type: 'item', cost: 10, qualityBonus: 0.3, icon: '💩', imageUrl: 'manure.png' },
             'fertilizer_2': { name: 'ปุ๋ยอย่างดี', type: 'item', cost: 25, qualityBonus: 0.6, icon: '✨', imageUrl: 'fertilizer.png' },
             'chicken_deed': { name: 'กรรมสิทธิ์ไก่', type: 'animal_deed', cost: 100, animalId: 'chicken', icon: '🐔', imageUrl: 'chicken.png' },
@@ -1681,6 +1710,37 @@
             'mayonnaise_machine_deed': { name: 'แบบแปลนเครื่องทำมายองเนส', type: 'factory_deed', cost: 5000, factoryId: 'mayonnaise_machine', icon: '🥚', imageUrl: 'mayonnaise_machine.png' },
             'winery': {name: 'โรงหมักไวน์', type: 'factory_instance', imageUrl: 'winery.png',recipes: [ { id: 'grape_wine_recipe', name: 'ทำไวน์องุ่น', inputs: [{ id: 'grape_produce', count: 20 }], resultId: 'grape_wine', output: { id: 'grape_wine', count: 1 }, processTime: 7200 } ]},
             'cheese_press': {name: 'โรงทำชีส', type: 'factory_instance', imageUrl: 'cheese_press.png',recipes: [ { id: 'cheese_recipe', name: 'ทำชีส', inputs: [{ id: 'milk', count: 10 }], resultId: 'cheese', output: { id: 'cheese', count: 1 }, processTime: 6000 } ]},
+            'roaster_deed': { 
+                name: 'แบบแปลนเครื่องคั่วกาแฟ', 
+                type: 'factory_deed', 
+                cost: 12000, 
+                factoryId: 'roaster', 
+                icon: '🔥', 
+                imageUrl: 'roaster.png' 
+            },
+            'roaster': {
+                name: 'เครื่องคั่วกาแฟ', 
+                type: 'factory_instance', 
+                imageUrl: 'roaster.png',
+                recipes: [
+                    { 
+                        id: 'roasted_coffee_recipe', 
+                        name: 'คั่วกาแฟ', 
+                        inputs: [{ id: 'coffee_bean', count: 5 }], 
+                        resultId: 'roasted_coffee', 
+                        output: { id: 'roasted_coffee', count: 1 }, 
+                        processTime: 1800 // 30 นาที
+                    }
+                ]
+            },
+            'roasted_coffee': { 
+                name: 'กาแฟคั่ว', 
+                type: 'produce', 
+                sellPrice: [150, 200, 250], 
+                icon: '🟤', 
+                imageUrl: 'roasted_coffee.png',
+                energyRestore: 5
+            },
             'preserves_jar': {
                 name: 'โรงทำแยม', type: 'factory_instance', imageUrl: 'preserves_jar.png',
                 recipes: [
@@ -2174,8 +2234,17 @@
             }
 
             let finalAmount = amount;
+
+            // ตรวจสอบบัพประหยัดพลังงาน
+            if (playerState.buffs) {
+                const now = Date.now();
+                const energyBuff = playerState.buffs.find(b => b.id === 'energy_saver' && b.expirationTime > now);
+                if (energyBuff) {
+                    finalAmount *= 0.80; // ลดการใช้พลังงานลง 20% (เหลือใช้แค่ 80%)
+                }
+            }
+
             const weather = WEATHER_DATA[farmState.currentWeather];
-            // ตรวจสอบเอฟเฟกต์พลังงานจากสภาพอากาศ
             if (weather && weather.energyModifier) {
                 finalAmount *= weather.energyModifier;
             }
@@ -5548,6 +5617,7 @@
                 newPlayerState.dailyRestCount = 0;
                 newPlayerState.dailyNapCount = 0;
                 newPlayerState.dailyOnsenUse = 0;
+                newPlayerState.dailyPurchaseLimits = {};
                 newPlayerState.lastResetTime = now.getTime();
 
                 newFarmState.plots.forEach(plot => {
@@ -6796,10 +6866,17 @@
             const itemData = GAME_DATA[itemId];
             const totalCost = itemData.cost * quantity;
 
+            if (itemData.purchaseLimit) {
+                const boughtToday = playerState.dailyPurchaseLimits?.[itemId] || 0;
+                if (boughtToday + quantity > itemData.purchaseLimit) {
+                    alert(`คุณซื้อ "${itemData.name}" ได้อีกแค่ ${itemData.purchaseLimit - boughtToday} ชิ้นในวันนี้`);
+                    return;
+                }
+            }
+
             if (playerState.money >= totalCost) {
                 const newPlayerState = { ...playerState };
-                const newFarmState = { ...farmState }; // ต้องดึง farmState มาเพื่ออัปเดตเควส
-
+                const newFarmState = { ...farmState };
                 newPlayerState.money -= totalCost;
 
                 if (itemData.type === 'kitchen_tool') {
@@ -6814,15 +6891,17 @@
                     }
                 }
 
-                // --- อัปเดตการเรียกใช้ updateQuestProgress ให้ถูกต้อง ---
+                if (itemData.purchaseLimit) {
+                    if (!newPlayerState.dailyPurchaseLimits) newPlayerState.dailyPurchaseLimits = {};
+                    newPlayerState.dailyPurchaseLimits[itemId] = (newPlayerState.dailyPurchaseLimits[itemId] || 0) + quantity;
+                }
+
                 updateQuestProgress(newFarmState, 'spend_money', { amount: totalCost });
                 if (itemData.type === 'animal_deed') {
                     updateQuestProgress(newFarmState, 'buy_animal', { amount: quantity });
                 }
-                // (สามารถเพิ่มเงื่อนไขสำหรับเควสซื้อของอื่นๆ ได้ที่นี่)
-
                 await updatePlayerState(newPlayerState);
-                await updateFarmState(newFarmState); // บันทึก farmState ที่มีเควสอัปเดตแล้ว
+                await updateFarmState(newFarmState);
             } else {
                 alert("เงินไม่พอ!");
             }
