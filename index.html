@@ -579,7 +579,8 @@
                     <select id="admin-item-select" class="flex-grow border rounded px-2 py-1" title="เลือกไอเท็ม"></select>
                     <input type="number" id="admin-item-quantity" value="1" min="1" class="w-20 border rounded px-2 py-1" title="จำนวน">
                     <input type="number" id="admin-item-quality" value="0" min="0" max="2" class="w-16 border rounded px-2 py-1" title="คุณภาพ (0-2 ดาว)">
-                    <button id="admin-add-item-btn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-3 rounded">เพิ่มของเข้าคลัง</button>
+                    <button id="admin-add-item-btn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-3 rounded">เพิ่มของ</button>
+                    <button id="admin-remove-item-btn" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-1 px-3 rounded">ลบของ</button>
                 </div>
             </div>
                 <span class="font-semibold bg-yellow-100 px-3 py-1 rounded-full">💰: <span id="money-display" class="font-bold text-yellow-800">0</span></span>
@@ -840,12 +841,13 @@
             const playerSelect = document.getElementById('admin-player-select');
             const itemSelect = document.getElementById('admin-item-select');
             const quantityInput = document.getElementById('admin-item-quantity');
-            const qualityInput = document.getElementById('admin-item-quality'); // <-- เพิ่มตัวแปรสำหรับช่องคุณภาพ
+            const qualityInput = document.getElementById('admin-item-quality');
             const addButton = document.getElementById('admin-add-item-btn');
+            const removeButton = document.getElementById('admin-remove-item-btn'); // <-- ดึงปุ่มใหม่เข้ามา
 
             panel.classList.remove('hidden');
 
-            // ... (โค้ดส่วนของการสร้าง playerSelect และ itemSelect เหมือนเดิม) ...
+            // --- โค้ดส่วนสร้าง Dropdown (เหมือนเดิม) ---
             playerSelect.innerHTML = '';
             const selfOption = document.createElement('option');
             selfOption.value = currentUserId;
@@ -863,10 +865,11 @@
                     playerSelect.appendChild(option);
                 });
             } catch (e) { console.error("Error fetching players for admin panel:", e); }
+            
             itemSelect.innerHTML = '<option value="">-- เลือกไอเท็ม --</option>';
             const itemTypesToInclude = ['produce', 'seed', 'item', 'animal_deed', 'factory_deed'];
             Object.entries(GAME_DATA).forEach(([id, data]) => {
-                if (itemTypesToInclude.includes(data.type)) {
+                if (itemTypesToInclude.includes(data.type) || data.category === 'fish') {
                     const option = document.createElement('option');
                     option.value = id;
                     option.textContent = `${data.icon || ''} ${data.name}`;
@@ -874,51 +877,121 @@
                 }
             });
 
-            // --- ส่วนที่แก้ไข: เพิ่มการอ่านค่า quality ---
+            // --- โค้ดสำหรับปุ่ม "เพิ่มของ" (เหมือนเดิม) ---
             addButton.onclick = async () => {
                 const targetUserId = playerSelect.value;
                 const itemId = itemSelect.value;
                 const quantity = parseInt(quantityInput.value, 10);
-                const quality = parseInt(qualityInput.value, 10); // <-- อ่านค่าคุณภาพจาก input
+                const quality = parseInt(qualityInput.value, 10);
 
                 if (!targetUserId || !itemId || !quantity || quantity < 1 || quality < 0 || quality > 2) {
                     alert('กรุณาเลือกเป้าหมาย, ไอเท็ม และใส่จำนวน/คุณภาพที่ถูกต้อง (0-2)');
                     return;
                 }
-
-                const itemToAdd = { id: itemId, quality: quality }; // <-- สร้าง object ไอเท็มพร้อมคุณภาพ
-
+                const itemToAdd = { id: itemId, quality: quality };
                 if (targetUserId === currentUserId) {
                     const newPlayerState = { ...playerState };
                     if (!newPlayerState.storageBin) newPlayerState.storageBin = [];
                     for (let i = 0; i < quantity; i++) {
-                        newPlayerState.storageBin.push(itemToAdd); // <-- เพิ่มไอเท็มที่มีคุณภาพ
+                        newPlayerState.storageBin.push(itemToAdd);
                     }
                     await updatePlayerState(newPlayerState);
                     alert(`เพิ่ม ${GAME_DATA[itemId].name} ${'★'.repeat(quality)} x${quantity} ชิ้น เข้าคลังของคุณสำเร็จ!`);
                 } else {
                     const playerDocRef = doc(db, "players", targetUserId);
                     try {
-                        const playerDoc = await getDoc(playerDocRef);
-                        if (playerDoc.exists()) {
+                        await runTransaction(db, async (transaction) => {
+                            const playerDoc = await transaction.get(playerDocRef);
+                            if (!playerDoc.exists()) throw "ไม่พบข้อมูลผู้เล่น!";
                             const targetPlayerData = playerDoc.data();
                             if (!targetPlayerData.storageBin) targetPlayerData.storageBin = [];
-                            
                             for (let i = 0; i < quantity; i++) {
-                                targetPlayerData.storageBin.push(itemToAdd); // <-- เพิ่มไอเท็มที่มีคุณภาพ
+                                targetPlayerData.storageBin.push(itemToAdd);
                             }
-                            
-                            await setDoc(playerDocRef, targetPlayerData);
-                            alert(`เพิ่ม ${GAME_DATA[itemId].name} ${'★'.repeat(quality)} x${quantity} ชิ้น เข้าคลังของ ${targetPlayerData.nickname} สำเร็จ!`);
-                        } else {
-                            alert('ไม่พบข้อมูลผู้เล่นคนดังกล่าว!');
-                        }
+                            transaction.set(playerDocRef, targetPlayerData);
+                        });
+                        alert(`เพิ่ม ${GAME_DATA[itemId].name} ${'★'.repeat(quality)} x${quantity} ชิ้น เข้าคลังของผู้เล่นเป้าหมายสำเร็จ!`);
                     } catch (e) {
                         console.error("Error giving item to other player:", e);
                         alert('เกิดข้อผิดพลาดในการส่งของ!');
                     }
                 }
             };
+
+            // ▼▼▼ START EDIT: เพิ่มการทำงานให้ปุ่ม "ลบของ" ▼▼▼
+            removeButton.onclick = async () => {
+                const targetUserId = playerSelect.value;
+                const itemId = itemSelect.value;
+                const quantityToRemove = parseInt(quantityInput.value, 10);
+                const quality = parseInt(qualityInput.value, 10);
+
+                if (!targetUserId || !itemId || !quantityToRemove || quantityToRemove < 1) {
+                    alert('กรุณาเลือกเป้าหมาย, ไอเท็ม, และจำนวนที่ต้องการลบให้ถูกต้อง');
+                    return;
+                }
+
+                const confirmationText = `คุณแน่ใจหรือไม่ว่าจะลบ ${GAME_DATA[itemId].name} x${quantityToRemove} (คุณภาพ ${'★'.repeat(quality)}) ออกจากคลังของผู้เล่นที่เลือก?`;
+
+                showConfirmationModal(confirmationText, async () => {
+                    // --- กรณีลบของตัวเอง ---
+                    if (targetUserId === currentUserId) {
+                        const newPlayerState = { ...playerState };
+                        if (!newPlayerState.storageBin) newPlayerState.storageBin = [];
+                        
+                        const currentCount = newPlayerState.storageBin.filter(i => i.id === itemId && i.quality === quality).length;
+                        if (currentCount < quantityToRemove) {
+                            alert(`ผู้เล่นมีไอเท็มไม่พอที่จะลบ (มีอยู่ ${currentCount} ชิ้น)`);
+                            return;
+                        }
+
+                        let removedCount = 0;
+                        newPlayerState.storageBin = newPlayerState.storageBin.filter(item => {
+                            if (item.id === itemId && item.quality === quality && removedCount < quantityToRemove) {
+                                removedCount++;
+                                return false; // ไม่เก็บไอเท็มนี้ไว้ = ลบทิ้ง
+                            }
+                            return true; // เก็บไอเท็มอื่นๆ ไว้
+                        });
+
+                        await updatePlayerState(newPlayerState);
+                        alert(`ลบไอเท็มออกจากคลังของคุณสำเร็จ!`);
+
+                    } else {
+                        // --- กรณีลบของผู้เล่นอื่น ---
+                        const playerDocRef = doc(db, "players", targetUserId);
+                        try {
+                            await runTransaction(db, async (transaction) => {
+                                const playerDoc = await transaction.get(playerDocRef);
+                                if (!playerDoc.exists()) throw "ไม่พบข้อมูลผู้เล่น!";
+                                
+                                const targetPlayerData = playerDoc.data();
+                                if (!targetPlayerData.storageBin) targetPlayerData.storageBin = [];
+
+                                const currentCount = targetPlayerData.storageBin.filter(i => i.id === itemId && i.quality === quality).length;
+                                if (currentCount < quantityToRemove) {
+                                    throw `ผู้เล่นมีไอเท็มไม่พอที่จะลบ (มีอยู่ ${currentCount} ชิ้น)`;
+                                }
+
+                                let removedCount = 0;
+                                targetPlayerData.storageBin = targetPlayerData.storageBin.filter(item => {
+                                    if (item.id === itemId && item.quality === quality && removedCount < quantityToRemove) {
+                                        removedCount++;
+                                        return false;
+                                    }
+                                    return true;
+                                });
+                                
+                                transaction.set(playerDocRef, targetPlayerData);
+                            });
+                            alert(`ลบไอเท็มออกจากคลังของผู้เล่นเป้าหมายสำเร็จ!`);
+                        } catch (e) {
+                            console.error("Error removing item from other player:", e);
+                            alert('เกิดข้อผิดพลาดในการลบของ: ' + e);
+                        }
+                    }
+                });
+            };
+            // ▲▲▲ END EDIT ▲▲▲
         }
         // --- START NEW INGREDIENT SELECTION SYSTEM ---
         let selectionSession = null;
@@ -1303,22 +1376,22 @@
                 { id: 'watering_can_basic', name: 'บัวรดน้ำธรรมดา', cost: 0, materials: {}, aoe: { shape: 'single', size: 1 } },
                 { id: 'watering_can_copper', name: 'บัวรดน้ำทองแดง', cost: 2000, materials: { 'pig_meat': 5 }, aoe: { shape: 'line', size: 2 } },
                 { id: 'watering_can_silver', name: 'บัวรดน้ำเงิน', cost: 7500, materials: { 'truffle': 5 }, aoe: { shape: 'line', size: 4 } },
-                { id: 'watering_can_gold', name: 'บัวรดน้ำทอง', cost: 25000, materials: { 'crocodile_skin': 5 }, aoe: { shape: 'rect', width: 2, height: 4 } },
-                { id: 'watering_can_mystical', name: 'บัวรดน้ำลี้ลับ', cost: 100000, materials: { 'pearl': 5 }, aoe: { shape: 'rect', width: 3, height: 4 } }
+                { id: 'watering_can_gold', name: 'บัวรดน้ำทอง', cost: 25000, materials: { 'crocodile_skin': 5 }, aoe: { shape: 'rect', width: 4, height: 2 } },
+                { id: 'watering_can_mystical', name: 'บัวรดน้ำลี้ลับ', cost: 100000, materials: { 'pearl': 5 }, aoe: { shape: 'rect', width: 4, height: 3 } }
             ],
             'scythes': [
                 { id: 'scythe_basic', name: 'เคียวธรรมดา', cost: 0, materials: {}, aoe: { shape: 'single', size: 1 } },
                 { id: 'scythe_copper', name: 'เคียวทองแดง', cost: 2000, materials: { 'pig_meat': 5 }, aoe: { shape: 'line', size: 2 } },
                 { id: 'scythe_silver', name: 'เคียวเงิน', cost: 7500, materials: { 'truffle': 5 }, aoe: { shape: 'line', size: 4 } },
-                { id: 'scythe_gold', name: 'เคียวทอง', cost: 25000, materials: { 'crocodile_skin': 5 }, aoe: { shape: 'rect', width: 2, height: 4 } },
-                { id: 'scythe_mystical', name: 'เคียวลี้ลับ', cost: 100000, materials: { 'pearl': 5 }, aoe: { shape: 'rect', width: 3, height: 4 } }
+                { id: 'scythe_gold', name: 'เคียวทอง', cost: 25000, materials: { 'crocodile_skin': 5 }, aoe: { shape: 'rect', width: 4, height: 2 } },
+                { id: 'scythe_mystical', name: 'เคียวลี้ลับ', cost: 100000, materials: { 'pearl': 5 }, aoe: { shape: 'rect', width: 4, height: 3 } }
             ],
             'spreaders': [
                 { id: 'spreader_basic', name: 'มือเปล่า', cost: 0, materials: {}, aoe: { shape: 'single', size: 1 } },
                 { id: 'spreader_copper', name: 'เครื่องหว่านปุ๋ยทองแดง', cost: 2000, materials: { 'pig_meat': 5 }, aoe: { shape: 'line', size: 2 } },
                 { id: 'spreader_silver', name: 'เครื่องหว่านปุ๋ยเงิน', cost: 7500, materials: { 'truffle': 5 }, aoe: { shape: 'line', size: 4 } },
-                { id: 'spreader_gold', name: 'เครื่องหว่านปุ๋ยทอง', cost: 25000, materials: { 'crocodile_skin': 5 }, aoe: { shape: 'rect', width: 2, height: 4 } },
-                { id: 'spreader_mystical', name: 'เครื่องหว่านปุ๋ยลี้ลับ', cost: 100000, materials: { 'pearl': 5 }, aoe: { shape: 'rect', width: 3, height: 4 } }
+                { id: 'spreader_gold', name: 'เครื่องหว่านปุ๋ยทอง', cost: 25000, materials: { 'crocodile_skin': 5 }, aoe: { shape: 'rect', width: 4, height: 2 } },
+                { id: 'spreader_mystical', name: 'เครื่องหว่านปุ๋ยลี้ลับ', cost: 100000, materials: { 'pearl': 5 }, aoe: { shape: 'rect', width: 4, height: 3 } }
             ],
             'house_upgrades': [
                 { name: 'เต็นท์', cost: 500, imageUrl: 'beadroom1.png' },
